@@ -1,0 +1,175 @@
+<div class="employes-page">
+  <header class="page-header">
+    <div>
+      <span class="page-kicker">Ressources Humaines</span>
+      <h1>Employes</h1>
+      <p>Demandes validées par le Directeur Général, prêtes pour suivi RH.</p>
+    </div>
+
+    <button type="button" class="export-btn" (click)="exporterExcel()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <path d="M7 10l5 5 5-5"/>
+        <path d="M12 15V3"/>
+      </svg>
+      Exporter Excel
+    </button>
+  </header>
+
+  <section class="filters-card">
+    <label class="field search-field">
+      <span>Recherche employé</span>
+      <input type="search" [(ngModel)]="searchTerm" placeholder="Nom de l'employé" />
+    </label>
+
+    <label class="field">
+      <span>Année</span>
+      <select [(ngModel)]="selectedYear">
+        <option *ngFor="let annee of annees" [value]="annee">{{ annee }}</option>
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Type</span>
+      <select [(ngModel)]="selectedType">
+        <option *ngFor="let type of types" [value]="type">{{ type }}</option>
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Département</span>
+      <select [(ngModel)]="selectedDepartement">
+        <option *ngFor="let departement of departements" [value]="departement">{{ departement }}</option>
+      </select>
+    </label>
+  </section>
+
+  <section class="demandes-card">
+    <div class="card-title">
+      <div>
+        <h2>Demandes validées DG</h2>
+        <p>{{ demandesFiltrees.length }} demande(s) trouvée(s)</p>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="demandes-table">
+        <thead>
+          <tr>
+            <th>Réf.</th>
+            <th>Employé</th>
+            <th>Département</th>
+            <th>Type</th>
+            <th>Période</th>
+            <th>Durée</th>
+            <th>Statut</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let demande of demandesFiltrees">
+            <td class="ref-cell">{{ demande.reference }}</td>
+            <td>
+              <strong>{{ demande.employe }}</strong>
+              <span class="matricule">{{ demande.matricule }}</span>
+            </td>
+            <td>{{ demande.departement }}</td>
+            <td>{{ demande.type }}</td>
+            <td class="date-cell">{{ demande.dateDebut }} - {{ demande.dateFin }}</td>
+            <td><span class="duree-chip">{{ demande.duree }} j</span></td>
+            <td><span class="badge">Validée DG</span></td>
+            <td>
+              <button type="button" class="print-btn" title="Imprimer la demande" (click)="imprimerDemande(demande)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M6 9V2h12v7"/>
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                  <path d="M6 14h12v8H6z"/>
+                </svg>
+              </button>
+            </td>
+          </tr>
+
+          <tr *ngIf="demandesFiltrees.length === 0">
+            <td colspan="8" class="empty-cell">Aucune demande validée ne correspond aux filtres.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="demandes-card">
+    <div class="card-title">
+      <div>
+        <h2>Absences déclarées</h2>
+        <p>{{ absencesFiltrees.length }} absence(s) visible(s) pour les filtres actuels</p>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="demandes-table">
+        <thead>
+          <tr>
+            <th>Réf.</th>
+            <th>Employé</th>
+            <th>Département</th>
+            <th>Période</th>
+            <th>Durée</th>
+            <th>Motif</th>
+            <th>Justificatif</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let absence of absencesFiltrees">
+            <td class="ref-cell">{{ absence.reference }}</td>
+            <td><strong>{{ absence.employe }}</strong></td>
+            <td>{{ absence.departement }}</td>
+            <td class="date-cell">{{ absence.dateDebut }} - {{ absence.dateFin }}</td>
+            <td><span class="duree-chip">{{ absence.duree }} j</span></td>
+            <td>{{ absence.motif }}</td>
+            <td><span class="file-chip">{{ absence.justificatif }}</span></td>
+          </tr>
+
+          <tr *ngIf="absencesFiltrees.length === 0">
+            <td colspan="7" class="empty-cell">Aucune absence déclarée ne correspond aux filtres.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<section class="print-sheet" *ngIf="demandeAImprimer">
+  <h1>Demande validée DG</h1>
+  <p class="print-ref">{{ demandeAImprimer.reference }}</p>
+
+  <dl>
+    <div>
+      <dt>Employé</dt>
+      <dd>{{ demandeAImprimer.employe }} - {{ demandeAImprimer.matricule }}</dd>
+    </div>
+    <div>
+      <dt>Département</dt>
+      <dd>{{ demandeAImprimer.departement }}</dd>
+    </div>
+    <div>
+      <dt>Type</dt>
+      <dd>{{ demandeAImprimer.type }}</dd>
+    </div>
+    <div>
+      <dt>Date de dépôt</dt>
+      <dd>{{ demandeAImprimer.dateDepot }}</dd>
+    </div>
+    <div>
+      <dt>Période</dt>
+      <dd>{{ demandeAImprimer.dateDebut }} - {{ demandeAImprimer.dateFin }}</dd>
+    </div>
+    <div>
+      <dt>Durée</dt>
+      <dd>{{ demandeAImprimer.duree }} jour(s)</dd>
+    </div>
+    <div>
+      <dt>Statut</dt>
+      <dd>{{ demandeAImprimer.statut }}</dd>
+    </div>
+  </dl>
+</section>

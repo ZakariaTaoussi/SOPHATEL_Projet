@@ -1,0 +1,68 @@
+<div class="app-shell" [class.sidebar-collapsed]="isSidebarCollapsed()">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="32" height="32" rx="8" fill="#1B3A6B"/>
+          <path d="M8 10h16M8 16h10M8 22h13" stroke="#C9A84C" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <span class="brand-name">GestionCongé</span>
+        <span class="brand-tag">Congés & absences</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">NAVIGATION</span>
+      <ul>
+        <li *ngFor="let item of navItems">
+          <a [routerLink]="item.route" routerLinkActive="active" class="nav-link" [title]="item.label">
+            <span class="nav-icon" [innerHTML]="getIcon(item.icon)"></span>
+            <span class="nav-label">{{ item.label }}</span>
+            <span class="active-indicator"></span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar">{{ currentUser.avatar }}</div>
+        <div class="user-info">
+          <span class="user-name">{{ currentUser.nom }}</span>
+          <span class="user-role">{{ currentUser.departement }}</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-wrapper">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="mobile-menu-btn" (click)="toggleSidebar()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+        <div class="breadcrumb">
+          <span class="breadcrumb-root">GestionCongé</span>
+          <span class="breadcrumb-sep">/</span>
+          <span class="breadcrumb-current">Espace Directeur Général</span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-user">
+          <div class="topbar-avatar">{{ currentUser.avatar }}</div>
+          <span class="topbar-name">{{ currentUser.nom }}</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

@@ -1,0 +1,100 @@
+<div class="team-page">
+  <header class="page-header">
+    <div>
+      <h1>Mes Employés</h1>
+      <p>Suivi des demandes, absences et historiques de votre équipe.</p>
+    </div>
+  </header>
+
+  <section class="filters-card">
+    <label class="field search-field">
+      <span>Recherche</span>
+      <input type="search" [(ngModel)]="searchTerm" placeholder="Nom de l'employé" />
+    </label>
+
+    <label class="field">
+      <span>Mois</span>
+      <select [(ngModel)]="selectedMonth">
+        <option *ngFor="let month of months" [value]="month">{{ month }}</option>
+      </select>
+    </label>
+  </section>
+
+  <section class="card">
+    <div class="card-title">
+      <h2>Demandes en validation</h2>
+      <p>{{ demandesFiltrees.length }} demande(s)</p>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Réf.</th>
+            <th>Employé</th>
+            <th>Type</th>
+            <th>Période</th>
+            <th>Statut</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let demande of demandesFiltrees">
+            <td class="ref-cell">{{ demande.id }}</td>
+            <td>
+              <strong>{{ demande.employe }}</strong>
+              <span>{{ demande.poste }}</span>
+            </td>
+            <td>{{ demande.type }}</td>
+            <td class="date-cell">{{ demande.dateDebut }} - {{ demande.dateFin }}</td>
+            <td><span class="badge" [attr.data-status]="demande.statut">{{ demande.statut }}</span></td>
+            <td>
+              <div class="action-group" *ngIf="demande.statut === 'En attente'; else noAction">
+                <button type="button" class="accept-btn" (click)="accepter(demande)">Accepter</button>
+                <button type="button" class="reject-btn" (click)="rejeter(demande)">Rejeter</button>
+              </div>
+              <ng-template #noAction><span class="no-action">-</span></ng-template>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="employees-grid">
+    <article class="employee-card" *ngFor="let employe of employesFiltres">
+      <div>
+        <h2>{{ employe.nom }}</h2>
+        <p>{{ employe.poste }}</p>
+        <span>{{ employe.departement }}</span>
+      </div>
+      <div class="absence-count">
+        <strong>{{ compterAbsences(employe.nom) }}</strong>
+        <span>absence(s)</span>
+      </div>
+      <button type="button" class="history-btn" (click)="ouvrirHistorique(employe)">
+        Historique absences
+      </button>
+    </article>
+  </section>
+</div>
+
+<div class="modal-backdrop" *ngIf="employeHistorique" (click)="fermerHistorique()">
+  <section class="history-modal" (click)="$event.stopPropagation()">
+    <button type="button" class="modal-close" aria-label="Fermer" (click)="fermerHistorique()">×</button>
+    <header>
+      <h2>{{ employeHistorique.nom }}</h2>
+      <p>Historique des absences déclarées</p>
+    </header>
+
+    <div class="absence-list">
+      <article *ngFor="let absence of historiqueAbsences(employeHistorique.nom)">
+        <strong>{{ absence.dateDebut }} - {{ absence.dateFin }}</strong>
+        <span>{{ absence.motif }}</span>
+      </article>
+      <p class="empty" *ngIf="historiqueAbsences(employeHistorique.nom).length === 0">
+        Aucune absence déclarée.
+      </p>
+    </div>
+  </section>
+</div>

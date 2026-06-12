@@ -1,0 +1,57 @@
+<div class="admin-page">
+  <header class="page-header">
+    <div>
+      <span class="page-kicker">Parametrage</span>
+      <h1>Regle Conge</h1>
+      <p>Definir l'acquisition mensuelle et les conditions de demande.</p>
+    </div>
+  </header>
+
+  <section class="settings-grid">
+    <article class="form-card">
+      <h2>Acquisition des conges</h2>
+      <form class="form-grid" (ngSubmit)="validerRegle()">
+        <label class="field">
+          <span>Jours ajoutes chaque mois</span>
+          <input type="number" min="0" step="0.5" name="joursParMois" [(ngModel)]="joursParMois" />
+        </label>
+        <label class="field">
+          <span>Preavis requis pour demander un conge</span>
+          <input type="number" min="0" name="preavisConge" [(ngModel)]="preavisConge" />
+        </label>
+        <label class="field">
+          <span>Maximum de jours consecutifs</span>
+          <input type="number" min="1" name="maxJoursConsecutifs" [(ngModel)]="maxJoursConsecutifs" />
+        </label>
+        <label class="field">
+          <span>Report autorise vers l'annee suivante</span>
+          <input type="number" min="0" name="reportAnnuel" [(ngModel)]="reportAnnuel" />
+        </label>
+        <div class="form-actions">
+          <span class="success-message" *ngIf="regleValidee">Regle validee</span>
+          <button type="submit" class="btn-primary">Valider</button>
+        </div>
+      </form>
+    </article>
+
+    <article class="summary-card">
+      <span>Total annuel</span>
+      <strong>{{ totalAnnuel }} j</strong>
+      <p>Avec {{ joursParMois }} jour(s) par mois, un employe obtient {{ totalAnnuel }} jours sur 12 mois.</p>
+      <p>Une demande de conge doit etre soumise {{ preavisConge }} jours avant la date de debut.</p>
+    </article>
+  </section>
+
+  <section class="table-card">
+    <div class="card-title">
+      <h2>Projection annuelle</h2>
+      <p>Solde genere mois par mois</p>
+    </div>
+    <div class="projection-grid">
+      <div class="projection-item" *ngFor="let item of projection">
+        <span>Mois {{ item.mois }}</span>
+        <strong>{{ item.total }} j</strong>
+      </div>
+    </div>
+  </section>
+</div>

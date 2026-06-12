@@ -1,0 +1,65 @@
+<div class="modal-backdrop" (click)="fermerModal()">
+  <form class="absence-modal" (ngSubmit)="enregistrerAbsence()" (click)="$event.stopPropagation()">
+    <button type="button" class="modal-close" aria-label="Fermer" (click)="fermerModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+
+    <header class="modal-header">
+      <h2>Déclarer une absence</h2>
+      <p>Cette absence sera enregistrée dans votre historique RH.</p>
+    </header>
+
+    <div class="date-grid">
+      <label class="field">
+        <span>Date de début</span>
+        <input type="date" name="dateDebut" [(ngModel)]="nouvelleAbsence.dateDebut" required />
+      </label>
+
+      <label class="field">
+        <span>Date de fin</span>
+        <input type="date" name="dateFin" [(ngModel)]="nouvelleAbsence.dateFin" required />
+      </label>
+    </div>
+
+    <label class="field">
+      <span>Motif</span>
+      <textarea
+        name="motif"
+        [(ngModel)]="nouvelleAbsence.motif"
+        placeholder="Maladie, événement familial, etc."
+        required
+      ></textarea>
+    </label>
+
+    <div class="justificatif-block">
+      <h3>Justificatif</h3>
+      <label
+        class="upload-zone"
+        (dragover)="$event.preventDefault()"
+        (drop)="deposerJustificatif($event)"
+      >
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" (change)="choisirJustificatif($event)" />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <path d="M17 8 12 3 7 8"/>
+          <path d="M12 3v13"/>
+        </svg>
+        <span class="upload-text">
+          Glissez un fichier ici ou <strong>parcourir</strong>
+        </span>
+        <span class="upload-hint">PDF, JPG, PNG - 5 Mo max.</span>
+        <span class="upload-file" *ngIf="nouvelleAbsence.justificatif">
+          {{ nouvelleAbsence.justificatif.name }}
+        </span>
+      </label>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-secondary" (click)="fermerModal()">Annuler</button>
+      <button type="submit" class="btn-primary">Enregistrer</button>
+    </div>
+  </form>
+</div>

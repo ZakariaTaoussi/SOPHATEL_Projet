@@ -1,0 +1,128 @@
+:host { display: block; }
+
+.history-page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  color: #020617;
+}
+
+.page-header h1 {
+  margin: 0 0 6px;
+  color: #163b68;
+  font-size: 1.7rem;
+  font-weight: 800;
+}
+
+.page-header p {
+  margin: 0;
+  color: #475569;
+  font-size: .92rem;
+}
+
+.filters-card,
+.card {
+  border: 1px solid #cfd8e3;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(15, 23, 42, .09);
+}
+
+.filters-card {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) repeat(2, 180px);
+  gap: 14px;
+  padding: 18px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+
+  span {
+    font-size: .82rem;
+    font-weight: 750;
+  }
+
+  input,
+  select {
+    height: 38px;
+    padding: 0 12px;
+    border: 1px solid #d7e0e8;
+    border-radius: 8px;
+    background: #f8fbfd;
+    outline: none;
+  }
+}
+
+.card { overflow: hidden; }
+
+.card-title {
+  padding: 24px 24px 18px;
+
+  h2 {
+    margin: 0 0 6px;
+    font-size: 1rem;
+    font-weight: 800;
+  }
+
+  p {
+    margin: 0;
+    color: #64748b;
+    font-size: .88rem;
+  }
+}
+
+.table-wrapper { overflow-x: auto; }
+
+.data-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: .88rem;
+
+  thead { background: #f1f6f9; }
+
+  th {
+    padding: 13px 18px;
+    color: #334155;
+    font-size: .72rem;
+    font-weight: 800;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  td {
+    padding: 15px 18px;
+    border-top: 1px solid #eef2f7;
+  }
+}
+
+.ref-cell,
+.date-cell { color: #64748b; white-space: nowrap; }
+
+.duree-chip,
+.badge {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: .74rem;
+  font-weight: 800;
+}
+
+.duree-chip { background: #eef6fb; color: #075985; }
+.badge[data-status="Validée DG"] { background: #ecfdf5; color: #047857; }
+.badge[data-status="Refusée"] { background: #fef2f2; color: #b91c1c; }
+
+.empty-cell {
+  padding: 28px 18px;
+  color: #64748b;
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .filters-card { grid-template-columns: 1fr; }
+}

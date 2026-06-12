@@ -1,0 +1,6 @@
+@use '../employes/employes.component.scss';
+.form-grid { grid-template-columns: 1fr 220px 220px; }
+.form-actions { grid-column: 1 / -1; }
+.card-title { padding: 20px; border-bottom: 1px solid #eef2f7; }
+table { min-width: 860px; }
+@media (max-width: 760px) { .form-grid { grid-template-columns: 1fr; } }

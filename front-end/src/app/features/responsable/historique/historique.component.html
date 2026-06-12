@@ -1,0 +1,64 @@
+<div class="history-page">
+  <header class="page-header">
+    <div>
+      <h1>Historique</h1>
+      <p>Toutes les demandes de vos employés validées DG ou refusées.</p>
+    </div>
+  </header>
+
+  <section class="filters-card">
+    <label class="field search-field">
+      <span>Recherche employé</span>
+      <input type="search" [(ngModel)]="searchTerm" placeholder="Nom de l'employé" />
+    </label>
+
+    <label class="field">
+      <span>Année</span>
+      <select [(ngModel)]="selectedYear">
+        <option *ngFor="let year of years" [value]="year">{{ year }}</option>
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Type</span>
+      <select [(ngModel)]="selectedType">
+        <option *ngFor="let type of types" [value]="type">{{ type }}</option>
+      </select>
+    </label>
+  </section>
+
+  <section class="card">
+    <div class="card-title">
+      <h2>Demandes finalisées</h2>
+      <p>{{ demandesFiltrees.length }} demande(s) trouvée(s)</p>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Réf.</th>
+            <th>Employé</th>
+            <th>Type</th>
+            <th>Période</th>
+            <th>Durée</th>
+            <th>Statut</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let demande of demandesFiltrees">
+            <td class="ref-cell">{{ demande.id }}</td>
+            <td>{{ demande.employe }}</td>
+            <td>{{ demande.type }}</td>
+            <td class="date-cell">{{ demande.dateDebut }} - {{ demande.dateFin }}</td>
+            <td><span class="duree-chip">{{ demande.duree }} j</span></td>
+            <td><span class="badge" [attr.data-status]="demande.statut">{{ demande.statut }}</span></td>
+          </tr>
+          <tr *ngIf="demandesFiltrees.length === 0">
+            <td colspan="6" class="empty-cell">Aucune demande ne correspond aux filtres.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

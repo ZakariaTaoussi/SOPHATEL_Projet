@@ -1,0 +1,99 @@
+<div class="admin-page">
+  <header class="page-header">
+    <div>
+      <span class="page-kicker">Comptes</span>
+      <h1>Employes</h1>
+      <p>Creer, modifier, supprimer et rechercher les comptes utilisateurs.</p>
+    </div>
+  </header>
+
+  <section class="form-card">
+    <h2>{{ editingId ? 'Modifier un compte' : 'Creer un compte' }}</h2>
+    <form class="form-grid" (ngSubmit)="enregistrer()">
+      <label class="field">
+        <span>Matricule</span>
+        <input name="matricule" [(ngModel)]="form.matricule" placeholder="EMP-0000" required />
+      </label>
+      <label class="field">
+        <span>Nom complet</span>
+        <input name="nom" [(ngModel)]="form.nom" placeholder="Nom de l'employe" required />
+      </label>
+      <label class="field">
+        <span>Email</span>
+        <input type="email" name="email" [(ngModel)]="form.email" placeholder="email@entreprise.ma" required />
+      </label>
+      <label class="field">
+        <span>Role</span>
+        <select name="role" [(ngModel)]="form.role">
+          <option *ngFor="let role of roles" [value]="role">{{ role }}</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Departement</span>
+        <select name="departement" [(ngModel)]="form.departement">
+          <option *ngFor="let departement of departements" [value]="departement">{{ departement }}</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Statut</span>
+        <select name="statut" [(ngModel)]="form.statut">
+          <option value="Actif">Actif</option>
+          <option value="Suspendu">Suspendu</option>
+        </select>
+      </label>
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="reinitialiser()" *ngIf="editingId">Annuler</button>
+        <button type="submit" class="btn-primary">{{ editingId ? 'Enregistrer' : 'Creer' }}</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="table-card">
+    <div class="toolbar">
+      <div>
+        <h2>Liste des employes</h2>
+        <p>{{ employesFiltres.length }} compte(s) trouve(s)</p>
+      </div>
+      <label class="search">
+        <input type="search" [(ngModel)]="searchTerm" placeholder="Recherche par nom" />
+      </label>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Matricule</th>
+            <th>Nom</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Departement</th>
+            <th>Statut</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let employe of employesFiltres">
+            <td class="muted">{{ employe.matricule }}</td>
+            <td><strong>{{ employe.nom }}</strong></td>
+            <td>{{ employe.email }}</td>
+            <td>{{ employe.role }}</td>
+            <td>{{ employe.departement }}</td>
+            <td><span class="badge" [class.suspended]="employe.statut === 'Suspendu'">{{ employe.statut }}</span></td>
+            <td class="actions">
+              <button type="button" class="icon-btn edit" title="Modifier" (click)="modifier(employe)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+              </button>
+              <button type="button" class="icon-btn delete" title="Supprimer" (click)="supprimer(employe)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="employesFiltres.length === 0">
+            <td colspan="7" class="empty-cell">Aucun compte ne correspond a la recherche.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

@@ -1,0 +1,152 @@
+:host {
+  display: block;
+}
+
+.absences-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  color: #020617;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+
+  h1 {
+    margin: 0 0 6px;
+    font-size: 1.55rem;
+    font-weight: 800;
+    letter-spacing: 0;
+  }
+
+  p {
+    margin: 0;
+    color: #475569;
+    font-size: .92rem;
+  }
+}
+
+.declare-btn {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 8px;
+  background: #087da0;
+  color: #fff;
+  font-size: .88rem;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 10px 22px rgba(8, 125, 160, .18);
+  transition: background .16s ease, transform .16s ease;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover {
+    background: #066b89;
+    transform: translateY(-1px);
+  }
+}
+
+.absences-card {
+  overflow: hidden;
+  border: 1px solid #cfd8e3;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(15, 23, 42, .09);
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 26px 24px 0;
+
+  svg {
+    width: 17px;
+    height: 17px;
+    color: #020617;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 800;
+  }
+}
+
+.result-count {
+  margin: 12px 24px 26px;
+  color: #475569;
+  font-size: .9rem;
+}
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.absences-table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+  font-size: .9rem;
+
+  thead {
+    background: #f1f6f9;
+  }
+
+  th {
+    padding: 13px 18px;
+    color: #334155;
+    font-size: .74rem;
+    font-weight: 800;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  td {
+    padding: 16px 18px 36px;
+    color: #020617;
+    vertical-align: top;
+  }
+}
+
+.id-cell {
+  font-weight: 650;
+}
+
+.empty-cell {
+  padding: 28px 18px;
+  color: #64748b;
+  text-align: center;
+}
+
+@media (max-width: 700px) {
+  .page-header {
+    flex-direction: column;
+  }
+
+  .declare-btn {
+    width: 100%;
+  }
+
+  .card-title {
+    padding: 22px 18px 0;
+  }
+
+  .result-count {
+    margin: 10px 18px 22px;
+  }
+}

@@ -1,0 +1,73 @@
+:host { display: block; }
+.page-wrapper { display: flex; flex-direction: column; gap: 24px; animation: fadeInUp .35s ease both; }
+@keyframes fadeInUp { from {opacity:0;transform:translateY(12px);} to {opacity:1;transform:translateY(0);} }
+.page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.page-title { font-family: 'Playfair Display', serif; font-size: 1.75rem; font-weight: 700; color: #1B3A6B; margin: 0 0 4px; }
+.page-subtitle { font-size: 0.875rem; color: #6B7394; margin: 0; font-family: 'Inter', sans-serif; }
+
+.btn-edit {
+  display: inline-flex; align-items: center; gap: 8px; padding: 9px 18px;
+  background: #fff; color: #1B3A6B; border: 1px solid #1B3A6B; border-radius: 6px;
+  font-size: 0.82rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif;
+  transition: all .2s; white-space: nowrap; flex-shrink: 0;
+  svg { width: 14px; height: 14px; }
+  &:hover { background: #1B3A6B; color: #fff; }
+}
+
+.profile-grid { display: grid; grid-template-columns: 280px 1fr; gap: 20px; align-items: start; @media (max-width: 860px) { grid-template-columns: 1fr; } }
+
+// Identity Card
+.identity-card { text-align: center; }
+.avatar-section { padding: 28px 20px 24px; border-bottom: 1px solid #EEF0F5; }
+.profile-avatar {
+  width: 72px; height: 72px; border-radius: 50%; margin: 0 auto 16px;
+  background: linear-gradient(135deg, #1B3A6B, #2A4F8F);
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700;
+  border: 3px solid #C9A84C;
+}
+.identity-name { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; color: #1A1F36; margin: 0 0 6px; }
+.identity-poste { display: block; font-size: 0.82rem; font-weight: 600; color: #1B3A6B; font-family: 'Inter', sans-serif; margin-bottom: 4px; }
+.identity-dept { display: block; font-size: 0.78rem; color: #9AA3BC; font-family: 'Inter', sans-serif; }
+
+.meta-list { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.meta-item { display: flex; flex-direction: column; gap: 3px; text-align: left; }
+.meta-label { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: #9AA3BC; font-family: 'Inter', sans-serif; }
+.meta-value { font-size: 0.85rem; color: #2D3352; font-family: 'Inter', sans-serif; font-weight: 500; &.mono { font-variant-numeric: tabular-nums; color: #1B3A6B; font-weight: 700; } }
+
+// Right col
+.right-col { display: flex; flex-direction: column; gap: 20px; }
+
+.card { background: #fff; border-radius: 10px; border: 1px solid #EEF0F5; box-shadow: 0 1px 3px rgba(27,58,107,.06); padding: 24px; }
+.card-header { margin-bottom: 20px; }
+.card-title { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; color: #1A1F36; margin: 0; }
+
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.full-width { grid-column: 1 / -1; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-label { font-size: 0.78rem; font-weight: 600; color: #5C6480; font-family: 'Inter', sans-serif; }
+.form-input {
+  padding: 9px 13px; border: 1px solid #D8DCE8; border-radius: 6px;
+  font-size: 0.85rem; color: #1A1F36; background: #fff; font-family: 'Inter', sans-serif;
+  transition: border-color .2s, box-shadow .2s;
+  &:focus { outline: none; border-color: #1B3A6B; box-shadow: 0 0 0 3px rgba(27,58,107,.08); }
+  &.readonly { background: #F5F6FA; color: #6B7394; cursor: default; }
+}
+
+.form-actions { margin-top: 20px; display: flex; justify-content: flex-end; }
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 8px; padding: 10px 22px;
+  background: #1B3A6B; color: #fff; border: none; border-radius: 6px;
+  font-size: 0.85rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif;
+  &:hover { background: #2A4F8F; }
+}
+
+// Soldes
+.soldes-list { display: flex; flex-direction: column; gap: 18px; }
+.solde-item {}
+.solde-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.solde-label { font-size: 0.82rem; font-weight: 600; color: #2D3352; font-family: 'Inter', sans-serif; }
+.solde-value { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; color: #1A1F36; }
+.solde-total { font-size: 0.75rem; font-weight: 400; color: #9AA3BC; font-family: 'Inter', sans-serif; }
+.solde-bar { height: 8px; background: #EEF0F5; border-radius: 4px; overflow: hidden; }
+.solde-fill { height: 100%; border-radius: 4px; transition: width .6s ease; }

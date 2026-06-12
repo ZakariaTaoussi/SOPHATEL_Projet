@@ -1,0 +1,81 @@
+<div class="employes-page">
+  <header class="page-header">
+    <div>
+      <span class="page-kicker">Validation finale</span>
+      <h1>Demande Employe</h1>
+      <p>Validez ou refusez les demandes des employés.</p>
+    </div>
+  </header>
+
+  <section class="filters-card">
+    <label class="field search-field">
+      <span>Recherche employé</span>
+      <input type="search" [(ngModel)]="searchTerm" placeholder="Nom de l'employé" />
+    </label>
+
+    <label class="field">
+      <span>Type</span>
+      <select [(ngModel)]="selectedType">
+        <option *ngFor="let type of types" [value]="type">{{ type }}</option>
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Département</span>
+      <select [(ngModel)]="selectedDepartement">
+        <option *ngFor="let departement of departements" [value]="departement">{{ departement }}</option>
+      </select>
+    </label>
+  </section>
+
+  <section class="demandes-card">
+    <div class="card-title">
+      <div>
+        <h2>Demandes validées responsable</h2>
+        <p>{{ demandesFiltrees.length }} demande(s) trouvée(s)</p>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="demandes-table">
+        <thead>
+          <tr>
+            <th>Réf.</th>
+            <th>Employé</th>
+            <th>Département</th>
+            <th>Type</th>
+            <th>Période</th>
+            <th>Durée</th>
+            <th>Statut</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let demande of demandesFiltrees">
+            <td class="ref-cell">{{ demande.reference }}</td>
+            <td>
+              <strong>{{ demande.employe }}</strong>
+              <span class="matricule">{{ demande.matricule }}</span>
+            </td>
+            <td>{{ demande.departement }}</td>
+            <td>{{ demande.type }}</td>
+            <td class="date-cell">{{ demande.dateDebut }} - {{ demande.dateFin }}</td>
+            <td><span class="duree-chip">{{ demande.duree }} j</span></td>
+            <td><span class="badge" [attr.data-status]="demande.statut">{{ demande.statut }}</span></td>
+            <td>
+              <div class="action-group" *ngIf="demande.statut === 'Validé_Responsable'; else done">
+                <button type="button" class="accept-btn" (click)="valider(demande)">Valider</button>
+                <button type="button" class="reject-btn" (click)="refuser(demande)">Refuser</button>
+              </div>
+              <ng-template #done><span class="file-chip">{{ demande.commentaire }}</span></ng-template>
+            </td>
+          </tr>
+
+          <tr *ngIf="demandesFiltrees.length === 0">
+            <td colspan="8" class="empty-cell">Aucune demande ne correspond aux filtres.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

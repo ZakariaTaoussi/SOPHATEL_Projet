@@ -1,0 +1,63 @@
+<div class="employes-page">
+  <header class="page-header">
+    <div>
+      <span class="page-kicker">Historique DG</span>
+      <h1>Historique</h1>
+      <p>Historique des demandes validées ou refusées par le Directeur Général.</p>
+    </div>
+  </header>
+
+  <section class="filters-card">
+    <label class="field search-field">
+      <span>Recherche employé</span>
+      <input type="search" [(ngModel)]="searchTerm" placeholder="Nom de l'employé" />
+    </label>
+
+    <label class="field">
+      <span>Type</span>
+      <select [(ngModel)]="selectedType">
+        <option *ngFor="let type of types" [value]="type">{{ type }}</option>
+      </select>
+    </label>
+  </section>
+
+  <section class="demandes-card">
+    <div class="card-title">
+      <div>
+        <h2>Décisions finalisées</h2>
+        <p>{{ validationsFiltrees.length }} décision(s) trouvée(s)</p>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="demandes-table">
+        <thead>
+          <tr>
+            <th>Réf.</th>
+            <th>Employé</th>
+            <th>Département</th>
+            <th>Type</th>
+            <th>Période</th>
+            <th>Décision le</th>
+            <th>Statut</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let validation of validationsFiltrees">
+            <td class="ref-cell">{{ validation.reference }}</td>
+            <td><strong>{{ validation.employe }}</strong></td>
+            <td>{{ validation.departement }}</td>
+            <td>{{ validation.type }}</td>
+            <td class="date-cell">{{ validation.dateDebut }} - {{ validation.dateFin }}</td>
+            <td class="date-cell">{{ validation.dateValidation }}</td>
+            <td><span class="badge" [attr.data-status]="validation.statut">{{ validation.statut }}</span></td>
+          </tr>
+
+          <tr *ngIf="validationsFiltrees.length === 0">
+            <td colspan="7" class="empty-cell">Aucune décision ne correspond aux filtres.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

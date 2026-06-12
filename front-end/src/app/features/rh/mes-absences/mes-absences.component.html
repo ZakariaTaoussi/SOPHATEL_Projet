@@ -1,0 +1,62 @@
+<div class="absences-page">
+  <header class="page-header">
+    <div>
+      <h1>Absences</h1>
+      <p>Déclarez et consultez vos absences</p>
+    </div>
+
+    <button type="button" class="declare-btn" (click)="ouvrirModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Déclarer une absence
+    </button>
+  </header>
+
+  <section class="absences-card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M8 2v4"/>
+        <path d="M16 2v4"/>
+        <rect x="3" y="4" width="18" height="18" rx="2"/>
+        <path d="M3 10h18"/>
+        <path d="m15 14-4 4"/>
+        <path d="m11 14 4 4"/>
+      </svg>
+      <h2>Absences enregistrées</h2>
+    </div>
+
+    <p class="result-count">{{ absences.length }} absence(s) trouvée(s)</p>
+
+    <div class="table-wrapper">
+      <table class="absences-table">
+        <thead>
+          <tr>
+            <th>N°</th>
+            <th>Période</th>
+            <th>Durée</th>
+            <th>Motif</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let absence of absences">
+            <td class="id-cell">#{{ absence.numero }}</td>
+            <td>{{ absence.periode }}</td>
+            <td>{{ absence.duree }} j</td>
+            <td>{{ absence.motif }}</td>
+          </tr>
+          <tr *ngIf="absences.length === 0">
+            <td colspan="4" class="empty-cell">Aucune absence trouvée.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<app-rh-declaration-absences
+  *ngIf="isModalOpen"
+  (closed)="fermerModal()"
+  (saved)="enregistrerAbsence($event)"
+></app-rh-declaration-absences>

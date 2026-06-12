@@ -1,0 +1,48 @@
+<div class="admin-page">
+  <header class="page-header">
+    <div>
+      <span class="page-kicker">Administration</span>
+      <h1>Dashboard Admin</h1>
+      <p>Vue globale des comptes, parametres et points de configuration.</p>
+    </div>
+  </header>
+
+  <section class="stats-grid">
+    <article class="stat-card" *ngFor="let stat of stats">
+      <span>{{ stat.label }}</span>
+      <strong>{{ stat.value }}</strong>
+      <p>{{ stat.detail }}</p>
+    </article>
+  </section>
+
+  <section class="content-grid">
+    <article class="panel">
+      <div class="panel-header">
+        <h2>Activite recente</h2>
+        <p>Dernieres actions d'administration</p>
+      </div>
+      <ul class="activity-list">
+        <li *ngFor="let activity of activities">
+          <div>
+            <strong>{{ activity.title }}</strong>
+            <span>{{ activity.detail }}</span>
+          </div>
+          <em>{{ activity.status }}</em>
+        </li>
+      </ul>
+    </article>
+
+    <article class="panel">
+      <div class="panel-header">
+        <h2>Controle qualite</h2>
+        <p>Elements a verifier pour garder les donnees propres</p>
+      </div>
+      <div class="health-list">
+        <div *ngFor="let item of health">
+          <span>{{ item.label }}</span>
+          <strong>{{ item.value }}</strong>
+        </div>
+      </div>
+    </article>
+  </section>
+</div>
