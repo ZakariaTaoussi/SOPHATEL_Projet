@@ -74,7 +74,7 @@ public class AuthentificationService implements IAuthentificationService {
     }
 
     private AuthUserResponse toAuthUserResponse(Utilisateur utilisateur) {
-        return employeRepository.findByUserId(utilisateur.getId())
+        return employeRepository.findByUtilisateurId(utilisateur.getId())
                 .map(employe -> new AuthUserResponse(
                         utilisateur.getId(),
                         utilisateur.getEmail(),

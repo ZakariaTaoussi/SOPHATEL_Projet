@@ -1,18 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-
-interface Employe {
-  id: number;
-  matricule: string;
-  nom: string;
-  email: string;
-  role: string;
-  departement: string;
-  statut: 'Actif' | 'Suspendu';
-}
-
-type EmployeForm = Omit<Employe, 'id'>;
+import { Role } from '../../../core/enums/role.enum';
+import { Departement } from '../../../core/models/departement.model';
+import { CreateEmployeRequest, Employe, StatutEmploye } from '../../../core/models/employe.model';
+import { DepartementService } from '../../../core/services/departement.service';
+import { EmployeAdminService } from '../../../core/services/employe-admin.service';
 
 @Component({
   selector: 'app-admin-employes',
@@ -21,61 +15,172 @@ type EmployeForm = Omit<Employe, 'id'>;
   templateUrl: './employes.component.html',
   styleUrls: ['./employes.component.scss'],
 })
-export class AdminEmployesComponent {
+export class AdminEmployesComponent implements OnInit {
   searchTerm = '';
   editingId?: number;
+  currentPage = 0;
+  totalPages = 0;
+  totalElements = 0;
+  readonly pageSize = 3;
 
-  departements = ['Informatique', 'Finance', 'Commercial', 'Ressources Humaines', 'Marketing'];
-  roles = ['Employe', 'Responsable', 'RH', 'Directeur General', 'Administrateur'];
+  departements: Departement[] = [];
+  roles = Object.values(Role);
+  statuts: StatutEmploye[] = ['ACTIF', 'INACTIF'];
+  employes: Employe[] = [];
+  form: CreateEmployeRequest = this.emptyForm();
+  errorMessage = '';
+  isLoading = false;
 
-  employes: Employe[] = [
-    { id: 1, matricule: 'EMP-0042', nom: 'Ahmed Benali', email: 'ahmed.benali@demo.ma', role: 'Employe', departement: 'Informatique', statut: 'Actif' },
-    { id: 2, matricule: 'EMP-0057', nom: 'Lina Mansouri', email: 'lina.mansouri@demo.ma', role: 'Responsable', departement: 'Finance', statut: 'Actif' },
-    { id: 3, matricule: 'EMP-0024', nom: 'Nadia El Fassi', email: 'nadia.elfassi@demo.ma', role: 'RH', departement: 'Ressources Humaines', statut: 'Actif' },
-  ];
+  constructor(
+    private readonly employeAdminService: EmployeAdminService,
+    private readonly departementService: DepartementService,
+    private readonly cdr: ChangeDetectorRef
+  ) {}
 
-  form: EmployeForm = this.emptyForm();
+  ngOnInit(): void {
+    this.chargerDepartements();
+    this.chargerEmployes();
+  }
 
-  get employesFiltres(): Employe[] {
-    const term = this.searchTerm.trim().toLowerCase();
-    return this.employes.filter(employe => !term || employe.nom.toLowerCase().includes(term));
+  chargerDepartements(): void {
+    this.departementService.consulterDepartements().subscribe({
+      next: departements => {
+        this.departements = departements;
+        this.cdr.detectChanges();
+      },
+      error: error => this.handleError(error),
+    });
+  }
+
+  chargerEmployes(page = this.currentPage): void {
+    this.isLoading = true;
+    this.cdr.detectChanges();
+    this.employeAdminService.consulterEmployes(page, this.pageSize, this.searchTerm).subscribe({
+      next: response => {
+        this.employes = response.content;
+        this.currentPage = response.currentPage;
+        this.totalPages = response.totalPages;
+        this.totalElements = response.totalElements;
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: error => this.handleError(error),
+    });
+  }
+
+  rechercher(): void {
+    this.chargerEmployes(0);
   }
 
   enregistrer(): void {
-    if (!this.form.nom.trim() || !this.form.email.trim()) {
+    if (!this.form.matricule.trim() || !this.form.nom.trim() || !this.form.prenom.trim() || !this.form.email.trim()) {
+      return;
+    }
+    if (!this.editingId && !this.form.password.trim()) {
+      this.errorMessage = 'Le mot de passe est obligatoire.';
       return;
     }
 
-    if (this.editingId) {
-      const employe = this.employes.find(item => item.id === this.editingId);
-      if (employe) {
-        Object.assign(employe, this.form);
-      }
-    } else {
-      this.employes = [...this.employes, { ...this.form, id: Date.now() }];
-    }
+    const request = { ...this.form };
+    const action = this.editingId
+      ? this.employeAdminService.modifierEmploye(this.editingId, request)
+      : this.employeAdminService.creerEmploye(request);
 
-    this.reinitialiser();
+    action.subscribe({
+      next: savedEmploye => {
+        const pageToReload = this.editingId ? this.currentPage : 0;
+        this.mettreAJourListeLocale(savedEmploye);
+        this.reinitialiser();
+        this.chargerEmployes(pageToReload);
+      },
+      error: error => this.handleError(error),
+    });
   }
 
   modifier(employe: Employe): void {
     this.editingId = employe.id;
-    this.form = { matricule: employe.matricule, nom: employe.nom, email: employe.email, role: employe.role, departement: employe.departement, statut: employe.statut };
+    this.form = {
+      matricule: employe.matricule,
+      nom: employe.nom,
+      prenom: employe.prenom,
+      email: employe.email,
+      password: '',
+      role: employe.role,
+      departementId: employe.departementId,
+      statut: employe.statut,
+    };
   }
 
   supprimer(employe: Employe): void {
-    this.employes = this.employes.filter(item => item.id !== employe.id);
-    if (this.editingId === employe.id) {
-      this.reinitialiser();
+    this.employeAdminService.supprimerEmploye(employe.id).subscribe({
+      next: () => {
+        if (this.editingId === employe.id) this.reinitialiser();
+        const nextPage = this.employes.length === 1 && this.currentPage > 0 ? this.currentPage - 1 : this.currentPage;
+        this.employes = this.employes.filter(item => item.id !== employe.id);
+        this.totalElements = Math.max(this.totalElements - 1, 0);
+        this.totalPages = Math.ceil(this.totalElements / this.pageSize);
+        this.cdr.detectChanges();
+        this.chargerEmployes(nextPage);
+      },
+      error: error => this.handleError(error),
+    });
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 0) {
+      this.chargerEmployes(this.currentPage - 1);
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage + 1 < this.totalPages) {
+      this.chargerEmployes(this.currentPage + 1);
     }
   }
 
   reinitialiser(): void {
     this.editingId = undefined;
     this.form = this.emptyForm();
+    this.errorMessage = '';
   }
 
-  private emptyForm(): EmployeForm {
-    return { matricule: '', nom: '', email: '', role: 'Employe', departement: this.departements[0], statut: 'Actif' };
+  roleLabel(role: Role): string {
+    return role.replace('_', ' ');
+  }
+
+  private handleError(error: unknown): void {
+    console.error('Erreur HTTP admin employes', error);
+    this.isLoading = false;
+    this.errorMessage = error instanceof HttpErrorResponse
+      ? error.error?.message ?? 'Une erreur est survenue.'
+      : 'Une erreur est survenue.';
+    this.cdr.detectChanges();
+  }
+
+  private emptyForm(): CreateEmployeRequest {
+    return {
+      matricule: '',
+      nom: '',
+      prenom: '',
+      email: '',
+      password: '',
+      role: Role.EMPLOYE,
+      departementId: null,
+      statut: 'ACTIF',
+    };
+  }
+
+  private mettreAJourListeLocale(employe: Employe): void {
+    if (this.editingId) {
+      this.employes = this.employes.map(item => item.id === employe.id ? employe : item);
+    } else {
+      this.currentPage = 0;
+      this.totalElements += 1;
+      this.totalPages = Math.ceil(this.totalElements / this.pageSize);
+      this.employes = [employe, ...this.employes].slice(0, this.pageSize);
+    }
+
+    this.isLoading = false;
+    this.cdr.detectChanges();
   }
 }

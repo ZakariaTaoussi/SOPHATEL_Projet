@@ -2,12 +2,93 @@
   <header class="page-header">
     <div>
       <span class="page-kicker">Calendrier</span>
-      <h1>Jour Ferie</h1>
-      <p>Cette rubrique est vide pour le moment.</p>
+      <h1>Jours feries</h1>
+      <p>Creer une annee, parcourir le calendrier et gerer les jours feries.</p>
     </div>
   </header>
 
-  <section class="empty-card">
-    <p>Contenu temporairement vide.</p>
+  <section class="form-card">
+    <h2>Ajouter une annee</h2>
+    <form class="form-grid" (ngSubmit)="creerAgenda()">
+      <label class="field">
+        <span>Annee</span>
+        <input type="number" name="newYear" [(ngModel)]="newYear" [min]="2026" required />
+      </label>
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">Ajouter une annee</button>
+      </div>
+    </form>
+    <p class="empty-cell" *ngIf="errorMessage">{{ errorMessage }}</p>
   </section>
+
+  <section class="table-card">
+    <div class="toolbar">
+      <div>
+        <h2>{{ monthNames[currentMonth] }} {{ selectedYear }}</h2>
+        <p>{{ isLoading ? 'Chargement...' : joursCalendrier.length + ' jours charges' }}</p>
+      </div>
+      <label class="search">
+        <select name="selectedYear" [(ngModel)]="selectedYear" (ngModelChange)="changerAnnee()">
+          <option *ngFor="let agenda of agendas" [ngValue]="agenda.annee">{{ agenda.annee }}</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="calendar-actions">
+      <button type="button" class="btn-secondary" (click)="previousMonth()" [disabled]="currentMonth === 0">Previous</button>
+      <button type="button" class="btn-secondary" (click)="nextMonth()" [disabled]="currentMonth === 11">Next</button>
+    </div>
+
+    <div class="calendar-grid" *ngIf="joursCalendrier.length > 0">
+      <div class="calendar-weekday" *ngFor="let day of weekDays">{{ day }}</div>
+      <button
+        type="button"
+        class="calendar-day"
+        *ngFor="let jour of monthDays"
+        [class.is-empty]="!jour"
+        [class.is-holiday]="jour?.jourFerieId"
+        (click)="ouvrirModal(jour)"
+      >
+        <strong *ngIf="jour">{{ dayNumber(jour) }}</strong>
+        <span *ngIf="jour?.jourFerieNom">{{ jour?.jourFerieNom }}</span>
+      </button>
+    </div>
+
+    <p class="empty-cell" *ngIf="!isLoading && joursCalendrier.length === 0">
+      Aucun agenda. Ajoutez une annee pour generer le calendrier.
+    </p>
+  </section>
+
+  <div class="modal-backdrop" *ngIf="selectedDay">
+    <section class="modal">
+      <header class="modal-header">
+        <h2>{{ selectedDay.jourFerieId ? 'Modifier un jour ferie' : 'Ajouter un jour ferie' }}</h2>
+        <button type="button" class="icon-btn" (click)="fermerModal()">x</button>
+      </header>
+
+      <form class="form-grid" (ngSubmit)="enregistrerJourFerie()">
+        <label class="field">
+          <span>Titre</span>
+          <input name="nom" [(ngModel)]="form.nom" required />
+        </label>
+        <label class="field">
+          <span>Date debut</span>
+          <input type="date" name="dateDebut" [(ngModel)]="form.dateDebut" required />
+        </label>
+        <label class="field">
+          <span>Date fin</span>
+          <input type="date" name="dateFin" [(ngModel)]="form.dateFin" required />
+        </label>
+        <label class="field">
+          <span>Description</span>
+          <input name="description" [(ngModel)]="form.description" />
+        </label>
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" *ngIf="selectedDay.jourFerieId" (click)="supprimerJourFerie()">Supprimer</button>
+          <button type="button" class="btn-secondary" (click)="fermerModal()">Annuler</button>
+          <button type="submit" class="btn-primary">{{ selectedDay.jourFerieId ? 'Enregistrer' : 'Ajouter' }}</button>
+        </div>
+      </form>
+    </section>
+  </div>
 </div>

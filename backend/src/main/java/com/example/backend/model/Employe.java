@@ -1,10 +1,17 @@
 package com.example.backend.model;
 
+import com.example.backend.model.enums.StatutEmploye;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 @Entity
@@ -18,14 +25,23 @@ public class Employe {
     @Column(nullable = false, unique = true)
     private String matricule;
 
-    @Column(nullable = false, unique = true)
-    private Long userId;
-
     @Column(nullable = false)
     private String nom;
 
     @Column(nullable = false)
     private String prenom;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, columnDefinition = "varchar(255) default 'ACTIF'")
+    private StatutEmploye statut = StatutEmploye.ACTIF;
+
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    private Utilisateur utilisateur;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "departement_id")
+    private Departement departement;
 
     public Long getIdEmp() {
         return idEmp;
@@ -43,14 +59,6 @@ public class Employe {
         this.matricule = matricule;
     }
 
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
     public String getNom() {
         return nom;
     }
@@ -65,5 +73,29 @@ public class Employe {
 
     public void setPrenom(String prenom) {
         this.prenom = prenom;
+    }
+
+    public StatutEmploye getStatut() {
+        return statut;
+    }
+
+    public void setStatut(StatutEmploye statut) {
+        this.statut = statut;
+    }
+
+    public Utilisateur getUtilisateur() {
+        return utilisateur;
+    }
+
+    public void setUtilisateur(Utilisateur utilisateur) {
+        this.utilisateur = utilisateur;
+    }
+
+    public Departement getDepartement() {
+        return departement;
+    }
+
+    public void setDepartement(Departement departement) {
+        this.departement = departement;
     }
 }

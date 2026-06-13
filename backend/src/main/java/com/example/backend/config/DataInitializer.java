@@ -4,6 +4,7 @@ import com.example.backend.model.Admin;
 import com.example.backend.model.Employe;
 import com.example.backend.model.Utilisateur;
 import com.example.backend.model.enums.Role;
+import com.example.backend.model.enums.StatutEmploye;
 import com.example.backend.repository.AdminRepository;
 import com.example.backend.repository.EmployeRepository;
 import com.example.backend.repository.UtilisateurRepository;
@@ -71,9 +72,10 @@ public class DataInitializer {
 
         Employe employe = new Employe();
         employe.setMatricule(matricule);
-        employe.setUserId(saved.getId());
+        employe.setUtilisateur(saved);
         employe.setNom(nom);
         employe.setPrenom(prenom);
+        employe.setStatut(StatutEmploye.ACTIF);
         employeRepository.save(employe);
     }
 }

@@ -19,12 +19,13 @@
         <button type="submit" class="btn-primary">{{ editingId ? 'Enregistrer' : 'Ajouter' }}</button>
       </div>
     </form>
+    <p class="empty-cell" *ngIf="errorMessage">{{ errorMessage }}</p>
   </section>
 
   <section class="table-card">
     <div class="card-title">
       <h2>Liste des departements</h2>
-      <p>{{ departements.length }} departement(s)</p>
+      <p>{{ isLoading ? 'Chargement...' : departements.length + ' departement(s)' }}</p>
     </div>
     <div class="table-wrapper">
       <table>
@@ -38,7 +39,7 @@
         <tbody>
           <tr *ngFor="let departement of departements">
             <td><strong>{{ departement.nom }}</strong></td>
-            <td>{{ departement.responsable || '-' }}</td>
+            <td>{{ departement.responsableNomComplet || 'Non assigne' }}</td>
             <td class="actions">
               <button type="button" class="icon-btn edit" title="Modifier" (click)="modifier(departement)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
@@ -47,6 +48,9 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
               </button>
             </td>
+          </tr>
+          <tr *ngIf="!isLoading && departements.length === 0">
+            <td colspan="3" class="empty-cell">Aucun departement pour le moment.</td>
           </tr>
         </tbody>
       </table>

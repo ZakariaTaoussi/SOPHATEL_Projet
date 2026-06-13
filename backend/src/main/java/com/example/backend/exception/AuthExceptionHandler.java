@@ -14,4 +14,11 @@ public class AuthExceptionHandler {
                 .status(exception.getStatus())
                 .body(Map.of("message", exception.getMessage()));
     }
+
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<Map<String, String>> handleBusinessException(BusinessException exception) {
+        return ResponseEntity
+                .status(exception.getStatus())
+                .body(Map.of("message", exception.getMessage()));
+    }
 }
