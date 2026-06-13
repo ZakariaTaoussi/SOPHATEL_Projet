@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Role } from '../../core/enums/role.enum';
+import { AuthService } from '../../core/services/auth.service';
 
 interface NavItem {
   label: string;
@@ -17,6 +18,11 @@ interface NavItem {
   styleUrls: ['../employe-layout/employe-layout.component.scss'],
 })
 export class AdminLayoutComponent {
+  constructor(
+    private readonly authService: AuthService,
+    private readonly router: Router
+  ) {}
+
   isSidebarCollapsed = signal(false);
   currentUser = {
     nom: 'Admin',
@@ -35,6 +41,12 @@ export class AdminLayoutComponent {
 
   toggleSidebar() {
     this.isSidebarCollapsed.update(v => !v);
+  }
+
+  logout(): void {
+    this.authService.logout().subscribe(() => {
+      this.router.navigateByUrl('/auth/login');
+    });
   }
 
   getIcon(name: string): string {

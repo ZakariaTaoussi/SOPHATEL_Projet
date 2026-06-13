@@ -1,7 +1,8 @@
 import { Component, signal } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Role } from '../../core/enums/role.enum';
+import { AuthService } from '../../core/services/auth.service';
 
 interface NavItem {
   label: string;
@@ -17,6 +18,11 @@ interface NavItem {
   styleUrls: ['./rh-layout.component.scss'],
 })
 export class RhLayoutComponent {
+  constructor(
+    private readonly authService: AuthService,
+    private readonly router: Router
+  ) {}
+
   isSidebarCollapsed = signal(false);
   currentUser = {
     nom: 'Samar Haddad',
@@ -37,6 +43,12 @@ export class RhLayoutComponent {
 
   toggleSidebar() {
     this.isSidebarCollapsed.update(v => !v);
+  }
+
+  logout(): void {
+    this.authService.logout().subscribe(() => {
+      this.router.navigateByUrl('/auth/login');
+    });
   }
 
   getIcon(name: string): string {

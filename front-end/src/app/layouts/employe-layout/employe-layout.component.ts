@@ -1,8 +1,9 @@
 import { Component, signal } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Role } from '../../core/enums/role.enum';
 import { NotificationService } from '../../core/services/notification.service';
+import { AuthService } from '../../core/services/auth.service';
 
 interface NavItem {
   label: string;
@@ -18,7 +19,11 @@ interface NavItem {
   styleUrls: ['./employe-layout.component.scss'],
 })
 export class EmployeLayoutComponent {
-  constructor(private readonly notificationService: NotificationService) {}
+  constructor(
+    private readonly notificationService: NotificationService,
+    private readonly authService: AuthService,
+    private readonly router: Router
+  ) {}
 
   isSidebarCollapsed = signal(false);
   currentUser = {
@@ -39,6 +44,12 @@ export class EmployeLayoutComponent {
 
   toggleSidebar() {
     this.isSidebarCollapsed.update(v => !v);
+  }
+
+  logout(): void {
+    this.authService.logout().subscribe(() => {
+      this.router.navigateByUrl('/auth/login');
+    });
   }
 
   get notificationCount(): number {

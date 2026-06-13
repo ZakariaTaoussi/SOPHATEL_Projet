@@ -74,10 +74,10 @@
           Se souvenir de moi
         </label>
 
-        <p class="form__error"></p>
+        <p class="form__error">{{ errorMessage }}</p>
 
-        <button type="submit" class="btn-primary">
-          Se connecter
+        <button type="submit" class="btn-primary" [disabled]="isLoading">
+          {{ isLoading ? 'Connexion...' : 'Se connecter' }}
         </button>
       </form>
     </div>
