@@ -3,14 +3,16 @@ package com.example.backend.service.impl;
 import com.example.backend.dto.admin.CreateDepartementRequest;
 import com.example.backend.dto.admin.DepartementResponse;
 import com.example.backend.dto.admin.UpdateDepartementRequest;
-import com.example.backend.exception.BusinessException;
+import com.example.backend.exception.InvalidBusinessRequestException;
+import com.example.backend.exception.ResourceAlreadyExistsException;
+import com.example.backend.exception.ResourceConflictException;
+import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.model.Departement;
 import com.example.backend.model.Employe;
 import com.example.backend.repository.DepartementRepository;
 import com.example.backend.repository.EmployeRepository;
 import com.example.backend.service.interfaces.IGestionDepartement;
 import java.util.List;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +32,7 @@ public class GestionDepartementService implements IGestionDepartement {
     public DepartementResponse creerDepartement(CreateDepartementRequest request) {
         String nom = validateNom(request.getNom());
         if (departementRepository.existsByNomIgnoreCase(nom)) {
-            throw new BusinessException("Un departement avec ce nom existe deja", HttpStatus.CONFLICT);
+            throw new ResourceAlreadyExistsException("Un departement avec ce nom existe deja");
         }
 
         Departement departement = new Departement();
@@ -44,7 +46,7 @@ public class GestionDepartementService implements IGestionDepartement {
         Departement departement = findDepartement(id);
         String nom = validateNom(request.getNom());
         if (departementRepository.existsByNomIgnoreCaseAndIdNot(nom, id)) {
-            throw new BusinessException("Un departement avec ce nom existe deja", HttpStatus.CONFLICT);
+            throw new ResourceAlreadyExistsException("Un departement avec ce nom existe deja");
         }
 
         departement.setNom(nom);
@@ -56,7 +58,7 @@ public class GestionDepartementService implements IGestionDepartement {
     public void supprimerDepartement(Long id) {
         Departement departement = findDepartement(id);
         if (employeRepository.existsByDepartementId(id)) {
-            throw new BusinessException("Impossible de supprimer un departement contenant des employes", HttpStatus.CONFLICT);
+            throw new ResourceConflictException("Impossible de supprimer un departement contenant des employes");
         }
         departementRepository.delete(departement);
     }
@@ -75,12 +77,12 @@ public class GestionDepartementService implements IGestionDepartement {
 
     private Departement findDepartement(Long id) {
         return departementRepository.findById(id)
-                .orElseThrow(() -> new BusinessException("Departement introuvable", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException("Departement introuvable"));
     }
 
     private String validateNom(String nom) {
         if (nom == null || nom.isBlank()) {
-            throw new BusinessException("Le nom du departement est obligatoire", HttpStatus.BAD_REQUEST);
+            throw new InvalidBusinessRequestException("Le nom du departement est obligatoire");
         }
         return nom.trim();
     }

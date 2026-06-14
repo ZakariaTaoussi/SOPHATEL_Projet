@@ -4,7 +4,9 @@ import com.example.backend.dto.admin.CreateEmployeRequest;
 import com.example.backend.dto.admin.EmployeResponse;
 import com.example.backend.dto.admin.PageResponse;
 import com.example.backend.dto.admin.UpdateEmployeRequest;
-import com.example.backend.exception.BusinessException;
+import com.example.backend.exception.InvalidBusinessRequestException;
+import com.example.backend.exception.ResourceAlreadyExistsException;
+import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.model.Departement;
 import com.example.backend.model.Employe;
 import com.example.backend.model.Utilisateur;
@@ -16,7 +18,6 @@ import com.example.backend.repository.UtilisateurRepository;
 import com.example.backend.service.interfaces.IGestionEmploye;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,10 +46,10 @@ public class GestionEmployeService implements IGestionEmploye {
     public EmployeResponse creerEmploye(CreateEmployeRequest request) {
         validateRequired(request, true);
         if (utilisateurRepository.existsByEmail(request.getEmail().trim())) {
-            throw new BusinessException("Email deja utilise", HttpStatus.CONFLICT);
+            throw new ResourceAlreadyExistsException("Email deja utilise");
         }
         if (employeRepository.existsByMatricule(request.getMatricule().trim())) {
-            throw new BusinessException("Matricule deja utilise", HttpStatus.CONFLICT);
+            throw new ResourceAlreadyExistsException("Matricule deja utilise");
         }
 
         Utilisateur utilisateur = new Utilisateur();
@@ -74,10 +75,10 @@ public class GestionEmployeService implements IGestionEmploye {
         Utilisateur utilisateur = employe.getUtilisateur();
 
         if (utilisateurRepository.existsByEmailAndIdNot(request.getEmail().trim(), utilisateur.getId())) {
-            throw new BusinessException("Email deja utilise", HttpStatus.CONFLICT);
+            throw new ResourceAlreadyExistsException("Email deja utilise");
         }
         if (employeRepository.existsByMatriculeAndIdEmpNot(request.getMatricule().trim(), id)) {
-            throw new BusinessException("Matricule deja utilise", HttpStatus.CONFLICT);
+            throw new ResourceAlreadyExistsException("Matricule deja utilise");
         }
 
         utilisateur.setEmail(request.getEmail().trim());
@@ -126,22 +127,22 @@ public class GestionEmployeService implements IGestionEmploye {
 
     private void validateRequired(CreateEmployeRequest request, boolean passwordRequired) {
         if (isBlank(request.getMatricule())) {
-            throw new BusinessException("Le matricule est obligatoire", HttpStatus.BAD_REQUEST);
+            throw new InvalidBusinessRequestException("Le matricule est obligatoire");
         }
         if (isBlank(request.getNom())) {
-            throw new BusinessException("Le nom est obligatoire", HttpStatus.BAD_REQUEST);
+            throw new InvalidBusinessRequestException("Le nom est obligatoire");
         }
         if (isBlank(request.getPrenom())) {
-            throw new BusinessException("Le prenom est obligatoire", HttpStatus.BAD_REQUEST);
+            throw new InvalidBusinessRequestException("Le prenom est obligatoire");
         }
         if (isBlank(request.getEmail())) {
-            throw new BusinessException("L'email est obligatoire", HttpStatus.BAD_REQUEST);
+            throw new InvalidBusinessRequestException("L'email est obligatoire");
         }
         if (passwordRequired && isBlank(request.getPassword())) {
-            throw new BusinessException("Le mot de passe est obligatoire", HttpStatus.BAD_REQUEST);
+            throw new InvalidBusinessRequestException("Le mot de passe est obligatoire");
         }
         if (request.getRole() == null) {
-            throw new BusinessException("Le role est obligatoire", HttpStatus.BAD_REQUEST);
+            throw new InvalidBusinessRequestException("Le role est obligatoire");
         }
         if (request.getStatut() == null) {
             request.setStatut(StatutEmploye.ACTIF);
@@ -161,7 +162,7 @@ public class GestionEmployeService implements IGestionEmploye {
             return null;
         }
         return departementRepository.findById(departementId)
-                .orElseThrow(() -> new BusinessException("Departement introuvable", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException("Departement introuvable"));
     }
 
     private void synchroniserResponsableDepartement(Employe employe) {
@@ -182,7 +183,7 @@ public class GestionEmployeService implements IGestionEmploye {
 
     private Employe findEmploye(Long id) {
         return employeRepository.findById(id)
-                .orElseThrow(() -> new BusinessException("Employe introuvable", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException("Employe introuvable"));
     }
 
     private boolean isBlank(String value) {

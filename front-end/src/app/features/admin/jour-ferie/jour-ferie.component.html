@@ -25,17 +25,21 @@
     <div class="toolbar">
       <div>
         <h2>{{ monthNames[currentMonth] }} {{ selectedYear }}</h2>
-        <p>{{ isLoading ? 'Chargement...' : joursCalendrier.length + ' jours charges' }}</p>
+        <p>{{ isLoading ? 'Chargement...' : holidayCount + ' jour(s) ferie(s)' }}</p>
       </div>
-      <label class="search">
-        <select name="selectedYear" [(ngModel)]="selectedYear" (ngModelChange)="changerAnnee()">
-          <option *ngFor="let agenda of agendas" [ngValue]="agenda.annee">{{ agenda.annee }}</option>
-        </select>
-      </label>
+      <div class="agenda-actions">
+        <label class="search">
+          <select name="selectedYear" [(ngModel)]="selectedYear" (ngModelChange)="changerAnnee()">
+            <option *ngFor="let agenda of agendas" [ngValue]="agenda.annee">{{ agenda.annee }}</option>
+          </select>
+        </label>
+        <button type="button" class="btn-danger" [disabled]="!selectedAgenda" (click)="supprimerAgenda()">Supprimer agenda</button>
+      </div>
     </div>
 
     <div class="calendar-actions">
       <button type="button" class="btn-secondary" (click)="previousMonth()" [disabled]="currentMonth === 0">Previous</button>
+      <strong>{{ monthNames[currentMonth] }} {{ selectedYear }}</strong>
       <button type="button" class="btn-secondary" (click)="nextMonth()" [disabled]="currentMonth === 11">Next</button>
     </div>
 
@@ -44,13 +48,15 @@
       <button
         type="button"
         class="calendar-day"
-        *ngFor="let jour of monthDays"
-        [class.is-empty]="!jour"
-        [class.is-holiday]="jour?.jourFerieId"
-        (click)="ouvrirModal(jour)"
+        *ngFor="let cell of calendarCells"
+        [class.is-muted]="!cell.inCurrentMonth"
+        [class.is-disabled]="!cell.jour"
+        [class.is-today]="isToday(cell)"
+        [class.is-holiday]="cell.jour?.jourFerieId"
+        (click)="ouvrirModal(cell)"
       >
-        <strong *ngIf="jour">{{ dayNumber(jour) }}</strong>
-        <span *ngIf="jour?.jourFerieNom">{{ jour?.jourFerieNom }}</span>
+        <strong>{{ cell.dayNumber }}</strong>
+        <span *ngIf="cell.jour?.jourFerieNom">{{ cell.jour?.jourFerieNom }}</span>
       </button>
     </div>
 
@@ -67,6 +73,7 @@
       </header>
 
       <form class="form-grid" (ngSubmit)="enregistrerJourFerie()">
+        <p class="modal-error" *ngIf="modalErrorMessage">{{ modalErrorMessage }}</p>
         <label class="field">
           <span>Titre</span>
           <input name="nom" [(ngModel)]="form.nom" required />
@@ -81,7 +88,7 @@
         </label>
         <label class="field">
           <span>Description</span>
-          <input name="description" [(ngModel)]="form.description" />
+          <textarea name="description" rows="3" [(ngModel)]="form.description"></textarea>
         </label>
         <div class="form-actions">
           <button type="button" class="btn-secondary" *ngIf="selectedDay.jourFerieId" (click)="supprimerJourFerie()">Supprimer</button>

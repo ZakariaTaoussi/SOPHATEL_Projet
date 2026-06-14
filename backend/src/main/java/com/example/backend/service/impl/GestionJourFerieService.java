@@ -3,7 +3,9 @@ package com.example.backend.service.impl;
 import com.example.backend.dto.admin.CreateJourFerieRequest;
 import com.example.backend.dto.admin.JourFerieResponse;
 import com.example.backend.dto.admin.UpdateJourFerieRequest;
-import com.example.backend.exception.BusinessException;
+import com.example.backend.exception.InvalidBusinessRequestException;
+import com.example.backend.exception.ResourceConflictException;
+import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.model.Agenda;
 import com.example.backend.model.JourCalendrier;
 import com.example.backend.model.JourFerie;
@@ -13,7 +15,6 @@ import com.example.backend.repository.JourFerieRepository;
 import com.example.backend.service.interfaces.IGestionJourFerie;
 import java.time.LocalDate;
 import java.util.List;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -80,7 +81,7 @@ public class GestionJourFerieService implements IGestionJourFerie {
     @Override
     public List<JourFerieResponse> consulterJoursFeriesParAnnee(Integer annee) {
         if (!agendaRepository.existsByAnnee(annee)) {
-            throw new BusinessException("Agenda introuvable pour cette annee", HttpStatus.NOT_FOUND);
+            throw new ResourceNotFoundException("Agenda introuvable pour cette annee");
         }
         return jourFerieRepository.findByAgendaAnneeOrderByDateDebutAsc(annee).stream()
                 .map(this::toResponse)
@@ -94,42 +95,42 @@ public class GestionJourFerieService implements IGestionJourFerie {
 
     private void validateRequest(CreateJourFerieRequest request) {
         if (request.getNom() == null || request.getNom().isBlank()) {
-            throw new BusinessException("Le nom du jour ferie est obligatoire", HttpStatus.BAD_REQUEST);
+            throw new InvalidBusinessRequestException("Le nom du jour ferie est obligatoire");
         }
         if (request.getDateDebut() == null || request.getDateFin() == null) {
-            throw new BusinessException("Les dates debut et fin sont obligatoires", HttpStatus.BAD_REQUEST);
+            throw new InvalidBusinessRequestException("Les dates debut et fin sont obligatoires");
         }
         if (request.getDateDebut().isAfter(request.getDateFin())) {
-            throw new BusinessException("La date debut ne peut pas etre apres la date fin", HttpStatus.BAD_REQUEST);
+            throw new InvalidBusinessRequestException("La date debut ne peut pas etre apres la date fin");
         }
     }
 
     private Agenda findAgenda(LocalDate dateDebut, LocalDate dateFin) {
         if (dateDebut.getYear() != dateFin.getYear()) {
-            throw new BusinessException("Les dates doivent appartenir a la meme annee", HttpStatus.BAD_REQUEST);
+            throw new InvalidBusinessRequestException("Les dates doivent appartenir a la meme annee");
         }
         return agendaRepository.findByAnnee(dateDebut.getYear())
-                .orElseThrow(() -> new BusinessException("Agenda introuvable pour cette annee", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException("Agenda introuvable pour cette annee"));
     }
 
     private List<JourCalendrier> findJoursDisponibles(LocalDate dateDebut, LocalDate dateFin, Long currentJourFerieId) {
         List<JourCalendrier> jours = jourCalendrierRepository.findByDateBetweenOrderByDateAsc(dateDebut, dateFin);
         long expectedDays = dateFin.toEpochDay() - dateDebut.toEpochDay() + 1;
         if (jours.size() != expectedDays) {
-            throw new BusinessException("Toutes les dates doivent appartenir a un agenda existant", HttpStatus.BAD_REQUEST);
+            throw new InvalidBusinessRequestException("Toutes les dates doivent appartenir a un agenda existant");
         }
 
         boolean hasOverlap = jours.stream().anyMatch(jour ->
                 jour.getJourFerie() != null && !jour.getJourFerie().getId().equals(currentJourFerieId));
         if (hasOverlap) {
-            throw new BusinessException("Cette periode chevauche un autre jour ferie", HttpStatus.CONFLICT);
+            throw new ResourceConflictException("Cette periode chevauche un autre jour ferie");
         }
         return jours;
     }
 
     private JourFerie findJourFerie(Long id) {
         return jourFerieRepository.findById(id)
-                .orElseThrow(() -> new BusinessException("Jour ferie introuvable", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException("Jour ferie introuvable"));
     }
 
     private void applyValues(JourFerie jourFerie, CreateJourFerieRequest request, Agenda agenda) {
