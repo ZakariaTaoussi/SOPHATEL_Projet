@@ -159,16 +159,7 @@ public class DirecteurGeneralDemandeServiceImpl implements IDirecteurGeneralDema
                 || demande.getStatus() == StatusDemande.MODIFICATION_DG) {
             return;
         }
-        if (demande.getStatus() == StatusDemande.MODIFICATION_RESPONSABLE) {
-            throw new InvalidBusinessRequestException("Cette demande est en modification responsable");
-        }
-        if (demande.getStatus() == StatusDemande.VALIDE_DG) {
-            throw new InvalidBusinessRequestException("Cette demande est deja validee par le directeur general");
-        }
-        if (demande.getStatus() == StatusDemande.ANNULE) {
-            throw new InvalidBusinessRequestException("Impossible de refuser une demande annulee");
-        }
-        throw new InvalidBusinessRequestException("Cette demande n'est pas dans un etat refusable par le directeur general");
+        throw new InvalidBusinessRequestException("Cette demande ne peut pas etre refusee par le directeur general.");
     }
 
     private void validateDatesResponsableDisponibles(DemandeConge demande) {

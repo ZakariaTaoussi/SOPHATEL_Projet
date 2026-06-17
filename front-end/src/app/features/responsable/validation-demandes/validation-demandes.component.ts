@@ -139,6 +139,11 @@ export class ResponsableValidationDemandesComponent implements OnInit {
   }
 
   refuserDemande(demande: ResponsableDemande): void {
+    if (!this.hasValidId(demande)) {
+      this.errorMessage = 'Impossible de refuser : id de demande manquant';
+      return;
+    }
+
     this.executerAction(
       demande.id,
       'refuser',
@@ -211,6 +216,10 @@ export class ResponsableValidationDemandesComponent implements OnInit {
     return labels[status] ?? status;
   }
 
+  private hasValidId(demande: ResponsableDemande | null | undefined): demande is ResponsableDemande {
+    return Number.isFinite(demande?.id) && Number(demande?.id) > 0;
+  }
+
   private executerAction(
     demandeId: number,
     type: 'valider' | 'refuser' | 'modifier',
@@ -253,6 +262,9 @@ export class ResponsableValidationDemandesComponent implements OnInit {
         return error.error;
       }
       return error.error?.message || fallback;
+    }
+    if (error instanceof Error && error.message.trim()) {
+      return error.message;
     }
 
     return fallback;

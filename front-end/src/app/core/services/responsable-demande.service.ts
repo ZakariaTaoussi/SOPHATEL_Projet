@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { apiUrl } from '../config/api-url';
 import {
   ResponsableDemande,
@@ -35,6 +35,10 @@ export class ResponsableDemandeService {
   }
 
   refuserDemande(id: number): Observable<ResponsableDemande> {
+    if (!this.isValidId(id)) {
+      return throwError(() => new Error('id demande manquant'));
+    }
+
     return this.http.post<ResponsableDemande>(`${this.responsableUrl}/demandes/${id}/refuser`, {}, {
       withCredentials: true,
     });
@@ -44,5 +48,9 @@ export class ResponsableDemandeService {
     return this.http.post<ResponsableDemande>(`${this.responsableUrl}/demandes/${id}/modifier`, {}, {
       withCredentials: true,
     });
+  }
+
+  private isValidId(id: number): boolean {
+    return Number.isFinite(id) && id > 0;
   }
 }

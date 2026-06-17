@@ -144,6 +144,11 @@ export class DirecteurGeneralDemandeEmployeComponent implements OnInit {
   }
 
   refuserDemande(demande: DirecteurGeneralDemande): void {
+    if (!this.hasValidId(demande)) {
+      this.errorMessage = 'Impossible de refuser : id de demande manquant';
+      return;
+    }
+
     this.executerAction(
       demande,
       'refuser',
@@ -247,6 +252,10 @@ export class DirecteurGeneralDemandeEmployeComponent implements OnInit {
     return labels[status] ?? status;
   }
 
+  private hasValidId(demande: DirecteurGeneralDemande | null | undefined): demande is DirecteurGeneralDemande {
+    return Number.isFinite(demande?.id) && Number(demande?.id) > 0;
+  }
+
   private executerAction(
     demande: DirecteurGeneralDemande,
     action: ActionDg,
@@ -288,6 +297,9 @@ export class DirecteurGeneralDemandeEmployeComponent implements OnInit {
         return error.error;
       }
       return error.error?.message || 'Erreur lors du traitement de la demande';
+    }
+    if (error instanceof Error && error.message.trim()) {
+      return error.message;
     }
 
     return 'Erreur lors du traitement de la demande';

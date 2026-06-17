@@ -106,18 +106,9 @@ public class ResponsableDemandeServiceImpl implements IResponsableDemandeService
         Departement departement = getDepartementResponsableConnecte();
         DemandeConge demande = findDemandeDuDepartement(demandeId, departement);
 
-        if (demande.getStatus() == StatusDemande.VALIDE_DG) {
-            throw new InvalidBusinessRequestException("Impossible de refuser une demande deja validee par le directeur general");
-        }
-        if (demande.getStatus() == StatusDemande.ANNULE) {
-            throw new InvalidBusinessRequestException("Impossible de refuser une demande annulee");
-        }
-        if (demande.getStatus() == StatusDemande.VALIDE_RESPONSABLE) {
-            throw new InvalidBusinessRequestException("Cette demande est deja validee par le responsable");
-        }
         if (demande.getStatus() != StatusDemande.VALIDE_EMPLOYE
                 && demande.getStatus() != StatusDemande.MODIFICATION_RESPONSABLE) {
-            throw new InvalidBusinessRequestException("Cette demande ne peut pas etre refusee par le responsable dans son statut actuel");
+            throw new InvalidBusinessRequestException("Cette demande ne peut pas etre refusee par le responsable.");
         }
 
         restaurerSoldeSiNecessaire(demande);
