@@ -3,6 +3,7 @@ package com.example.backend.mapper;
 import com.example.backend.dto.demande.DemandeCongeCreateRequest;
 import com.example.backend.dto.demande.DemandeCongeResponse;
 import com.example.backend.dto.demande.DemandeCongeUpdateRequest;
+import com.example.backend.dto.demande.DirecteurGeneralDemandeResponse;
 import com.example.backend.dto.demande.ResponsableDemandeResponse;
 import com.example.backend.model.Departement;
 import com.example.backend.model.DemandeConge;
@@ -69,5 +70,33 @@ public class DemandeCongeMapper {
                 demande.getJoursDeduits(),
                 demande.getCreatedAt(),
                 demande.getUpdatedAt());
+    }
+
+    public DirecteurGeneralDemandeResponse toDirecteurGeneralResponse(DemandeConge demande) {
+        Employe employe = demande.getEmploye();
+        Departement departement = employe == null ? null : employe.getDepartement();
+        Employe responsable = departement == null ? null : departement.getResponsable();
+        return new DirecteurGeneralDemandeResponse(
+                demande.getId(),
+                employe == null ? null : employe.getIdEmp(),
+                nomComplet(employe),
+                departement == null ? null : departement.getId(),
+                departement == null ? null : departement.getNom(),
+                nomComplet(responsable),
+                demande.getDateDebutEmp(),
+                demande.getDateFinEmp(),
+                demande.getDateDebutResp(),
+                demande.getDateFinResp(),
+                demande.getDateDebutDg(),
+                demande.getDateFinDg(),
+                demande.getTypeDemande(),
+                demande.getStatus(),
+                demande.getJoursDeduits(),
+                demande.getCreatedAt(),
+                demande.getUpdatedAt());
+    }
+
+    private String nomComplet(Employe employe) {
+        return employe == null ? null : employe.getPrenom() + " " + employe.getNom();
     }
 }

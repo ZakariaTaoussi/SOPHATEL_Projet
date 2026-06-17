@@ -39,4 +39,21 @@ public class SignatureDemandeServiceImpl implements ISignatureDemandeService {
         signature.setDateSignatureResp(LocalDateTime.now());
         signatureDemandeRepository.save(signature);
     }
+
+    @Override
+    @Transactional
+    public void signerParDg(DemandeConge demande, Employe directeurGeneral) {
+        SignatureDemande signature = signatureDemandeRepository.findByDemandeId(demande.getId())
+                .orElseGet(SignatureDemande::new);
+        signature.setDemande(demande);
+        signature.setDirecteurGeneral(directeurGeneral);
+        signature.setDateSignatureDg(LocalDateTime.now());
+        signatureDemandeRepository.save(signature);
+    }
+
+    @Override
+    @Transactional
+    public void signerParDirecteurGeneral(DemandeConge demande, Employe directeurGeneral) {
+        signerParDg(demande, directeurGeneral);
+    }
 }

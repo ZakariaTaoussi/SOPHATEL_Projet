@@ -1,28 +1,33 @@
-<div class="employes-page">
+<div class="demandes-page">
   <header class="page-header">
     <div>
       <span class="page-kicker">Validation finale</span>
-      <h1>Demandes employes</h1>
-      <p>Demandes validees par les responsables et en attente de decision DG.</p>
+      <h1>{{ pageTitle }}</h1>
+      <p>{{ pageDescription }}</p>
     </div>
   </header>
 
   <section class="filters-card">
     <label class="field search-field">
       <span>Recherche employe</span>
-      <input type="search" [(ngModel)]="searchTerm" placeholder="Nom de l'employe" />
+      <input
+        type="search"
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="applyFilters()"
+        placeholder="Nom de l'employe"
+      />
     </label>
 
     <label class="field">
       <span>Type</span>
-      <select [(ngModel)]="selectedType">
+      <select [(ngModel)]="selectedType" (ngModelChange)="applyFilters()">
         <option *ngFor="let type of types" [value]="type">{{ type }}</option>
       </select>
     </label>
 
     <label class="field">
       <span>Departement</span>
-      <select [(ngModel)]="selectedDepartement">
+      <select [(ngModel)]="selectedDepartement" (ngModelChange)="applyFilters()">
         <option *ngFor="let departement of departements" [value]="departement">{{ departement }}</option>
       </select>
     </label>
@@ -31,11 +36,15 @@
   <section class="demandes-card">
     <div class="card-title">
       <div>
-        <h2>Demandes validees responsable</h2>
+        <h2>{{ tableTitle }}</h2>
         <p>{{ loading ? 'Chargement...' : demandesFiltrees.length + ' demande(s) trouvee(s)' }}</p>
       </div>
+      <button type="button" class="refresh-btn" (click)="loadDemandes()" [disabled]="loading">
+        Actualiser
+      </button>
     </div>
 
+    <p *ngIf="successMessage" class="success-message">{{ successMessage }}</p>
     <p *ngIf="errorMessage" class="error-message">{{ errorMessage }}</p>
 
     <div class="table-wrapper">
@@ -46,14 +55,18 @@
             <th>Employe</th>
             <th>Departement</th>
             <th>Type</th>
-            <th>Periode</th>
+            <th>Dates employe</th>
+            <th>Dates responsable</th>
+            <th>Dates DG</th>
             <th>Duree</th>
             <th>Statut</th>
+            <th>Creation</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngIf="loading">
-            <td colspan="7" class="empty-cell">Chargement...</td>
+            <td colspan="11" class="empty-cell">Chargement...</td>
           </tr>
 
           <tr *ngFor="let demande of demandesFiltrees">
@@ -62,18 +75,129 @@
               <strong>{{ demande.employeNomComplet || '-' }}</strong>
               <span class="matricule">EMP-{{ demande.empId }}</span>
             </td>
-            <td>{{ demande.departementNom || '-' }}</td>
+            <td>
+              <span>{{ demande.departementNom || '-' }}</span>
+              <span class="matricule" *ngIf="demande.responsableNomComplet">
+                Resp. {{ demande.responsableNomComplet }}
+              </span>
+            </td>
             <td>{{ demande.typeDemande }}</td>
-            <td class="date-cell">{{ formatDate(getDateDebut(demande)) }} - {{ formatDate(getDateFin(demande)) }}</td>
+            <td class="date-cell">
+              {{ formatDate(demande.dateDebutEmp) }} - {{ formatDate(demande.dateFinEmp) }}
+            </td>
+            <td class="date-cell">
+              {{ formatDate(demande.dateDebutResp) }} - {{ formatDate(demande.dateFinResp) }}
+            </td>
+            <td class="date-cell">
+              {{ formatDate(demande.dateDebutDg) }} - {{ formatDate(demande.dateFinDg) }}
+            </td>
             <td><span class="duree-chip">{{ demande.joursDeduits || 0 }} j</span></td>
-            <td><span class="badge" data-status="VALIDE_RESPONSABLE">En attente DG</span></td>
+            <td>
+              <span class="badge" [attr.data-status]="demande.status">
+                {{ getStatusLabel(demande.status) }}
+              </span>
+            </td>
+            <td class="date-cell">{{ formatDate(demande.createdAt) }}</td>
+            <td>
+              <div class="action-group" *ngIf="!isModeValidees">
+                <button
+                  type="button"
+                  class="accept-btn"
+                  (click)="validerSansModification(demande)"
+                  [disabled]="isActionLoading(demande, 'valider')"
+                >
+                  {{ isActionLoading(demande, 'valider') ? 'Validation...' : 'Valider' }}
+                </button>
+                <button
+                  type="button"
+                  class="edit-btn"
+                  (click)="ouvrirModification(demande)"
+                  [disabled]="isActionLoading(demande, 'modifier')"
+                >
+                  Modifier
+                </button>
+                <button
+                  type="button"
+                  class="reject-btn"
+                  (click)="refuserDemande(demande)"
+                  [disabled]="isActionLoading(demande, 'refuser')"
+                >
+                  {{ isActionLoading(demande, 'refuser') ? 'Refus...' : 'Refuser' }}
+                </button>
+              </div>
+
+              <div class="action-group" *ngIf="isModeValidees">
+                <button
+                  *ngIf="peutPasserEnModificationDg(demande)"
+                  type="button"
+                  class="edit-btn"
+                  (click)="passerEnModificationDg(demande)"
+                  [disabled]="isActionLoading(demande, 'modifier')"
+                >
+                  {{ isActionLoading(demande, 'modifier') ? 'Modification...' : 'Modifier' }}
+                </button>
+                <button
+                  *ngIf="peutRevaliderModificationDg(demande)"
+                  type="button"
+                  class="accept-btn"
+                  (click)="ouvrirModification(demande)"
+                >
+                  Revalider
+                </button>
+              </div>
+            </td>
           </tr>
 
           <tr *ngIf="!loading && demandesFiltrees.length === 0">
-            <td colspan="7" class="empty-cell">Aucune demande ne correspond aux filtres.</td>
+            <td colspan="11" class="empty-cell">{{ emptyMessage }}</td>
           </tr>
         </tbody>
       </table>
     </div>
   </section>
+
+  <div class="modal-backdrop" *ngIf="demandeEnModification">
+    <section class="modal-panel" role="dialog" aria-modal="true">
+      <header class="modal-header">
+        <div>
+          <span class="page-kicker">Dates finales</span>
+          <h2>Modifier la demande DEM-{{ demandeEnModification.id }}</h2>
+        </div>
+        <button type="button" class="close-btn" (click)="fermerModal()" aria-label="Fermer">x</button>
+      </header>
+
+      <div class="modal-summary">
+        <p><strong>Employe :</strong> {{ demandeEnModification.employeNomComplet || '-' }}</p>
+        <p>
+          <strong>Dates responsable :</strong>
+          {{ formatDate(demandeEnModification.dateDebutResp) }} -
+          {{ formatDate(demandeEnModification.dateFinResp) }}
+        </p>
+      </div>
+
+      <div class="modal-grid">
+        <label class="field">
+          <span>Date debut DG</span>
+          <input type="date" [(ngModel)]="modificationForm.dateDebutDg" />
+        </label>
+
+        <label class="field">
+          <span>Date fin DG</span>
+          <input type="date" [(ngModel)]="modificationForm.dateFinDg" />
+        </label>
+      </div>
+
+      <footer class="modal-actions">
+        <button type="button" class="secondary-btn" (click)="fermerModal()">Annuler</button>
+        <button
+          type="button"
+          class="accept-btn"
+          (click)="validerAvecModification()"
+          [disabled]="isActionLoading(demandeEnModification, 'valider')"
+        >
+          {{ isActionLoading(demandeEnModification, 'valider') ? 'Validation...' : 'Valider les dates DG' }}
+        </button>
+      </footer>
+    </section>
+  </div>
 </div>

@@ -67,6 +67,31 @@ export interface ResponsableValidationDemandeRequest {
   dateFinResp?: string | null;
 }
 
+export interface DirecteurGeneralDemande {
+  id: number;
+  empId: number;
+  employeNomComplet: string;
+  departementId: number | null;
+  departementNom: string | null;
+  responsableNomComplet: string | null;
+  dateDebutEmp: string;
+  dateFinEmp: string;
+  dateDebutResp: string | null;
+  dateFinResp: string | null;
+  dateDebutDg: string | null;
+  dateFinDg: string | null;
+  typeDemande: TypeDemande;
+  status: StatusDemande;
+  joursDeduits: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DirecteurGeneralValidationDemandeRequest {
+  dateDebutDg?: string | null;
+  dateFinDg?: string | null;
+}
+
 export interface SoldeConge {
   id: number;
   empId: number;

@@ -16,12 +16,19 @@ import com.example.backend.service.interfaces.IResponsableDemandeService;
 import com.example.backend.service.interfaces.ISignatureDemandeService;
 import com.example.backend.service.interfaces.ISoldeCongeService;
 import java.time.LocalDate;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ResponsableDemandeServiceImpl implements IResponsableDemandeService {
+
+    private static final Set<StatusDemande> STATUTS_WORKFLOW_RESPONSABLE = EnumSet.of(
+            StatusDemande.VALIDE_EMPLOYE,
+            StatusDemande.VALIDE_RESPONSABLE,
+            StatusDemande.MODIFICATION_RESPONSABLE);
 
     private final DemandeCongeRepository demandeCongeRepository;
     private final DemandeCongeMapper demandeCongeMapper;
@@ -45,9 +52,9 @@ public class ResponsableDemandeServiceImpl implements IResponsableDemandeService
     @Override
     public List<ResponsableDemandeResponse> getDemandesAValider() {
         Departement departement = getDepartementResponsableConnecte();
-        return demandeCongeRepository.findByEmployeDepartementIdAndStatusOrderByCreatedAtDesc(
+        return demandeCongeRepository.findByEmployeDepartementIdAndStatusInOrderByUpdatedAtDesc(
                         departement.getId(),
-                        StatusDemande.VALIDE_EMPLOYE).stream()
+                        STATUTS_WORKFLOW_RESPONSABLE).stream()
                 .map(demandeCongeMapper::toResponsableResponse)
                 .toList();
     }
@@ -56,8 +63,8 @@ public class ResponsableDemandeServiceImpl implements IResponsableDemandeService
     public ResponsableDemandeResponse getDemandeAValiderById(Long demandeId) {
         Departement departement = getDepartementResponsableConnecte();
         DemandeConge demande = findDemandeDuDepartement(demandeId, departement);
-        if (demande.getStatus() != StatusDemande.VALIDE_EMPLOYE) {
-            throw new ResourceNotFoundException("Demande a valider introuvable");
+        if (!STATUTS_WORKFLOW_RESPONSABLE.contains(demande.getStatus())) {
+            throw new ResourceNotFoundException("Demande responsable introuvable");
         }
         return demandeCongeMapper.toResponsableResponse(demande);
     }
@@ -124,7 +131,8 @@ public class ResponsableDemandeServiceImpl implements IResponsableDemandeService
         Departement departement = getDepartementResponsableConnecte();
         DemandeConge demande = findDemandeDuDepartement(demandeId, departement);
 
-        if (demande.getStatus() == StatusDemande.VALIDE_DG) {
+        if (demande.getStatus() == StatusDemande.VALIDE_DG
+                || demande.getStatus() == StatusDemande.MODIFICATION_DG) {
             throw new InvalidBusinessRequestException("Le responsable ne peut plus modifier une demande validee par le directeur general");
         }
         if (demande.getStatus() == StatusDemande.ANNULE

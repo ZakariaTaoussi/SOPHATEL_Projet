@@ -100,7 +100,9 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
         Employe employe = employeConnecteProvider.getEmployeConnecte();
         DemandeConge demande = findMaDemande(demandeId, employe);
 
-        if (demande.getStatus() == StatusDemande.VALIDE_RESPONSABLE || demande.getStatus() == StatusDemande.VALIDE_DG) {
+        if (demande.getStatus() == StatusDemande.VALIDE_RESPONSABLE
+                || demande.getStatus() == StatusDemande.VALIDE_DG
+                || demande.getStatus() == StatusDemande.MODIFICATION_DG) {
             throw new InvalidBusinessRequestException(
                     "Cette demande a deja ete validee par le responsable ou le directeur general, modification impossible.");
         }
@@ -178,7 +180,9 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
         if (STATUTS_MODIFICATION_DIRECTE.contains(demande.getStatus())) {
             return;
         }
-        if (demande.getStatus() == StatusDemande.VALIDE_RESPONSABLE || demande.getStatus() == StatusDemande.VALIDE_DG) {
+        if (demande.getStatus() == StatusDemande.VALIDE_RESPONSABLE
+                || demande.getStatus() == StatusDemande.VALIDE_DG
+                || demande.getStatus() == StatusDemande.MODIFICATION_DG) {
             throw new InvalidBusinessRequestException(
                     "Cette demande a deja ete validee par le responsable ou le directeur general, modification impossible.");
         }
@@ -190,10 +194,20 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
 
     private void restaurerSoldeSiNecessaire(DemandeConge demande, Employe employe) {
         if (demande.getTypeDemande() == TypeDemande.CONGE && demande.getJoursDeduits() != null && demande.getJoursDeduits() > 0D) {
-            int annee = demande.getDateDebutEmp().getYear();
+            int annee = getAnneeSolde(demande);
             demande.setJoursDeduits(0D);
             demandeCongeRepository.saveAndFlush(demande);
             soldeCongeService.getOrCreateSolde(employe.getIdEmp(), annee);
         }
+    }
+
+    private int getAnneeSolde(DemandeConge demande) {
+        if (demande.getDateDebutDg() != null) {
+            return demande.getDateDebutDg().getYear();
+        }
+        if (demande.getDateDebutResp() != null) {
+            return demande.getDateDebutResp().getYear();
+        }
+        return demande.getDateDebutEmp().getYear();
     }
 }

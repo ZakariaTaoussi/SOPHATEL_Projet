@@ -2,7 +2,7 @@
   display: block;
 }
 
-.employes-page {
+.demandes-page {
   display: flex;
   flex-direction: column;
   gap: 22px;
@@ -40,76 +40,9 @@
   text-transform: uppercase;
 }
 
-.export-btn,
-.print-btn {
-  display: inline-grid;
-  place-items: center;
-  border: 0;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.action-group {
-  display: flex;
-  gap: 8px;
-}
-
-.accept-btn,
-.reject-btn {
-  min-height: 34px;
-  padding: 0 12px;
-  border-radius: 8px;
-  font-size: .82rem;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.accept-btn {
-  border: 1px solid #bbf7d0;
-  background: #ecfdf5;
-  color: #047857;
-}
-
-.reject-btn {
-  border: 1px solid #fecaca;
-  background: #fef2f2;
-  color: #b91c1c;
-}
-
-.badge[data-status="VALIDE_RESPONSABLE"] {
-  background: #fffbeb;
-  color: #b45309;
-}
-
-.badge[data-status="Refusée"] {
-  background: #fef2f2;
-  color: #b91c1c;
-}
-
-.export-btn {
-  min-height: 40px;
-  display: inline-flex;
-  gap: 10px;
-  padding: 0 16px;
-  background: #087da0;
-  color: #fff;
-  font-size: .88rem;
-  font-weight: 800;
-  white-space: nowrap;
-  box-shadow: 0 10px 22px rgba(8, 125, 160, .18);
-
-  svg {
-    width: 17px;
-    height: 17px;
-  }
-
-  &:hover {
-    background: #066b89;
-  }
-}
-
 .filters-card,
-.demandes-card {
+.demandes-card,
+.modal-panel {
   border: 1px solid #cfd8e3;
   border-radius: 14px;
   background: #fff;
@@ -118,7 +51,7 @@
 
 .filters-card {
   display: grid;
-  grid-template-columns: minmax(220px, 1.4fr) repeat(3, minmax(160px, 1fr));
+  grid-template-columns: minmax(220px, 1.4fr) repeat(2, minmax(160px, 1fr));
   gap: 14px;
   padding: 18px;
 }
@@ -159,6 +92,7 @@
 
 .card-title {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
   padding: 24px 24px 18px;
@@ -177,15 +111,25 @@
   }
 }
 
+.success-message,
 .error-message {
   margin: 0 24px 12px;
   padding: 10px 12px;
-  border: 1px solid #fecaca;
   border-radius: 8px;
-  background: #fef2f2;
-  color: #991b1b;
   font-size: .86rem;
   font-weight: 750;
+}
+
+.success-message {
+  border: 1px solid #bbf7d0;
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.error-message {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
 }
 
 .table-wrapper {
@@ -195,7 +139,7 @@
 
 .demandes-table {
   width: 100%;
-  min-width: 900px;
+  min-width: 1280px;
   border-collapse: collapse;
   font-size: .88rem;
 
@@ -246,6 +190,7 @@
   border-radius: 999px;
   font-size: .74rem;
   font-weight: 800;
+  white-space: nowrap;
 }
 
 .duree-chip {
@@ -254,37 +199,82 @@
 }
 
 .badge {
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+.badge[data-status="VALIDE_RESPONSABLE"] {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.badge[data-status="VALIDE_DG"] {
   background: #ecfdf5;
   color: #047857;
 }
 
-.file-chip {
-  display: inline-flex;
-  align-items: center;
-  min-height: 24px;
-  padding: 0 10px;
-  border-radius: 999px;
-  background: #f8fafc;
-  color: #334155;
-  font-size: .74rem;
-  font-weight: 750;
+.badge[data-status="MODIFICATION_DG"] {
+  background: #eef6fb;
+  color: #075985;
 }
 
-.print-btn {
-  width: 34px;
-  height: 34px;
-  border: 1px solid #cdebdd;
+.badge[data-status="REFUSE_DG"],
+.badge[data-status="REFUSE_RESPONSABLE"] {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.action-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.accept-btn,
+.reject-btn,
+.edit-btn,
+.refresh-btn,
+.secondary-btn,
+.close-btn {
+  min-height: 34px;
+  border-radius: 8px;
+  font-size: .82rem;
+  font-weight: 800;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: .62;
+  }
+}
+
+.accept-btn {
+  padding: 0 12px;
+  border: 1px solid #bbf7d0;
   background: #ecfdf5;
   color: #047857;
+}
 
-  svg {
-    width: 16px;
-    height: 16px;
-  }
+.reject-btn {
+  padding: 0 12px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
 
-  &:hover {
-    background: #d1fae5;
-  }
+.edit-btn,
+.secondary-btn {
+  padding: 0 12px;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.refresh-btn {
+  padding: 0 14px;
+  border: 1px solid #087da0;
+  background: #087da0;
+  color: #fff;
 }
 
 .empty-cell {
@@ -293,75 +283,85 @@
   text-align: center;
 }
 
-.print-sheet {
-  display: none;
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, .34);
+}
+
+.modal-panel {
+  width: min(560px, 100%);
+  padding: 22px;
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
+
+  h2 {
+    margin: 0;
+    color: #163b68;
+    font-size: 1.05rem;
+    font-weight: 800;
+  }
+}
+
+.close-btn {
+  width: 34px;
+  border: 1px solid #d7e0e8;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.modal-summary {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0;
+  color: #334155;
+  font-size: .88rem;
+
+  p {
+    margin: 0;
+  }
+}
+
+.modal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
 }
 
 @media (max-width: 980px) {
-  .filters-card {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 700px) {
-  .page-header {
-    flex-direction: column;
-  }
-
-  .export-btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .filters-card {
+  .filters-card,
+  .modal-grid {
     grid-template-columns: 1fr;
   }
 }
 
-@media print {
-  .employes-page {
-    display: none;
+@media (max-width: 700px) {
+  .page-header,
+  .card-title,
+  .modal-actions {
+    flex-direction: column;
   }
 
-  .print-sheet {
-    display: block;
-    color: #111827;
-    font-family: Inter, sans-serif;
-  }
-
-  .print-sheet h1 {
-    margin: 0 0 6px;
-    color: #163b68;
-    font-size: 1.6rem;
-  }
-
-  .print-ref {
-    margin: 0 0 28px;
-    color: #64748b;
-    font-weight: 700;
-  }
-
-  .print-sheet dl {
-    display: grid;
-    gap: 12px;
-    margin: 0;
-  }
-
-  .print-sheet dl div {
-    display: grid;
-    grid-template-columns: 160px 1fr;
-    gap: 16px;
-    padding: 10px 0;
-    border-bottom: 1px solid #e5e7eb;
-  }
-
-  .print-sheet dt {
-    color: #64748b;
-    font-weight: 800;
-  }
-
-  .print-sheet dd {
-    margin: 0;
-    font-weight: 650;
+  .refresh-btn,
+  .modal-actions button {
+    width: 100%;
   }
 }

@@ -65,14 +65,16 @@
             <td>
               <div class="action-group">
                 <button
+                  *ngIf="peutValider(demande)"
                   type="button"
                   class="accept-btn"
                   [disabled]="isActionLoading(demande, 'valider')"
                   (click)="validerSansModification(demande)">
-                  {{ isActionLoading(demande, 'valider') ? 'Validation...' : 'Valider' }}
+                  {{ isActionLoading(demande, 'valider') ? 'Validation...' : (demande.status === 'MODIFICATION_RESPONSABLE' ? 'Revalider' : 'Valider') }}
                 </button>
 
                 <button
+                  *ngIf="peutModifierDates(demande)"
                   type="button"
                   class="edit-btn"
                   [disabled]="isActionLoading(demande, 'modifier')"
@@ -81,6 +83,16 @@
                 </button>
 
                 <button
+                  *ngIf="peutPasserEnModificationResponsable(demande)"
+                  type="button"
+                  class="edit-btn"
+                  [disabled]="isActionLoading(demande, 'modifier')"
+                  (click)="passerEnModificationResponsable(demande)">
+                  {{ isActionLoading(demande, 'modifier') ? 'Modification...' : 'Demander modification' }}
+                </button>
+
+                <button
+                  *ngIf="peutRefuser(demande)"
                   type="button"
                   class="reject-btn"
                   [disabled]="isActionLoading(demande, 'refuser')"

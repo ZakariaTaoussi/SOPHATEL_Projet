@@ -33,7 +33,12 @@ export class ResponsableValidationDemandesComponent implements OnInit {
     dateFinResp: '',
   };
 
-  readonly statusOptions: Array<StatusDemande | 'Tous'> = ['Tous', 'VALIDE_EMPLOYE'];
+  readonly statusOptions: Array<StatusDemande | 'Tous'> = [
+    'Tous',
+    'VALIDE_EMPLOYE',
+    'VALIDE_RESPONSABLE',
+    'MODIFICATION_RESPONSABLE',
+  ];
 
   constructor(
     private readonly responsableDemandeService: ResponsableDemandeService,
@@ -144,6 +149,10 @@ export class ResponsableValidationDemandesComponent implements OnInit {
   }
 
   passerEnModificationResponsable(demande: ResponsableDemande): void {
+    if (!this.peutPasserEnModificationResponsable(demande)) {
+      return;
+    }
+
     this.executerAction(
       demande.id,
       'modifier',
@@ -151,6 +160,22 @@ export class ResponsableValidationDemandesComponent implements OnInit {
       () => this.responsableDemandeService.passerEnModificationResponsable(demande.id),
       'Erreur lors du passage en modification'
     );
+  }
+
+  peutValider(demande: ResponsableDemande): boolean {
+    return demande.status === 'VALIDE_EMPLOYE' || demande.status === 'MODIFICATION_RESPONSABLE';
+  }
+
+  peutModifierDates(demande: ResponsableDemande): boolean {
+    return demande.status === 'VALIDE_EMPLOYE' || demande.status === 'MODIFICATION_RESPONSABLE';
+  }
+
+  peutPasserEnModificationResponsable(demande: ResponsableDemande): boolean {
+    return demande.status === 'VALIDE_RESPONSABLE';
+  }
+
+  peutRefuser(demande: ResponsableDemande): boolean {
+    return demande.status === 'VALIDE_EMPLOYE' || demande.status === 'MODIFICATION_RESPONSABLE';
   }
 
   isActionLoading(demande: ResponsableDemande, type: 'valider' | 'refuser' | 'modifier'): boolean {

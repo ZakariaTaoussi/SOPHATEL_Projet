@@ -38,8 +38,31 @@ public interface DemandeCongeRepository extends JpaRepository<DemandeConge, Long
             @Param("departementId") Long departementId,
             @Param("status") StatusDemande status);
 
+    @Query("""
+            select d from DemandeConge d
+            where d.employe.departement.id = :departementId
+              and d.status in :statuses
+            order by d.updatedAt desc
+            """)
+    List<DemandeConge> findByEmployeDepartementIdAndStatusInOrderByUpdatedAtDesc(
+            @Param("departementId") Long departementId,
+            @Param("statuses") Collection<StatusDemande> statuses);
+
     @Query("select d from DemandeConge d where d.status = :status order by d.updatedAt desc")
     List<DemandeConge> findByStatusOrderByUpdatedAtDesc(@Param("status") StatusDemande status);
+
+    @Query("select d from DemandeConge d where d.status in :statuses order by d.updatedAt desc")
+    List<DemandeConge> findByStatusInOrderByUpdatedAtDesc(@Param("statuses") Collection<StatusDemande> statuses);
+
+    @Query("select d from DemandeConge d where d.id = :id and d.status = :status")
+    Optional<DemandeConge> findByIdAndStatus(
+            @Param("id") Long id,
+            @Param("status") StatusDemande status);
+
+    @Query("select d from DemandeConge d where d.id = :id and d.status in :statuses")
+    Optional<DemandeConge> findByIdAndStatusIn(
+            @Param("id") Long id,
+            @Param("statuses") Collection<StatusDemande> statuses);
 
     @Query("select d from DemandeConge d where d.id = :demandeId and d.employe.departement.id = :departementId")
     Optional<DemandeConge> findByIdAndEmployeDepartementId(
@@ -50,7 +73,7 @@ public interface DemandeCongeRepository extends JpaRepository<DemandeConge, Long
             select coalesce(sum(d.joursDeduits), 0)
             from DemandeConge d
             where d.employe.idEmp = :employeId
-              and d.dateDebutEmp between :dateDebut and :dateFin
+              and coalesce(d.dateDebutDg, d.dateDebutResp, d.dateDebutEmp) between :dateDebut and :dateFin
               and d.typeDemande = com.example.backend.model.enums.TypeDemande.CONGE
               and d.joursDeduits > 0
             """)

@@ -2,9 +2,17 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { finalize } from 'rxjs';
-import { ResponsableDemande } from '../../../core/models/demande-conge.model';
+import { Router } from '@angular/router';
+import { finalize, Observable } from 'rxjs';
+import {
+  DirecteurGeneralDemande,
+  DirecteurGeneralValidationDemandeRequest,
+  StatusDemande,
+} from '../../../core/models/demande-conge.model';
 import { DirecteurGeneralDemandeService } from '../../../core/services/directeur-general-demande.service';
+
+type ModePage = 'a-valider' | 'validees';
+type ActionDg = 'valider' | 'refuser' | 'modifier';
 
 @Component({
   selector: 'app-directeur-general-demande-employe',
@@ -17,17 +25,56 @@ export class DirecteurGeneralDemandeEmployeComponent implements OnInit {
   searchTerm = '';
   selectedType = 'Tous';
   selectedDepartement = 'Tous';
-  demandes: ResponsableDemande[] = [];
+
+  mode: ModePage = 'a-valider';
+  demandes: DirecteurGeneralDemande[] = [];
+  demandesFiltrees: DirecteurGeneralDemande[] = [];
+
   loading = false;
   errorMessage = '';
+  successMessage = '';
+  actionLoadingId: number | null = null;
+  actionLoadingType: ActionDg | null = null;
+
+  demandeEnModification: DirecteurGeneralDemande | null = null;
+  modificationForm: DirecteurGeneralValidationDemandeRequest = {
+    dateDebutDg: null,
+    dateFinDg: null,
+  };
 
   constructor(
     private readonly directeurGeneralDemandeService: DirecteurGeneralDemandeService,
+    private readonly router: Router,
     private readonly cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
+    this.syncModeFromUrl();
     this.loadDemandes();
+  }
+
+  get isModeValidees(): boolean {
+    return this.mode === 'validees';
+  }
+
+  get pageTitle(): string {
+    return this.isModeValidees ? 'Demandes validees DG' : 'Demandes a valider';
+  }
+
+  get pageDescription(): string {
+    return this.isModeValidees
+      ? 'Demandes deja validees par le directeur general.'
+      : 'Demandes validees par les responsables et en attente de decision DG.';
+  }
+
+  get tableTitle(): string {
+    return this.isModeValidees ? 'Demandes validees' : 'Demandes en attente DG';
+  }
+
+  get emptyMessage(): string {
+    return this.isModeValidees
+      ? 'Aucune demande validee par le directeur general.'
+      : 'Aucune demande a valider pour le directeur general.';
   }
 
   get types(): string[] {
@@ -40,23 +87,16 @@ export class DirecteurGeneralDemandeEmployeComponent implements OnInit {
     )).sort()];
   }
 
-  get demandesFiltrees(): ResponsableDemande[] {
-    const search = this.searchTerm.trim().toLowerCase();
-    return this.demandes.filter(demande => {
-      const employe = demande.employeNomComplet?.toLowerCase() || '';
-      const departement = demande.departementNom || '-';
-      const matchSearch = !search || employe.includes(search);
-      const matchType = this.selectedType === 'Tous' || demande.typeDemande === this.selectedType;
-      const matchDepartement = this.selectedDepartement === 'Tous' || departement === this.selectedDepartement;
-      return matchSearch && matchType && matchDepartement;
-    });
-  }
-
   loadDemandes(): void {
     this.loading = true;
     this.errorMessage = '';
+    this.successMessage = '';
 
-    this.directeurGeneralDemandeService.getDemandesAValider().pipe(
+    const request$ = this.isModeValidees
+      ? this.directeurGeneralDemandeService.getDemandesValidees()
+      : this.directeurGeneralDemandeService.getDemandesAValider();
+
+    request$.pipe(
       finalize(() => {
         this.loading = false;
         this.cdr.markForCheck();
@@ -64,13 +104,118 @@ export class DirecteurGeneralDemandeEmployeComponent implements OnInit {
     ).subscribe({
       next: demandes => {
         this.demandes = [...demandes];
+        this.applyFilters();
       },
       error: error => {
         console.error('Erreur demandes DG', error);
         this.demandes = [];
+        this.demandesFiltrees = [];
         this.errorMessage = this.getErrorMessage(error);
       },
     });
+  }
+
+  applyFilters(): void {
+    const search = this.searchTerm.trim().toLowerCase();
+
+    const result = this.demandes.filter(demande => {
+      const employe = demande.employeNomComplet?.toLowerCase() || '';
+      const departement = demande.departementNom || '-';
+      const matchSearch = !search || employe.includes(search);
+      const matchType = this.selectedType === 'Tous' || demande.typeDemande === this.selectedType;
+      const matchDepartement = this.selectedDepartement === 'Tous' || departement === this.selectedDepartement;
+
+      return matchSearch && matchType && matchDepartement;
+    });
+
+    this.demandesFiltrees = [...result];
+  }
+
+  validerSansModification(demande: DirecteurGeneralDemande): void {
+    this.executerAction(
+      demande,
+      'valider',
+      this.directeurGeneralDemandeService.validerDemande(demande.id, {
+        dateDebutDg: null,
+        dateFinDg: null,
+      }),
+      'Demande validee par le directeur general.'
+    );
+  }
+
+  refuserDemande(demande: DirecteurGeneralDemande): void {
+    this.executerAction(
+      demande,
+      'refuser',
+      this.directeurGeneralDemandeService.refuserDemande(demande.id),
+      'Demande refusee par le directeur general.'
+    );
+  }
+
+  ouvrirModification(demande: DirecteurGeneralDemande): void {
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.demandeEnModification = demande;
+    this.modificationForm = {
+      dateDebutDg: demande.dateDebutDg || demande.dateDebutResp || demande.dateDebutEmp,
+      dateFinDg: demande.dateFinDg || demande.dateFinResp || demande.dateFinEmp,
+    };
+  }
+
+  passerEnModificationDg(demande: DirecteurGeneralDemande): void {
+    if (!this.peutPasserEnModificationDg(demande)) {
+      this.ouvrirModification(demande);
+      return;
+    }
+
+    this.executerAction(
+      demande,
+      'modifier',
+      this.directeurGeneralDemandeService.passerEnModificationDg(demande.id),
+      'Demande repassee en modification DG.',
+      updatedDemande => {
+        this.ouvrirModification(updatedDemande);
+      }
+    );
+  }
+
+  peutPasserEnModificationDg(demande: DirecteurGeneralDemande): boolean {
+    return demande.status === 'VALIDE_DG';
+  }
+
+  peutRevaliderModificationDg(demande: DirecteurGeneralDemande): boolean {
+    return demande.status === 'MODIFICATION_DG';
+  }
+
+  validerAvecModification(): void {
+    if (!this.demandeEnModification) {
+      return;
+    }
+
+    const payload: DirecteurGeneralValidationDemandeRequest = {
+      dateDebutDg: this.modificationForm.dateDebutDg || null,
+      dateFinDg: this.modificationForm.dateFinDg || null,
+    };
+
+    this.executerAction(
+      this.demandeEnModification,
+      'valider',
+      this.directeurGeneralDemandeService.validerDemande(this.demandeEnModification.id, payload),
+      'Demande validee avec les dates finales DG.',
+      () => this.fermerModal()
+    );
+  }
+
+  fermerModal(): void {
+    this.demandeEnModification = null;
+    this.modificationForm = {
+      dateDebutDg: null,
+      dateFinDg: null,
+    };
+  }
+
+  isActionLoading(demande: DirecteurGeneralDemande, action: ActionDg): boolean {
+    return this.actionLoadingId === demande.id && this.actionLoadingType === action;
   }
 
   formatDate(value?: string | null): string {
@@ -85,12 +230,56 @@ export class DirecteurGeneralDemandeEmployeComponent implements OnInit {
     }).format(new Date(value));
   }
 
-  getDateDebut(demande: ResponsableDemande): string {
-    return demande.dateDebutResp || demande.dateDebutEmp;
+  getStatusLabel(status: StatusDemande): string {
+    const labels: Record<StatusDemande, string> = {
+      BROUILLON: 'Brouillon',
+      VALIDE_EMPLOYE: 'Validee employe',
+      VALIDE_RESPONSABLE: 'En attente DG',
+      VALIDE_DG: 'Validee DG',
+      MODIFICATION_EMPLOYE: 'Modification employe',
+      MODIFICATION_RESPONSABLE: 'Modification responsable',
+      MODIFICATION_DG: 'Modification DG',
+      ANNULE: 'Annulee',
+      REFUSE_RESPONSABLE: 'Refusee responsable',
+      REFUSE_DG: 'Refusee DG',
+    };
+
+    return labels[status] ?? status;
   }
 
-  getDateFin(demande: ResponsableDemande): string {
-    return demande.dateFinResp || demande.dateFinEmp;
+  private executerAction(
+    demande: DirecteurGeneralDemande,
+    action: ActionDg,
+    request$: Observable<DirecteurGeneralDemande>,
+    successMessage: string,
+    afterSuccess?: (demande: DirecteurGeneralDemande) => void
+  ): void {
+    this.actionLoadingId = demande.id;
+    this.actionLoadingType = action;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    request$.pipe(
+      finalize(() => {
+        this.actionLoadingId = null;
+        this.actionLoadingType = null;
+        this.cdr.markForCheck();
+      })
+    ).subscribe({
+      next: updatedDemande => {
+        this.successMessage = successMessage;
+        afterSuccess?.(updatedDemande);
+        this.loadDemandes();
+      },
+      error: error => {
+        console.error('Erreur action DG', error);
+        this.errorMessage = this.getErrorMessage(error);
+      },
+    });
+  }
+
+  private syncModeFromUrl(): void {
+    this.mode = this.router.url.includes('/demandes-validees') ? 'validees' : 'a-valider';
   }
 
   private getErrorMessage(error: unknown): string {
@@ -98,9 +287,9 @@ export class DirecteurGeneralDemandeEmployeComponent implements OnInit {
       if (typeof error.error === 'string' && error.error.trim()) {
         return error.error;
       }
-      return error.error?.message || 'Erreur lors du chargement des demandes';
+      return error.error?.message || 'Erreur lors du traitement de la demande';
     }
 
-    return 'Erreur lors du chargement des demandes';
+    return 'Erreur lors du traitement de la demande';
   }
 }
