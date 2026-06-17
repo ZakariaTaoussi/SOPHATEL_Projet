@@ -3,7 +3,7 @@ import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NotificationService } from '../../../core/services/notification.service';
 
-type StatutDemande = 'EN_ATTENTE' | 'VALIDEE_RESPONSABLE' | 'VALIDEE_DG' | 'ANNULE' | 'REFUSE';
+type StatutDemande = 'EN_ATTENTE' | 'VALIDEE_RESPONSABLE' | 'VALIDEE_DG' | 'ANNULE' | 'REFUSE_DG';
 
 type Demande = {
   id: string;
@@ -37,7 +37,7 @@ export class ResponsableMesDemandesComponent {
     { id: 'RESP-001', type: 'Rattrapage', dateDepot: '01/04/2026', dateDebut: '02/04/2026', dateFin: '04/04/2026', duree: 3, statut: 'VALIDEE_RESPONSABLE', commentaire: 'En attente de validation par le DG.' },
     { id: 'RESP-002', type: 'Congé', dateDepot: '11/05/2026', dateDebut: '12/05/2026', dateFin: '14/05/2026', duree: 3, statut: 'VALIDEE_DG', commentaire: 'Validée par le responsable.' },
     { id: 'RESP-003', type: 'Congé', dateDepot: '01/06/2026', dateDebut: '03/06/2026', dateFin: '03/06/2026', duree: 1, statut: 'VALIDEE_RESPONSABLE', commentaire: 'En attente de validation par le DG.' },
-    { id: 'RESP-004', type: 'Congé', dateDepot: '05/09/2025', dateDebut: '10/09/2025', dateFin: '10/09/2025', duree: 1, statut: 'REFUSE', commentaire: 'Refusée par le DG.' },
+    { id: 'RESP-004', type: 'Congé', dateDepot: '05/09/2025', dateDebut: '10/09/2025', dateFin: '10/09/2025', duree: 1, statut: 'REFUSE_DG', commentaire: 'Refusée par le DG.' },
   ];
 
   demandeAImprimer?: Demande;
@@ -54,7 +54,7 @@ export class ResponsableMesDemandesComponent {
 
   types = ['Tous', 'Congé', 'Rattrapage'];
   editTypes = ['Congé', 'Rattrapage'];
-  statuses: Array<StatutDemande | 'Tous'> = ['Tous', 'EN_ATTENTE', 'VALIDEE_RESPONSABLE', 'VALIDEE_DG', 'ANNULE', 'REFUSE'];
+  statuses: Array<StatutDemande | 'Tous'> = ['Tous', 'EN_ATTENTE', 'VALIDEE_RESPONSABLE', 'VALIDEE_DG', 'ANNULE', 'REFUSE_DG'];
 
   setType(value: string) { this.selectedType = value; }
   setStatus(value: string) { this.selectedStatus = value as StatutDemande | 'Tous'; }
@@ -74,7 +74,7 @@ export class ResponsableMesDemandesComponent {
       VALIDEE_RESPONSABLE: 'Validée responsable',
       VALIDEE_DG: 'Validée DG',
       ANNULE: 'Annulée',
-      REFUSE: 'Refusée',
+      REFUSE_DG: 'Refusée DG',
     };
 
     return labels[statut];
@@ -86,7 +86,7 @@ export class ResponsableMesDemandesComponent {
       VALIDEE_RESPONSABLE: 'responsable-approved',
       VALIDEE_DG: 'approved',
       ANNULE: 'cancelled',
-      REFUSE: 'rejected',
+      REFUSE_DG: 'rejected',
     };
 
     return classes[statut];

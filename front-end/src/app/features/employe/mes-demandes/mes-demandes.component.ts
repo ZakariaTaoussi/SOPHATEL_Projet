@@ -160,7 +160,13 @@ export class MesDemandesComponent implements OnInit, OnDestroy {
   }
 
   peutAnnuler(demande: DemandeConge): boolean {
-    return demande.status !== 'ANNULE';
+    return ![
+      'VALIDE_DG',
+      'MODIFICATION_DG',
+      'REFUSE_RESPONSABLE',
+      'REFUSE_DG',
+      'ANNULE',
+    ].includes(demande.status);
   }
 
   peutImprimer(demande: DemandeConge): boolean {

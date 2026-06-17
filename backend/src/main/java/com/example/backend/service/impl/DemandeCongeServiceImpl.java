@@ -126,6 +126,7 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
     public DemandeCongeResponse annulerDemande(Long demandeId) {
         Employe employe = employeConnecteProvider.getEmployeConnecte();
         DemandeConge demande = findMaDemande(demandeId, employe);
+        validateAnnulationAutorisee(demande);
 
         restaurerSoldeSiNecessaire(demande, employe);
         demande.setStatus(StatusDemande.ANNULE);
@@ -190,6 +191,24 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
             throw new InvalidBusinessRequestException("Passez d'abord la demande en modification employe");
         }
         throw new InvalidBusinessRequestException("Cette demande ne peut pas etre modifiee dans son statut actuel");
+    }
+
+    private void validateAnnulationAutorisee(DemandeConge demande) {
+        if (demande.getStatus() == StatusDemande.VALIDE_DG) {
+            throw new InvalidBusinessRequestException(
+                    "Cette demande est deja validee par le directeur general, annulation impossible.");
+        }
+        if (demande.getStatus() == StatusDemande.MODIFICATION_DG) {
+            throw new InvalidBusinessRequestException(
+                    "Cette demande est en modification directeur general, annulation impossible.");
+        }
+        if (demande.getStatus() == StatusDemande.REFUSE_RESPONSABLE
+                || demande.getStatus() == StatusDemande.REFUSE_DG) {
+            throw new InvalidBusinessRequestException("Une demande refusee ne peut pas etre annulee.");
+        }
+        if (demande.getStatus() == StatusDemande.ANNULE) {
+            throw new InvalidBusinessRequestException("Cette demande est deja annulee.");
+        }
     }
 
     private void restaurerSoldeSiNecessaire(DemandeConge demande, Employe employe) {

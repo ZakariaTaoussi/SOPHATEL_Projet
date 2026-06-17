@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NotificationService } from '../../../core/services/notification.service';
 
-type StatutDemande = 'EN_ATTENTE' | 'VALIDEE_RESPONSABLE' | 'VALIDEE_DG' | 'ANNULE' | 'REFUSE';
+type StatutDemande = 'EN_ATTENTE' | 'VALIDEE_RESPONSABLE' | 'VALIDEE_DG' | 'ANNULE' | 'REFUSE_DG';
 
 type Demande = {
   id: string;
@@ -48,7 +48,7 @@ export class RhMesDemandesComponent {
 
   types = ['Tous', 'Congé', 'Rattrapage'];
   editTypes = ['Congé', 'Rattrapage'];
-  statuses: Array<StatutDemande | 'Tous'> = ['Tous', 'EN_ATTENTE', 'VALIDEE_RESPONSABLE', 'VALIDEE_DG', 'ANNULE', 'REFUSE'];
+  statuses: Array<StatutDemande | 'Tous'> = ['Tous', 'EN_ATTENTE', 'VALIDEE_RESPONSABLE', 'VALIDEE_DG', 'ANNULE', 'REFUSE_DG'];
 
   setType(value: string) { this.selectedType = value; }
   setStatus(value: string) { this.selectedStatus = value as StatutDemande | 'Tous'; }
@@ -68,7 +68,7 @@ export class RhMesDemandesComponent {
       VALIDEE_RESPONSABLE: 'Validée responsable',
       VALIDEE_DG: 'Validée DG',
       ANNULE: 'Annulée',
-      REFUSE: 'Refusée',
+      REFUSE_DG: 'Refusée DG',
     };
     return labels[statut];
   }
@@ -79,7 +79,7 @@ export class RhMesDemandesComponent {
       VALIDEE_RESPONSABLE: 'responsable-approved',
       VALIDEE_DG: 'approved',
       ANNULE: 'cancelled',
-      REFUSE: 'rejected',
+      REFUSE_DG: 'rejected',
     };
     return classes[statut];
   }
