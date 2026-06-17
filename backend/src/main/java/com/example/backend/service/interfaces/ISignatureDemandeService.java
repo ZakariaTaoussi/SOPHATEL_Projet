@@ -5,4 +5,6 @@ import com.example.backend.model.Employe;
 
 public interface ISignatureDemandeService {
     void signerParEmploye(DemandeConge demande, Employe employe);
+
+    void signerParResponsable(DemandeConge demande, Employe responsable);
 }

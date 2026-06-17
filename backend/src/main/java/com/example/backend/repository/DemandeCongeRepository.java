@@ -30,11 +30,21 @@ public interface DemandeCongeRepository extends JpaRepository<DemandeConge, Long
 
     @Query("""
             select d from DemandeConge d
-            where d.status = com.example.backend.model.enums.StatusDemande.VALIDE_EMPLOYE
-              and d.employe.departement.responsable.idEmp = :responsableId
+            where d.employe.departement.id = :departementId
+              and d.status = :status
             order by d.createdAt desc
             """)
-    List<DemandeConge> findDemandesVisiblesForResponsable(@Param("responsableId") Long responsableId);
+    List<DemandeConge> findByEmployeDepartementIdAndStatusOrderByCreatedAtDesc(
+            @Param("departementId") Long departementId,
+            @Param("status") StatusDemande status);
+
+    @Query("select d from DemandeConge d where d.status = :status order by d.updatedAt desc")
+    List<DemandeConge> findByStatusOrderByUpdatedAtDesc(@Param("status") StatusDemande status);
+
+    @Query("select d from DemandeConge d where d.id = :demandeId and d.employe.departement.id = :departementId")
+    Optional<DemandeConge> findByIdAndEmployeDepartementId(
+            @Param("demandeId") Long demandeId,
+            @Param("departementId") Long departementId);
 
     @Query("""
             select coalesce(sum(d.joursDeduits), 0)

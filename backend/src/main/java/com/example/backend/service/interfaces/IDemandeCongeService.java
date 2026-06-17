@@ -19,6 +19,4 @@ public interface IDemandeCongeService {
     List<DemandeCongeResponse> mesDemandes();
 
     DemandeCongeResponse getMaDemande(Long demandeId);
-
-    List<DemandeCongeResponse> demandesAValiderPourResponsable();
 }

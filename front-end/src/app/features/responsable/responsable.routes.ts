@@ -39,6 +39,10 @@ export const RESPONSABLE_ROUTES: Routes = [
 				loadComponent: () => import('./profil/profil.component').then(m => m.ResponsableProfilComponent),
 			},
 			{
+				path: 'demandes-a-valider',
+				loadComponent: () => import('./validation-demandes/validation-demandes.component').then(m => m.ResponsableValidationDemandesComponent),
+			},
+			{
 				path: 'validation-demandes',
 				loadComponent: () => import('./validation-demandes/validation-demandes.component').then(m => m.ResponsableValidationDemandesComponent),
 			},

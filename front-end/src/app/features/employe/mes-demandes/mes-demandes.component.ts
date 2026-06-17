@@ -46,7 +46,8 @@ export class MesDemandesComponent implements OnInit, OnDestroy {
     'VALIDE_DG',
     'MODIFICATION_EMPLOYE',
     'ANNULE',
-    'REFUSE',
+    'REFUSE_RESPONSABLE',
+    'REFUSE_DG',
   ];
 
   constructor(
@@ -120,7 +121,8 @@ export class MesDemandesComponent implements OnInit, OnDestroy {
       MODIFICATION_RESPONSABLE: 'Modification responsable',
       MODIFICATION_DG: 'Modification DG',
       ANNULE: 'Annulee',
-      REFUSE: 'Refusee',
+      REFUSE_RESPONSABLE: 'Refusee responsable',
+      REFUSE_DG: 'Refusee DG',
     };
 
     return labels[statut];
@@ -136,7 +138,8 @@ export class MesDemandesComponent implements OnInit, OnDestroy {
       MODIFICATION_RESPONSABLE: 'pending',
       MODIFICATION_DG: 'pending',
       ANNULE: 'cancelled',
-      REFUSE: 'rejected',
+      REFUSE_RESPONSABLE: 'rejected',
+      REFUSE_DG: 'rejected',
     };
 
     return classes[statut];

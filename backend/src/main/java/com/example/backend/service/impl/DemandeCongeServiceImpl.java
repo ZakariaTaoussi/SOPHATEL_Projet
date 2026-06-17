@@ -104,12 +104,16 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
             throw new InvalidBusinessRequestException(
                     "Cette demande a deja ete validee par le responsable ou le directeur general, modification impossible.");
         }
-        if (demande.getStatus() == StatusDemande.ANNULE || demande.getStatus() == StatusDemande.REFUSE) {
+        if (demande.getStatus() == StatusDemande.ANNULE
+                || demande.getStatus() == StatusDemande.REFUSE_RESPONSABLE
+                || demande.getStatus() == StatusDemande.REFUSE_DG) {
             throw new InvalidBusinessRequestException("Cette demande ne peut plus etre modifiee.");
         }
         if (demande.getStatus() == StatusDemande.VALIDE_EMPLOYE) {
             restaurerSoldeSiNecessaire(demande, employe);
             demande.setStatus(StatusDemande.MODIFICATION_EMPLOYE);
+        } else {
+            throw new InvalidBusinessRequestException("Seule une demande soumise a l'employe peut repasser en modification employe.");
         }
 
         return demandeCongeMapper.toResponse(demandeCongeRepository.save(demande));
@@ -138,14 +142,6 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
     public DemandeCongeResponse getMaDemande(Long demandeId) {
         Employe employe = employeConnecteProvider.getEmployeConnecte();
         return demandeCongeMapper.toResponse(findMaDemande(demandeId, employe));
-    }
-
-    @Override
-    public List<DemandeCongeResponse> demandesAValiderPourResponsable() {
-        Employe responsable = employeConnecteProvider.getEmployeConnecte();
-        return demandeCongeRepository.findDemandesVisiblesForResponsable(responsable.getIdEmp()).stream()
-                .map(demandeCongeMapper::toResponse)
-                .toList();
     }
 
     private DemandeConge findMaDemande(Long demandeId, Employe employe) {
@@ -194,11 +190,10 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
 
     private void restaurerSoldeSiNecessaire(DemandeConge demande, Employe employe) {
         if (demande.getTypeDemande() == TypeDemande.CONGE && demande.getJoursDeduits() != null && demande.getJoursDeduits() > 0D) {
-            soldeCongeService.restaurerSolde(
-                    employe.getIdEmp(),
-                    demande.getDateDebutEmp().getYear(),
-                    demande.getJoursDeduits());
+            int annee = demande.getDateDebutEmp().getYear();
             demande.setJoursDeduits(0D);
+            demandeCongeRepository.saveAndFlush(demande);
+            soldeCongeService.getOrCreateSolde(employe.getIdEmp(), annee);
         }
     }
 }

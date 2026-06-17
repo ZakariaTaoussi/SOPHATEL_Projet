@@ -34,6 +34,7 @@ export class ResponsableLayoutComponent {
   navItems: NavItem[] = [
     { label: 'Dashboard',           route: '/responsable/dashboard',         icon: 'grid' },
     { label: 'Mes Employés',        route: '/responsable/mes-employes',      icon: 'users' },
+    { label: 'Demandes a valider',  route: '/responsable/demandes-a-valider', icon: 'check-circle' },
     { label: 'Mes Demandes',        route: '/responsable/mes-demandes',      icon: 'file-text' },
     { label: 'Mes Absences',        route: '/responsable/mes-absences',      icon: 'calendar-off' },
     { label: 'Nouvelle Demande',    route: '/responsable/nouvelle-demande',  icon: 'plus-circle' },

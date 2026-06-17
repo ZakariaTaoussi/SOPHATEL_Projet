@@ -9,5 +9,6 @@ public enum StatusDemande {
     MODIFICATION_RESPONSABLE,
     MODIFICATION_DG,
     ANNULE,
-    REFUSE
+    REFUSE_RESPONSABLE,
+    REFUSE_DG
 }

@@ -1,62 +1,160 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { finalize, Subscription } from 'rxjs';
-import { DemandeConge } from '../../../core/models/demande-conge.model';
-import { DemandeCongeService } from '../../../core/services/demande-conge.service';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
+import {
+  ResponsableDemande,
+  ResponsableValidationDemandeRequest,
+  StatusDemande,
+} from '../../../core/models/demande-conge.model';
+import { ResponsableDemandeService } from '../../../core/services/responsable-demande.service';
 
 @Component({
   selector: 'app-responsable-validation-demandes',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './validation-demandes.component.html',
   styleUrls: ['./validation-demandes.component.scss'],
 })
-export class ResponsableValidationDemandesComponent implements OnInit, OnDestroy {
-  demandes: DemandeConge[] = [];
+export class ResponsableValidationDemandesComponent implements OnInit {
+  demandes: ResponsableDemande[] = [];
+  filteredDemandes: ResponsableDemande[] = [];
+  selectedType = 'Tous';
+  selectedStatus = 'Tous';
   loading = false;
+  actionLoadingId: number | null = null;
+  actionLoadingType: 'valider' | 'refuser' | 'modifier' | null = null;
   errorMessage = '';
-  private readonly subscriptions = new Subscription();
+  successMessage = '';
+  demandeEnModification: ResponsableDemande | null = null;
+  modificationForm = {
+    dateDebutResp: '',
+    dateFinResp: '',
+  };
+
+  readonly statusOptions: Array<StatusDemande | 'Tous'> = ['Tous', 'VALIDE_EMPLOYE'];
 
   constructor(
-    private readonly demandeCongeService: DemandeCongeService,
+    private readonly responsableDemandeService: ResponsableDemandeService,
     private readonly cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    this.subscriptions.add(
-      this.demandeCongeService.demandesAValider$.subscribe(demandes => {
-        this.demandes = demandes;
-        this.cdr.detectChanges();
-      })
-    );
-    this.loadDemandesAValider();
+    this.loadDemandes();
   }
 
-  ngOnDestroy(): void {
-    this.subscriptions.unsubscribe();
-  }
-
-  loadDemandesAValider(): void {
+  loadDemandes(): void {
     this.loading = true;
     this.errorMessage = '';
 
-    this.demandeCongeService.getDemandesAValiderResponsable().pipe(
+    this.responsableDemandeService.getDemandesAValider().pipe(
       finalize(() => {
         this.loading = false;
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       })
     ).subscribe({
       next: demandes => {
-        this.loading = false;
-        this.demandes = demandes;
-        this.cdr.detectChanges();
+        this.demandes = [...demandes];
+        this.applyFilters();
       },
       error: error => {
-        this.handleError(error);
-        this.cdr.detectChanges();
+        console.error('Erreur chargement demandes responsable', error);
+        this.demandes = [];
+        this.filteredDemandes = [];
+        this.errorMessage = this.getErrorMessage(error, 'Erreur lors du chargement des demandes');
       },
     });
+  }
+
+  applyFilters(): void {
+    const result = this.demandes.filter(demande => {
+      const matchType = this.selectedType === 'Tous' || demande.typeDemande === this.selectedType;
+      const matchStatus = this.selectedStatus === 'Tous' || demande.status === this.selectedStatus;
+      return matchType && matchStatus;
+    });
+
+    this.filteredDemandes = [...result];
+    this.cdr.markForCheck();
+  }
+
+  validerSansModification(demande: ResponsableDemande): void {
+    const payload: ResponsableValidationDemandeRequest = {
+      dateDebutResp: null,
+      dateFinResp: null,
+    };
+
+    this.executerAction(
+      demande.id,
+      'valider',
+      'Demande validee par le responsable.',
+      () => this.responsableDemandeService.validerDemande(demande.id, payload),
+      'Erreur lors de la validation'
+    );
+  }
+
+  ouvrirModification(demande: ResponsableDemande): void {
+    this.clearMessages();
+    this.demandeEnModification = demande;
+    this.modificationForm = {
+      dateDebutResp: demande.dateDebutResp || demande.dateDebutEmp,
+      dateFinResp: demande.dateFinResp || demande.dateFinEmp,
+    };
+    this.cdr.markForCheck();
+  }
+
+  fermerModification(): void {
+    this.demandeEnModification = null;
+    this.modificationForm = {
+      dateDebutResp: '',
+      dateFinResp: '',
+    };
+    this.cdr.markForCheck();
+  }
+
+  validerAvecModification(): void {
+    if (!this.demandeEnModification) {
+      return;
+    }
+
+    const demande = this.demandeEnModification;
+    const payload: ResponsableValidationDemandeRequest = {
+      dateDebutResp: this.modificationForm.dateDebutResp,
+      dateFinResp: this.modificationForm.dateFinResp,
+    };
+
+    this.executerAction(
+      demande.id,
+      'modifier',
+      'Demande validee avec les dates responsable.',
+      () => this.responsableDemandeService.validerDemande(demande.id, payload),
+      'Erreur lors de la validation avec modification',
+      () => this.fermerModification()
+    );
+  }
+
+  refuserDemande(demande: ResponsableDemande): void {
+    this.executerAction(
+      demande.id,
+      'refuser',
+      'Demande refusee par le responsable.',
+      () => this.responsableDemandeService.refuserDemande(demande.id),
+      'Erreur lors du refus'
+    );
+  }
+
+  passerEnModificationResponsable(demande: ResponsableDemande): void {
+    this.executerAction(
+      demande.id,
+      'modifier',
+      'Demande passee en modification responsable.',
+      () => this.responsableDemandeService.passerEnModificationResponsable(demande.id),
+      'Erreur lors du passage en modification'
+    );
+  }
+
+  isActionLoading(demande: ResponsableDemande, type: 'valider' | 'refuser' | 'modifier'): boolean {
+    return this.actionLoadingId === demande.id && this.actionLoadingType === type;
   }
 
   formatDate(value?: string | null): string {
@@ -71,15 +169,67 @@ export class ResponsableValidationDemandesComponent implements OnInit, OnDestroy
     }).format(new Date(value));
   }
 
-  private handleError(error: unknown): void {
-    console.error('Erreur demandes responsable', error);
+  getStatusLabel(status: StatusDemande): string {
+    const labels: Record<StatusDemande, string> = {
+      BROUILLON: 'Brouillon',
+      VALIDE_EMPLOYE: 'Validee employe',
+      VALIDE_RESPONSABLE: 'Validee responsable',
+      VALIDE_DG: 'Validee DG',
+      MODIFICATION_EMPLOYE: 'Modification employe',
+      MODIFICATION_RESPONSABLE: 'Modification responsable',
+      MODIFICATION_DG: 'Modification DG',
+      ANNULE: 'Annulee',
+      REFUSE_RESPONSABLE: 'Refusee responsable',
+      REFUSE_DG: 'Refusee DG',
+    };
+
+    return labels[status] ?? status;
+  }
+
+  private executerAction(
+    demandeId: number,
+    type: 'valider' | 'refuser' | 'modifier',
+    successMessage: string,
+    requestFactory: () => ReturnType<ResponsableDemandeService['validerDemande']>,
+    fallbackError: string,
+    afterSuccess?: () => void
+  ): void {
+    this.clearMessages();
+    this.actionLoadingId = demandeId;
+    this.actionLoadingType = type;
+
+    requestFactory().pipe(
+      finalize(() => {
+        this.actionLoadingId = null;
+        this.actionLoadingType = null;
+        this.cdr.markForCheck();
+      })
+    ).subscribe({
+      next: () => {
+        this.successMessage = successMessage;
+        afterSuccess?.();
+        this.loadDemandes();
+      },
+      error: error => {
+        console.error('Erreur action demande responsable', error);
+        this.errorMessage = this.getErrorMessage(error, fallbackError);
+      },
+    });
+  }
+
+  private clearMessages(): void {
+    this.errorMessage = '';
+    this.successMessage = '';
+  }
+
+  private getErrorMessage(error: unknown, fallback: string): string {
     if (error instanceof HttpErrorResponse) {
-      this.errorMessage = typeof error.error === 'string'
-        ? error.error
-        : error.error?.message ?? 'Une erreur est survenue.';
-      return;
+      if (typeof error.error === 'string' && error.error.trim()) {
+        return error.error;
+      }
+      return error.error?.message || fallback;
     }
 
-    this.errorMessage = 'Une erreur est survenue.';
+    return fallback;
   }
 }

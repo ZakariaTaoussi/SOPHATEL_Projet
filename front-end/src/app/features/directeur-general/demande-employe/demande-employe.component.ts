@@ -1,22 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-
-type StatutDemande = 'Validé_Responsable' | 'Validée DG' | 'Refusée';
-
-interface DemandeEmploye {
-  reference: string;
-  employe: string;
-  matricule: string;
-  departement: string;
-  type: 'Congé' | 'Rattrapage';
-  dateDepot: string;
-  dateDebut: string;
-  dateFin: string;
-  duree: number;
-  statut: StatutDemande;
-  commentaire?: string;
-}
+import { finalize } from 'rxjs';
+import { ResponsableDemande } from '../../../core/models/demande-conge.model';
+import { DirecteurGeneralDemandeService } from '../../../core/services/directeur-general-demande.service';
 
 @Component({
   selector: 'app-directeur-general-demande-employe',
@@ -25,50 +13,94 @@ interface DemandeEmploye {
   templateUrl: './demande-employe.component.html',
   styleUrls: ['./demande-employe.component.scss'],
 })
-export class DirecteurGeneralDemandeEmployeComponent {
+export class DirecteurGeneralDemandeEmployeComponent implements OnInit {
   searchTerm = '';
   selectedType = 'Tous';
   selectedDepartement = 'Tous';
+  demandes: ResponsableDemande[] = [];
+  loading = false;
+  errorMessage = '';
 
-  demandes: DemandeEmploye[] = [
-    { reference: 'DEM-2026-041', employe: 'Ahmed Benali', matricule: 'EMP-0042', departement: 'Informatique', type: 'Congé', dateDepot: '12/04/2026', dateDebut: '22/04/2026', dateFin: '26/04/2026', duree: 5, statut: 'Validé_Responsable' },
-    { reference: 'DEM-2026-038', employe: 'Lina Mansouri', matricule: 'EMP-0057', departement: 'Finance', type: 'Rattrapage', dateDepot: '08/04/2026', dateDebut: '15/04/2026', dateFin: '15/04/2026', duree: 1, statut: 'Validé_Responsable' },
-    { reference: 'DEM-2026-029', employe: 'Youssef Idrissi', matricule: 'EMP-0031', departement: 'Commercial', type: 'Congé', dateDepot: '21/03/2026', dateDebut: '02/05/2026', dateFin: '09/05/2026', duree: 6, statut: 'Validé_Responsable' },
-  ];
+  constructor(
+    private readonly directeurGeneralDemandeService: DirecteurGeneralDemandeService,
+    private readonly cdr: ChangeDetectorRef
+  ) {}
+
+  ngOnInit(): void {
+    this.loadDemandes();
+  }
 
   get types(): string[] {
-    return ['Tous', 'Congé', 'Rattrapage'];
+    return ['Tous', 'CONGE', 'ABSENCE'];
   }
 
   get departements(): string[] {
-    return ['Tous', ...Array.from(new Set(this.demandes.map(demande => demande.departement))).sort()];
+    return ['Tous', ...Array.from(new Set(
+      this.demandes.map(demande => demande.departementNom || '-')
+    )).sort()];
   }
 
-  get demandesFiltrees(): DemandeEmploye[] {
+  get demandesFiltrees(): ResponsableDemande[] {
     const search = this.searchTerm.trim().toLowerCase();
     return this.demandes.filter(demande => {
-      const matchSearch = !search || demande.employe.toLowerCase().includes(search);
-      const matchType = this.selectedType === 'Tous' || demande.type === this.selectedType;
-      const matchDepartement = this.selectedDepartement === 'Tous' || demande.departement === this.selectedDepartement;
+      const employe = demande.employeNomComplet?.toLowerCase() || '';
+      const departement = demande.departementNom || '-';
+      const matchSearch = !search || employe.includes(search);
+      const matchType = this.selectedType === 'Tous' || demande.typeDemande === this.selectedType;
+      const matchDepartement = this.selectedDepartement === 'Tous' || departement === this.selectedDepartement;
       return matchSearch && matchType && matchDepartement;
     });
   }
 
-  valider(demande: DemandeEmploye): void {
-    if (demande.statut !== 'Validé_Responsable') {
-      return;
-    }
+  loadDemandes(): void {
+    this.loading = true;
+    this.errorMessage = '';
 
-    demande.statut = 'Validée DG';
-    demande.commentaire = 'Demande validée par le Directeur Général.';
+    this.directeurGeneralDemandeService.getDemandesAValider().pipe(
+      finalize(() => {
+        this.loading = false;
+        this.cdr.markForCheck();
+      })
+    ).subscribe({
+      next: demandes => {
+        this.demandes = [...demandes];
+      },
+      error: error => {
+        console.error('Erreur demandes DG', error);
+        this.demandes = [];
+        this.errorMessage = this.getErrorMessage(error);
+      },
+    });
   }
 
-  refuser(demande: DemandeEmploye): void {
-    if (demande.statut !== 'Validé_Responsable') {
-      return;
+  formatDate(value?: string | null): string {
+    if (!value) {
+      return '-';
     }
 
-    demande.statut = 'Refusée';
-    demande.commentaire = 'Demande refusée par le Directeur Général.';
+    return new Intl.DateTimeFormat('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(new Date(value));
+  }
+
+  getDateDebut(demande: ResponsableDemande): string {
+    return demande.dateDebutResp || demande.dateDebutEmp;
+  }
+
+  getDateFin(demande: ResponsableDemande): string {
+    return demande.dateFinResp || demande.dateFinEmp;
+  }
+
+  private getErrorMessage(error: unknown): string {
+    if (error instanceof HttpErrorResponse) {
+      if (typeof error.error === 'string' && error.error.trim()) {
+        return error.error;
+      }
+      return error.error?.message || 'Erreur lors du chargement des demandes';
+    }
+
+    return 'Erreur lors du chargement des demandes';
   }
 }

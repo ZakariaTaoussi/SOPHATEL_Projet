@@ -2,15 +2,15 @@
   <header class="page-header">
     <div>
       <span class="page-kicker">Validation finale</span>
-      <h1>Demande Employe</h1>
-      <p>Validez ou refusez les demandes des employés.</p>
+      <h1>Demandes employes</h1>
+      <p>Demandes validees par les responsables et en attente de decision DG.</p>
     </div>
   </header>
 
   <section class="filters-card">
     <label class="field search-field">
-      <span>Recherche employé</span>
-      <input type="search" [(ngModel)]="searchTerm" placeholder="Nom de l'employé" />
+      <span>Recherche employe</span>
+      <input type="search" [(ngModel)]="searchTerm" placeholder="Nom de l'employe" />
     </label>
 
     <label class="field">
@@ -21,7 +21,7 @@
     </label>
 
     <label class="field">
-      <span>Département</span>
+      <span>Departement</span>
       <select [(ngModel)]="selectedDepartement">
         <option *ngFor="let departement of departements" [value]="departement">{{ departement }}</option>
       </select>
@@ -31,48 +31,46 @@
   <section class="demandes-card">
     <div class="card-title">
       <div>
-        <h2>Demandes validées responsable</h2>
-        <p>{{ demandesFiltrees.length }} demande(s) trouvée(s)</p>
+        <h2>Demandes validees responsable</h2>
+        <p>{{ loading ? 'Chargement...' : demandesFiltrees.length + ' demande(s) trouvee(s)' }}</p>
       </div>
     </div>
+
+    <p *ngIf="errorMessage" class="error-message">{{ errorMessage }}</p>
 
     <div class="table-wrapper">
       <table class="demandes-table">
         <thead>
           <tr>
-            <th>Réf.</th>
-            <th>Employé</th>
-            <th>Département</th>
+            <th>Ref.</th>
+            <th>Employe</th>
+            <th>Departement</th>
             <th>Type</th>
-            <th>Période</th>
-            <th>Durée</th>
+            <th>Periode</th>
+            <th>Duree</th>
             <th>Statut</th>
-            <th>Action</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let demande of demandesFiltrees">
-            <td class="ref-cell">{{ demande.reference }}</td>
-            <td>
-              <strong>{{ demande.employe }}</strong>
-              <span class="matricule">{{ demande.matricule }}</span>
-            </td>
-            <td>{{ demande.departement }}</td>
-            <td>{{ demande.type }}</td>
-            <td class="date-cell">{{ demande.dateDebut }} - {{ demande.dateFin }}</td>
-            <td><span class="duree-chip">{{ demande.duree }} j</span></td>
-            <td><span class="badge" [attr.data-status]="demande.statut">{{ demande.statut }}</span></td>
-            <td>
-              <div class="action-group" *ngIf="demande.statut === 'Validé_Responsable'; else done">
-                <button type="button" class="accept-btn" (click)="valider(demande)">Valider</button>
-                <button type="button" class="reject-btn" (click)="refuser(demande)">Refuser</button>
-              </div>
-              <ng-template #done><span class="file-chip">{{ demande.commentaire }}</span></ng-template>
-            </td>
+          <tr *ngIf="loading">
+            <td colspan="7" class="empty-cell">Chargement...</td>
           </tr>
 
-          <tr *ngIf="demandesFiltrees.length === 0">
-            <td colspan="8" class="empty-cell">Aucune demande ne correspond aux filtres.</td>
+          <tr *ngFor="let demande of demandesFiltrees">
+            <td class="ref-cell">DEM-{{ demande.id }}</td>
+            <td>
+              <strong>{{ demande.employeNomComplet || '-' }}</strong>
+              <span class="matricule">EMP-{{ demande.empId }}</span>
+            </td>
+            <td>{{ demande.departementNom || '-' }}</td>
+            <td>{{ demande.typeDemande }}</td>
+            <td class="date-cell">{{ formatDate(getDateDebut(demande)) }} - {{ formatDate(getDateFin(demande)) }}</td>
+            <td><span class="duree-chip">{{ demande.joursDeduits || 0 }} j</span></td>
+            <td><span class="badge" data-status="VALIDE_RESPONSABLE">En attente DG</span></td>
+          </tr>
+
+          <tr *ngIf="!loading && demandesFiltrees.length === 0">
+            <td colspan="7" class="empty-cell">Aucune demande ne correspond aux filtres.</td>
           </tr>
         </tbody>
       </table>

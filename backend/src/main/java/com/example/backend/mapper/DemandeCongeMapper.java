@@ -3,6 +3,8 @@ package com.example.backend.mapper;
 import com.example.backend.dto.demande.DemandeCongeCreateRequest;
 import com.example.backend.dto.demande.DemandeCongeResponse;
 import com.example.backend.dto.demande.DemandeCongeUpdateRequest;
+import com.example.backend.dto.demande.ResponsableDemandeResponse;
+import com.example.backend.model.Departement;
 import com.example.backend.model.DemandeConge;
 import com.example.backend.model.Employe;
 import com.example.backend.model.enums.StatusDemande;
@@ -34,6 +36,28 @@ public class DemandeCongeMapper {
                 demande.getId(),
                 employe == null ? null : employe.getIdEmp(),
                 employe == null ? null : employe.getPrenom() + " " + employe.getNom(),
+                demande.getDateDebutEmp(),
+                demande.getDateFinEmp(),
+                demande.getDateDebutResp(),
+                demande.getDateFinResp(),
+                demande.getDateDebutDg(),
+                demande.getDateFinDg(),
+                demande.getTypeDemande(),
+                demande.getStatus(),
+                demande.getJoursDeduits(),
+                demande.getCreatedAt(),
+                demande.getUpdatedAt());
+    }
+
+    public ResponsableDemandeResponse toResponsableResponse(DemandeConge demande) {
+        Employe employe = demande.getEmploye();
+        Departement departement = employe == null ? null : employe.getDepartement();
+        return new ResponsableDemandeResponse(
+                demande.getId(),
+                employe == null ? null : employe.getIdEmp(),
+                employe == null ? null : employe.getPrenom() + " " + employe.getNom(),
+                departement == null ? null : departement.getId(),
+                departement == null ? null : departement.getNom(),
                 demande.getDateDebutEmp(),
                 demande.getDateFinEmp(),
                 demande.getDateDebutResp(),

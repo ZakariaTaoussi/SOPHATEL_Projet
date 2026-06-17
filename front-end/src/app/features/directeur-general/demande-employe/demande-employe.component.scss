@@ -76,7 +76,7 @@
   color: #b91c1c;
 }
 
-.badge[data-status="Validé_Responsable"] {
+.badge[data-status="VALIDE_RESPONSABLE"] {
   background: #fffbeb;
   color: #b45309;
 }
@@ -175,6 +175,17 @@
     color: #64748b;
     font-size: .88rem;
   }
+}
+
+.error-message {
+  margin: 0 24px 12px;
+  padding: 10px 12px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: .86rem;
+  font-weight: 750;
 }
 
 .table-wrapper {

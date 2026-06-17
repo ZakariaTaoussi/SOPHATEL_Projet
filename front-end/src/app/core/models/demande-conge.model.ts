@@ -9,12 +9,15 @@ export type StatusDemande =
   | 'MODIFICATION_RESPONSABLE'
   | 'MODIFICATION_DG'
   | 'ANNULE'
-  | 'REFUSE';
+  | 'REFUSE_RESPONSABLE'
+  | 'REFUSE_DG';
 
 export interface DemandeConge {
   id: number;
   empId: number;
   employeNomComplet?: string;
+  departementId?: number | null;
+  departementNom?: string | null;
   dateDebutEmp: string;
   dateFinEmp: string;
   dateDebutResp?: string | null;
@@ -38,6 +41,30 @@ export interface DemandeCongeUpdateRequest {
   dateDebutEmp: string;
   dateFinEmp: string;
   typeDemande: TypeDemande;
+}
+
+export interface ResponsableDemande {
+  id: number;
+  empId: number;
+  employeNomComplet: string;
+  departementId: number | null;
+  departementNom: string | null;
+  dateDebutEmp: string;
+  dateFinEmp: string;
+  dateDebutResp: string | null;
+  dateFinResp: string | null;
+  dateDebutDg: string | null;
+  dateFinDg: string | null;
+  typeDemande: TypeDemande;
+  status: StatusDemande;
+  joursDeduits: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ResponsableValidationDemandeRequest {
+  dateDebutResp?: string | null;
+  dateFinResp?: string | null;
 }
 
 export interface SoldeConge {
