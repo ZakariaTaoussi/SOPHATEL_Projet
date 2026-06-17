@@ -68,6 +68,17 @@
   line-height: 1.45;
 }
 
+.error-message {
+  margin: 0 0 18px;
+  padding: 10px 12px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: .88rem;
+  font-weight: 700;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -171,6 +182,12 @@
   border: 0;
   background: transparent;
   color: #020617;
+}
+
+.btn-submit:disabled,
+.btn-draft:disabled {
+  cursor: not-allowed;
+  opacity: .65;
 }
 
 .side-column {

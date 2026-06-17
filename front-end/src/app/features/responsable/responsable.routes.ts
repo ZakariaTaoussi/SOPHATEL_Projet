@@ -40,8 +40,7 @@ export const RESPONSABLE_ROUTES: Routes = [
 			},
 			{
 				path: 'validation-demandes',
-				redirectTo: 'mes-employes',
-				pathMatch: 'full',
+				loadComponent: () => import('./validation-demandes/validation-demandes.component').then(m => m.ResponsableValidationDemandesComponent),
 			},
 			{ path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 		],

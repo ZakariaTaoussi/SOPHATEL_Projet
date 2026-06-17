@@ -1,26 +1,16 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { finalize, Subscription } from 'rxjs';
+import { DemandeConge, DemandeCongeUpdateRequest, StatusDemande, TypeDemande } from '../../../core/models/demande-conge.model';
+import { DemandeCongeService } from '../../../core/services/demande-conge.service';
 import { NotificationService } from '../../../core/services/notification.service';
 
-type StatutDemande = 'EN_ATTENTE' | 'VALIDEE_RESPONSABLE' | 'VALIDEE_DG' | 'ANNULE' | 'REFUSE';
-
-type Demande = {
-  id: string;
-  type: 'Congé' | 'Rattrapage' | string;
-  dateDepot: string;
-  dateDebut: string;
-  dateFin: string;
-  duree: number;
-  statut: StatutDemande;
-  commentaire?: string;
-};
-
 type DemandeForm = {
-  type: string;
-  dateDebut: string;
-  dateFin: string;
-  commentaire: string;
+  typeDemande: TypeDemande;
+  dateDebutEmp: string;
+  dateFinEmp: string;
 };
 
 @Component({
@@ -30,62 +20,121 @@ type DemandeForm = {
   templateUrl: './mes-demandes.component.html',
   styleUrls: ['./mes-demandes.component.scss'],
 })
-export class MesDemandesComponent {
-  constructor(private readonly notificationService: NotificationService) {}
-
-  demandes: Demande[] = [
-    { id: 'DEM-001', type: 'Rattrapage', dateDepot: '01/04/2025', dateDebut: '02/04/2025', dateFin: '04/04/2025', duree: 3, statut: 'VALIDEE_RESPONSABLE', commentaire: '' },
-    { id: 'DEM-002', type: 'Congé', dateDepot: '11/05/2025', dateDebut: '12/05/2025', dateFin: '14/05/2025', duree: 3, statut: 'VALIDEE_DG', commentaire: '' },
-    { id: 'DEM-003', type: 'Congé', dateDepot: '01/06/2025', dateDebut: '03/06/2025', dateFin: '03/06/2025', duree: 1, statut: 'VALIDEE_DG', commentaire: '' },
-    { id: 'DEM-004', type: 'Congé', dateDepot: '10/07/2025', dateDebut: '15/07/2025', dateFin: '25/07/2025', duree: 11, statut: 'EN_ATTENTE', commentaire: '' },
-    { id: 'DEM-005', type: 'Congé', dateDepot: '05/09/2025', dateDebut: '10/09/2025', dateFin: '10/09/2025', duree: 1, statut: 'REFUSE', commentaire: 'Manque de personnel ce jour.' },
-  ];
-
-  demandeAImprimer?: Demande;
-  demandeEnModification?: Demande;
+export class MesDemandesComponent implements OnInit, OnDestroy {
+  demandes: DemandeConge[] = [];
+  demandeAImprimer?: DemandeConge;
+  demandeEnModification?: DemandeConge;
   demandeForm: DemandeForm = {
-    type: 'Congé',
-    dateDebut: '',
-    dateFin: '',
-    commentaire: '',
+    typeDemande: 'CONGE',
+    dateDebutEmp: '',
+    dateFinEmp: '',
   };
 
-  selectedType = 'Tous';
-  selectedStatus: StatutDemande | 'Tous' = 'Tous';
+  selectedType: TypeDemande | 'Tous' = 'Tous';
+  selectedStatus: StatusDemande | 'Tous' = 'Tous';
+  loading = false;
+  errorMessage = '';
+  private readonly subscriptions = new Subscription();
 
-  types = ['Tous', 'Congé', 'Rattrapage'];
-  editTypes = ['Congé', 'Rattrapage'];
-  statuses: Array<StatutDemande | 'Tous'> = ['Tous', 'EN_ATTENTE', 'VALIDEE_RESPONSABLE', 'VALIDEE_DG', 'ANNULE', 'REFUSE'];
+  types: Array<TypeDemande | 'Tous'> = ['Tous', 'CONGE', 'ABSENCE'];
+  editTypes: TypeDemande[] = ['CONGE', 'ABSENCE'];
+  statuses: Array<StatusDemande | 'Tous'> = [
+    'Tous',
+    'BROUILLON',
+    'VALIDE_EMPLOYE',
+    'VALIDE_RESPONSABLE',
+    'VALIDE_DG',
+    'MODIFICATION_EMPLOYE',
+    'ANNULE',
+    'REFUSE',
+  ];
 
-  setType(value: string) { this.selectedType = value; }
-  setStatus(value: string) { this.selectedStatus = value as StatutDemande | 'Tous'; }
+  constructor(
+    private readonly demandeCongeService: DemandeCongeService,
+    private readonly notificationService: NotificationService,
+    private readonly cdr: ChangeDetectorRef
+  ) {}
 
-  get filteredDemandes(): Demande[] {
+  ngOnInit(): void {
+    this.subscriptions.add(
+      this.demandeCongeService.mesDemandes$.subscribe(demandes => {
+        this.demandes = demandes;
+        this.cdr.detectChanges();
+      })
+    );
+    this.loadDemandes();
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+  }
+
+  loadDemandes(): void {
+    this.loading = true;
+    this.errorMessage = '';
+
+    this.demandeCongeService.getMesDemandes().pipe(
+      finalize(() => {
+        this.loading = false;
+        this.cdr.detectChanges();
+      })
+    ).subscribe({
+      next: demandes => {
+        this.loading = false;
+        this.demandes = demandes;
+        this.cdr.detectChanges();
+      },
+      error: error => {
+        this.handleError(error);
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  setType(value: string) {
+    this.selectedType = value as TypeDemande | 'Tous';
+    this.cdr.detectChanges();
+  }
+
+  setStatus(value: string) {
+    this.selectedStatus = value as StatusDemande | 'Tous';
+    this.cdr.detectChanges();
+  }
+
+  get filteredDemandes(): DemandeConge[] {
     return this.demandes.filter(d => {
-      const matchType = this.selectedType === 'Tous' || d.type === this.selectedType;
-      const matchStatus = this.selectedStatus === 'Tous' || d.statut === this.selectedStatus;
+      const matchType = this.selectedType === 'Tous' || d.typeDemande === this.selectedType;
+      const matchStatus = this.selectedStatus === 'Tous' || d.status === this.selectedStatus;
       return matchType && matchStatus;
     });
   }
 
-  getStatutLabel(statut: StatutDemande | 'Tous'): string {
-    const labels: Record<StatutDemande | 'Tous', string> = {
+  getStatutLabel(statut: StatusDemande | 'Tous'): string {
+    const labels: Record<StatusDemande | 'Tous', string> = {
       Tous: 'Tous',
-      EN_ATTENTE: 'En attente',
-      VALIDEE_RESPONSABLE: 'Validée responsable',
-      VALIDEE_DG: 'Validée DG',
-      ANNULE: 'Annulée',
-      REFUSE: 'Refusée',
+      BROUILLON: 'Brouillon',
+      VALIDE_EMPLOYE: 'Soumise',
+      VALIDE_RESPONSABLE: 'Validee responsable',
+      VALIDE_DG: 'Validee DG',
+      MODIFICATION_EMPLOYE: 'Modification employe',
+      MODIFICATION_RESPONSABLE: 'Modification responsable',
+      MODIFICATION_DG: 'Modification DG',
+      ANNULE: 'Annulee',
+      REFUSE: 'Refusee',
     };
 
     return labels[statut];
   }
 
-  getStatutClass(statut: StatutDemande): string {
-    const classes: Record<StatutDemande, string> = {
-      EN_ATTENTE: 'pending',
-      VALIDEE_RESPONSABLE: 'responsable-approved',
-      VALIDEE_DG: 'approved',
+  getStatutClass(statut: StatusDemande): string {
+    const classes: Record<StatusDemande, string> = {
+      BROUILLON: 'draft',
+      VALIDE_EMPLOYE: 'pending',
+      VALIDE_RESPONSABLE: 'responsable-approved',
+      VALIDE_DG: 'approved',
+      MODIFICATION_EMPLOYE: 'draft',
+      MODIFICATION_RESPONSABLE: 'pending',
+      MODIFICATION_DG: 'pending',
       ANNULE: 'cancelled',
       REFUSE: 'rejected',
     };
@@ -93,15 +142,27 @@ export class MesDemandesComponent {
     return classes[statut];
   }
 
-  peutImprimer(demande: Demande): boolean {
-    return demande.statut === 'VALIDEE_DG';
+  peutSubmit(demande: DemandeConge): boolean {
+    return demande.status === 'BROUILLON' || demande.status === 'MODIFICATION_EMPLOYE';
   }
 
-  peutModifier(demande: Demande): boolean {
-    return demande.statut === 'EN_ATTENTE';
+  peutModifierDirect(demande: DemandeConge): boolean {
+    return demande.status === 'BROUILLON' || demande.status === 'MODIFICATION_EMPLOYE';
   }
 
-  imprimerDemande(demande: Demande): void {
+  peutDemanderModification(demande: DemandeConge): boolean {
+    return demande.status === 'VALIDE_EMPLOYE';
+  }
+
+  peutAnnuler(demande: DemandeConge): boolean {
+    return demande.status !== 'ANNULE';
+  }
+
+  peutImprimer(demande: DemandeConge): boolean {
+    return demande.status === 'VALIDE_DG';
+  }
+
+  imprimerDemande(demande: DemandeConge): void {
     if (!this.peutImprimer(demande)) {
       return;
     }
@@ -110,17 +171,16 @@ export class MesDemandesComponent {
     setTimeout(() => window.print());
   }
 
-  ouvrirModification(demande: Demande): void {
-    if (!this.peutModifier(demande)) {
+  ouvrirModification(demande: DemandeConge): void {
+    if (!this.peutModifierDirect(demande)) {
       return;
     }
 
     this.demandeEnModification = demande;
     this.demandeForm = {
-      type: demande.type,
-      dateDebut: this.toInputDate(demande.dateDebut),
-      dateFin: this.toInputDate(demande.dateFin),
-      commentaire: demande.commentaire ?? '',
+      typeDemande: demande.typeDemande,
+      dateDebutEmp: demande.dateDebutEmp,
+      dateFinEmp: demande.dateFinEmp,
     };
   }
 
@@ -133,41 +193,90 @@ export class MesDemandesComponent {
       return;
     }
 
-    this.demandeEnModification.type = this.demandeForm.type;
-    this.demandeEnModification.dateDebut = this.toDisplayDate(this.demandeForm.dateDebut);
-    this.demandeEnModification.dateFin = this.toDisplayDate(this.demandeForm.dateFin);
-    this.demandeEnModification.commentaire = this.demandeForm.commentaire;
-    this.demandeEnModification.duree = this.calculerDuree(this.demandeForm.dateDebut, this.demandeForm.dateFin);
+    const payload: DemandeCongeUpdateRequest = {
+      typeDemande: this.demandeForm.typeDemande,
+      dateDebutEmp: this.demandeForm.dateDebutEmp,
+      dateFinEmp: this.demandeForm.dateFinEmp,
+    };
 
-    this.notificationService.add(`Votre demande ${this.demandeEnModification.id} a été modifiée.`, 'info');
-    this.fermerModification();
+    this.demandeCongeService.modifierDemande(this.demandeEnModification.id, payload).subscribe({
+      next: demande => {
+        this.demandeCongeService.refreshMesDemandes();
+        this.loadDemandes();
+        this.notificationService.add(`Demande DEM-${demande.id} modifiee.`, 'info');
+        this.fermerModification();
+        this.cdr.detectChanges();
+      },
+      error: error => this.handleError(error),
+    });
   }
 
-  annulerDemande(demande: Demande): void {
-    if (!this.peutModifier(demande)) {
+  submitDemande(demande: DemandeConge): void {
+    if (!this.peutSubmit(demande)) {
       return;
     }
 
-    demande.statut = 'ANNULE';
-    demande.commentaire = 'Demande annulée par l’employé.';
-    this.notificationService.add(`Votre demande ${demande.id} a été annulée.`, 'warning');
+    this.demandeCongeService.submitDemande(demande.id).subscribe({
+      next: updated => {
+        this.loadDemandes();
+        this.notificationService.add(`Demande DEM-${updated.id} soumise.`, 'success');
+        this.cdr.detectChanges();
+      },
+      error: error => this.handleError(error),
+    });
   }
 
-  private toInputDate(date: string): string {
-    const [day, month, year] = date.split('/');
-    return `${year}-${month}-${day}`;
+  demanderModification(demande: DemandeConge): void {
+    if (!this.peutDemanderModification(demande)) {
+      return;
+    }
+
+    this.demandeCongeService.passerEnModification(demande.id).subscribe({
+      next: updated => {
+        this.loadDemandes();
+        this.notificationService.add(`Demande DEM-${updated.id} repassee en modification.`, 'info');
+        this.cdr.detectChanges();
+      },
+      error: error => this.handleError(error),
+    });
   }
 
-  private toDisplayDate(date: string): string {
-    const [year, month, day] = date.split('-');
-    return `${day}/${month}/${year}`;
+  annulerDemande(demande: DemandeConge): void {
+    if (!this.peutAnnuler(demande)) {
+      return;
+    }
+
+    this.demandeCongeService.annulerDemande(demande.id).subscribe({
+      next: updated => {
+        this.loadDemandes();
+        this.notificationService.add(`Demande DEM-${updated.id} annulee.`, 'warning');
+        this.cdr.detectChanges();
+      },
+      error: error => this.handleError(error),
+    });
   }
 
-  private calculerDuree(dateDebut: string, dateFin: string): number {
-    const debut = new Date(dateDebut);
-    const fin = new Date(dateFin);
-    const diff = fin.getTime() - debut.getTime();
-    const days = Math.floor(diff / 86400000) + 1;
-    return Math.max(days, 1);
+  formatDate(value?: string | null): string {
+    if (!value) {
+      return '-';
+    }
+
+    return new Intl.DateTimeFormat('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(new Date(value));
+  }
+
+  private handleError(error: unknown): void {
+    console.error('Erreur demande conge', error);
+    if (error instanceof HttpErrorResponse) {
+      this.errorMessage = typeof error.error === 'string'
+        ? error.error
+        : error.error?.message ?? 'Une erreur est survenue.';
+      return;
+    }
+
+    this.errorMessage = 'Une erreur est survenue.';
   }
 }

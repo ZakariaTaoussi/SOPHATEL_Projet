@@ -1,4 +1,38 @@
 <div class="responsable-page">
-  <h1>Validation des Demandes - Responsable</h1>
-  <p>Liste des demandes à valider par le responsable.</p>
+  <header class="page-header">
+    <h1>Validation des demandes</h1>
+    <p>Demandes soumises par vos employes avec le statut VALIDE_EMPLOYE.</p>
+  </header>
+
+  <p *ngIf="errorMessage" class="error-message">{{ errorMessage }}</p>
+
+  <section class="card">
+    <p *ngIf="loading" class="empty-state">Chargement...</p>
+    <p *ngIf="!loading && demandes.length === 0" class="empty-state">Aucune demande a valider.</p>
+
+    <div class="table-wrapper" *ngIf="!loading && demandes.length > 0">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Ref.</th>
+            <th>Employe</th>
+            <th>Type</th>
+            <th>Periode</th>
+            <th>Jours deduits</th>
+            <th>Statut</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let demande of demandes">
+            <td>DEM-{{ demande.id }}</td>
+            <td>{{ demande.employeNomComplet || '-' }}</td>
+            <td>{{ demande.typeDemande }}</td>
+            <td>{{ formatDate(demande.dateDebutEmp) }} -> {{ formatDate(demande.dateFinEmp) }}</td>
+            <td>{{ demande.joursDeduits || 0 }}j</td>
+            <td><span class="badge">{{ demande.status }}</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
 </div>

@@ -1,6 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { finalize, Subscription } from 'rxjs';
+import { DemandeCongeService } from '../../../core/services/demande-conge.service';
+import { NotificationService } from '../../../core/services/notification.service';
+import { SoldeConge, TypeDemande } from '../../../core/models/demande-conge.model';
 
 @Component({
   selector: 'app-nouvelle-demande',
@@ -9,71 +15,208 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './nouvelle-demande.component.html',
   styleUrls: ['./nouvelle-demande.component.scss'],
 })
-export class NouvellDemandeComponent {
-  typesDemande = ['Congé', 'Rattrapage'];
+export class NouvellDemandeComponent implements OnInit, OnDestroy {
+  typesDemande: TypeDemande[] = ['CONGE', 'ABSENCE'];
 
   form = {
-    type: 'Congé',
-    demandeur: 'Amine Benali',
-    dateDebut: '',
-    dateFin: '',
-    motif: '',
+    typeDemande: 'CONGE' as TypeDemande,
+    dateDebutEmp: '',
+    dateFinEmp: '',
   };
 
-  joursFeries = [
-    { nom: 'Fête du Travail', date: '01 mai 2026' },
-    { nom: 'Fête du Trône', date: '30 juil. 2026' },
-    { nom: 'Oued Ed-Dahab', date: '14 août 2026' },
-    { nom: 'Marche Verte', date: '06 nov. 2026' },
-  ];
+  solde?: SoldeConge;
+  joursApercu: number | null = null;
+  demandeBrouillonId?: number;
+  loading = false;
+  savingDraft = false;
+  submitting = false;
+  errorMessage = '';
+  private readonly subscriptions = new Subscription();
 
-  readonly soldeActuel = 14;
-  readonly soldeTotal = 22;
+  constructor(
+    private readonly demandeCongeService: DemandeCongeService,
+    private readonly notificationService: NotificationService,
+    private readonly router: Router,
+    private readonly cdr: ChangeDetectorRef
+  ) {}
 
-  get periode() {
-    if (!this.form.dateDebut || !this.form.dateFin) {
-      return '—';
+  ngOnInit(): void {
+    this.subscriptions.add(
+      this.demandeCongeService.soldeConge$.subscribe(solde => {
+        if (solde) {
+          this.solde = solde;
+          this.cdr.detectChanges();
+        }
+      })
+    );
+    this.loadSolde();
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+  }
+
+  get periode(): string {
+    if (!this.form.dateDebutEmp || !this.form.dateFinEmp) {
+      return '-';
     }
 
-    return `${this.formatDate(this.form.dateDebut)} - ${this.formatDate(this.form.dateFin)}`;
+    return `${this.formatDate(this.form.dateDebutEmp)} - ${this.formatDate(this.form.dateFinEmp)}`;
   }
 
-  get joursOuvres() {
-    if (!this.form.dateDebut || !this.form.dateFin) {
-      return null;
+  get soldeApres(): string {
+    if (this.form.typeDemande !== 'CONGE' || this.joursApercu === null || !this.solde) {
+      return '-';
     }
 
-    const debut = new Date(this.form.dateDebut);
-    const fin = new Date(this.form.dateFin);
-    let total = 0;
+    return `${Math.max(this.solde.soldeActuel - this.joursApercu, 0)} / ${this.solde.soldeTotal} j`;
+  }
 
-    for (const date = new Date(debut); date <= fin; date.setDate(date.getDate() + 1)) {
-      const day = date.getDay();
-      if (day !== 0 && day !== 6) {
-        total++;
-      }
+  loadSolde(): void {
+    this.demandeCongeService.getSoldeConge().subscribe({
+      next: solde => {
+        this.solde = solde;
+        this.cdr.detectChanges();
+      },
+      error: error => {
+        this.handleError(error);
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  onFormChange(): void {
+    this.errorMessage = '';
+    this.demandeBrouillonId = undefined;
+    this.calculerJours();
+    this.cdr.detectChanges();
+  }
+
+  calculerJours(): void {
+    if (this.form.typeDemande !== 'CONGE' || !this.form.dateDebutEmp || !this.form.dateFinEmp) {
+      this.joursApercu = null;
+      return;
     }
 
-    return Math.max(total, 0);
+    this.demandeCongeService.calculerJours(this.form.dateDebutEmp, this.form.dateFinEmp).subscribe({
+      next: response => {
+        this.joursApercu = response.jours;
+        this.cdr.detectChanges();
+      },
+      error: error => {
+        this.joursApercu = null;
+        this.handleError(error);
+        this.cdr.detectChanges();
+      },
+    });
   }
 
-  get soldeApres() {
-    if (this.form.type !== 'Congé' || this.joursOuvres === null) {
-      return '—';
+  enregistrerBrouillon(): void {
+    if (!this.isFormValid()) {
+      return;
     }
 
-    return `${Math.max(this.soldeActuel - this.joursOuvres, 0)} / ${this.soldeTotal} j`;
+    this.savingDraft = true;
+    this.errorMessage = '';
+
+    this.demandeCongeService.creerDemande(this.buildPayload()).pipe(
+      finalize(() => {
+        this.savingDraft = false;
+        this.cdr.detectChanges();
+      })
+    ).subscribe({
+      next: demande => {
+        this.savingDraft = false;
+        this.demandeBrouillonId = demande.id;
+        this.demandeCongeService.refreshMesDemandes();
+        this.notificationService.add(`Demande DEM-${demande.id} enregistree en brouillon.`, 'success');
+        this.cdr.detectChanges();
+      },
+      error: error => {
+        this.handleError(error);
+        this.cdr.detectChanges();
+      },
+    });
   }
 
-  enregistrerBrouillon() {
-    // Placeholder for future API integration.
+  soumettreDemande(): void {
+    if (!this.isFormValid()) {
+      return;
+    }
+
+    this.submitting = true;
+    this.errorMessage = '';
+
+    const submitDraft = (id: number) => {
+      this.demandeCongeService.submitDemande(id).pipe(
+        finalize(() => {
+          this.submitting = false;
+          this.cdr.detectChanges();
+        })
+      ).subscribe({
+        next: demande => {
+          this.submitting = false;
+          this.notificationService.add(`Demande DEM-${demande.id} soumise.`, 'success');
+          this.cdr.detectChanges();
+          this.router.navigate(['/employe/mes-demandes']);
+        },
+        error: error => {
+          this.handleError(error);
+          this.cdr.detectChanges();
+        },
+      });
+    };
+
+    if (this.demandeBrouillonId) {
+      submitDraft(this.demandeBrouillonId);
+      return;
+    }
+
+    this.demandeCongeService.creerDemande(this.buildPayload()).subscribe({
+      next: demande => submitDraft(demande.id),
+      error: error => {
+        this.submitting = false;
+        this.handleError(error);
+        this.cdr.detectChanges();
+      },
+    });
   }
 
-  soumettreDemande() {
-    // Placeholder for future API integration.
+  private buildPayload() {
+    return {
+      dateDebutEmp: this.form.dateDebutEmp,
+      dateFinEmp: this.form.dateFinEmp,
+      typeDemande: this.form.typeDemande,
+    };
   }
 
-  private formatDate(value: string) {
+  private isFormValid(): boolean {
+    if (!this.form.dateDebutEmp || !this.form.dateFinEmp || !this.form.typeDemande) {
+      this.errorMessage = 'Veuillez remplir tous les champs obligatoires.';
+      return false;
+    }
+
+    if (this.form.dateDebutEmp > this.form.dateFinEmp) {
+      this.errorMessage = 'La date de debut ne peut pas etre apres la date de fin.';
+      return false;
+    }
+
+    return true;
+  }
+
+  private handleError(error: unknown): void {
+    console.error('Erreur demande conge', error);
+    if (error instanceof HttpErrorResponse) {
+      this.errorMessage = typeof error.error === 'string'
+        ? error.error
+        : error.error?.message ?? 'Une erreur est survenue.';
+      return;
+    }
+
+    this.errorMessage = 'Une erreur est survenue.';
+  }
+
+  private formatDate(value: string): string {
     return new Intl.DateTimeFormat('fr-FR', {
       day: '2-digit',
       month: 'short',

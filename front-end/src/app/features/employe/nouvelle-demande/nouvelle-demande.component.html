@@ -1,7 +1,7 @@
 <div class="request-page">
   <header class="page-header">
     <h1>Nouvelle demande</h1>
-    <p>Soumettez une demande de congé ou de rattrapage.</p>
+    <p>Creez une demande de conge ou d'absence.</p>
   </header>
 
   <div class="request-layout">
@@ -18,88 +18,69 @@
         <h2>Formulaire de demande</h2>
       </div>
 
-      <p class="form-note">Tous les champs sont obligatoires. Le délai de préavis est de 15 jours pour les congés.</p>
+      <p class="form-note">Les conges deduisent le solde seulement au moment du submit.</p>
+
+      <p *ngIf="errorMessage" class="error-message">{{ errorMessage }}</p>
 
       <form>
         <div class="form-grid">
           <label class="field field-small">
             <span>Type de demande</span>
-            <select name="type" [(ngModel)]="form.type">
+            <select name="typeDemande" [(ngModel)]="form.typeDemande" (ngModelChange)="onFormChange()">
               <option *ngFor="let type of typesDemande" [value]="type">{{ type }}</option>
             </select>
           </label>
 
           <label class="field">
-            <span>Demandeur</span>
-            <input type="text" name="demandeur" [(ngModel)]="form.demandeur" readonly />
-          </label>
-
-          <label class="field">
-            <span>Date de début</span>
-            <input type="date" name="dateDebut" [(ngModel)]="form.dateDebut" />
+            <span>Date de debut</span>
+            <input type="date" name="dateDebutEmp" [(ngModel)]="form.dateDebutEmp" (ngModelChange)="onFormChange()" />
           </label>
 
           <label class="field">
             <span>Date de fin</span>
-            <input type="date" name="dateFin" [(ngModel)]="form.dateFin" />
-          </label>
-
-          <label class="field field-full">
-            <span>Motif</span>
-            <textarea
-              name="motif"
-              [(ngModel)]="form.motif"
-              placeholder="Précisez le motif de votre demande..."
-            ></textarea>
+            <input type="date" name="dateFinEmp" [(ngModel)]="form.dateFinEmp" (ngModelChange)="onFormChange()" />
           </label>
         </div>
 
         <div class="form-actions">
-          <button type="button" class="btn-submit" (click)="soumettreDemande()">Soumettre la demande</button>
-          <button type="button" class="btn-draft">Annuler</button>
-         
+          <button type="button" class="btn-draft" [disabled]="savingDraft || submitting" (click)="enregistrerBrouillon()">
+            {{ savingDraft ? 'Enregistrement...' : 'Enregistrer brouillon' }}
+          </button>
+          <button type="button" class="btn-submit" [disabled]="savingDraft || submitting" (click)="soumettreDemande()">
+            {{ submitting ? 'Submit...' : 'Submit' }}
+          </button>
         </div>
       </form>
     </section>
 
     <aside class="side-column">
       <section class="side-card">
-        <h2>Récapitulatif</h2>
+        <h2>Recapitulatif</h2>
         <dl class="summary-list">
           <div>
             <dt>Type</dt>
-            <dd>{{ form.type }}</dd>
+            <dd>{{ form.typeDemande }}</dd>
           </div>
           <div>
-            <dt>Période</dt>
+            <dt>Periode</dt>
             <dd>{{ periode }}</dd>
           </div>
           <div>
-            <dt>Jours ouvrés</dt>
-            <dd>{{ joursOuvres === null ? '—' : joursOuvres }}</dd>
+            <dt>Jours deduits</dt>
+            <dd>{{ form.typeDemande === 'CONGE' ? (joursApercu === null ? '-' : joursApercu) : 0 }}</dd>
           </div>
         </dl>
 
         <dl class="summary-list summary-balance">
           <div>
             <dt>Solde actuel</dt>
-            <dd>{{ soldeActuel }} / {{ soldeTotal }} j</dd>
+            <dd>{{ solde ? (solde.soldeActuel + ' / ' + solde.soldeTotal + ' j') : '-' }}</dd>
           </div>
           <div>
-            <dt>Solde après</dt>
+            <dt>Solde apres</dt>
             <dd>{{ soldeApres }}</dd>
           </div>
         </dl>
-      </section>
-
-      <section class="side-card">
-        <h2>Jours fériés à venir</h2>
-        <ul class="holiday-list">
-          <li *ngFor="let jour of joursFeries">
-            <span>{{ jour.nom }}</span>
-            <strong>{{ jour.date }}</strong>
-          </li>
-        </ul>
       </section>
     </aside>
   </div>

@@ -2,7 +2,7 @@
   <div class="page-header">
     <div>
       <h1 class="page-title">Mes Demandes</h1>
-      <p class="page-subtitle">Suivez l'état de toutes vos demandes.</p>
+      <p class="page-subtitle">Suivez l'etat de toutes vos demandes.</p>
     </div>
     <div class="header-controls">
       <div class="filters">
@@ -22,44 +22,45 @@
     </div>
   </div>
 
+  <p *ngIf="errorMessage" class="error-message">{{ errorMessage }}</p>
+
   <div class="card">
-    <div class="table-wrapper">
+    <p *ngIf="loading" class="empty-state">Chargement...</p>
+    <p *ngIf="!loading && filteredDemandes.length === 0" class="empty-state">Aucune demande trouvee.</p>
+
+    <div class="table-wrapper" *ngIf="!loading && filteredDemandes.length > 0">
       <table class="data-table">
         <thead>
           <tr>
-            <th>Réf.</th>
+            <th>Ref.</th>
             <th>Type</th>
-            <th>Déposée le</th>
-            <th>Période</th>
-            <th>Durée</th>
+            <th>Deposee le</th>
+            <th>Periode</th>
+            <th>Jours deduits</th>
             <th>Statut</th>
-            <th>Commentaire</th>
             <th>Action</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let d of filteredDemandes">
-            <td class="ref-cell">{{ d.id }}</td>
-            <td class="type-cell">{{ d.type }}</td>
-            <td class="date-cell">{{ d.dateDepot }}</td>
-            <td class="date-cell">{{ d.dateDebut }} -> {{ d.dateFin }}</td>
-            <td><span class="duree-chip">{{ d.duree }}j</span></td>
+            <td class="ref-cell">DEM-{{ d.id }}</td>
+            <td class="type-cell">{{ d.typeDemande }}</td>
+            <td class="date-cell">{{ formatDate(d.createdAt) }}</td>
+            <td class="date-cell">{{ formatDate(d.dateDebutEmp) }} -> {{ formatDate(d.dateFinEmp) }}</td>
+            <td><span class="duree-chip">{{ d.joursDeduits || 0 }}j</span></td>
             <td>
-              <span class="badge" [attr.data-status]="getStatutClass(d.statut)">
-                {{ getStatutLabel(d.statut) }}
+              <span class="badge" [attr.data-status]="getStatutClass(d.status)">
+                {{ getStatutLabel(d.status) }}
               </span>
             </td>
-            <td class="comment-cell">
-              <span *ngIf="d.commentaire" class="comment-text">{{ d.commentaire }}</span>
-              <span *ngIf="!d.commentaire" class="no-comment">-</span>
-            </td>
             <td class="action-cell">
-              <div class="action-group" *ngIf="peutModifier(d)">
+              <div class="action-group">
                 <button
+                  *ngIf="peutModifierDirect(d)"
                   type="button"
                   class="icon-btn edit-btn"
-                  title="Modifier la demande"
-                  aria-label="Modifier la demande"
+                  title="Modifier"
+                  aria-label="Modifier"
                   (click)="ouvrirModification(d)"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -67,11 +68,41 @@
                     <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
                   </svg>
                 </button>
+
                 <button
+                  *ngIf="peutSubmit(d)"
+                  type="button"
+                  class="icon-btn submit-btn"
+                  title="Submit"
+                  aria-label="Submit"
+                  (click)="submitDemande(d)"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M22 2 11 13"/>
+                    <path d="m22 2-7 20-4-9-9-4Z"/>
+                  </svg>
+                </button>
+
+                <button
+                  *ngIf="peutDemanderModification(d)"
+                  type="button"
+                  class="icon-btn request-edit-btn"
+                  title="Demander modification"
+                  aria-label="Demander modification"
+                  (click)="demanderModification(d)"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M3 12a9 9 0 1 0 3-6.7"/>
+                    <path d="M3 3v6h6"/>
+                  </svg>
+                </button>
+
+                <button
+                  *ngIf="peutAnnuler(d)"
                   type="button"
                   class="icon-btn cancel-btn"
-                  title="Annuler la demande"
-                  aria-label="Annuler la demande"
+                  title="Annuler"
+                  aria-label="Annuler"
                   (click)="annulerDemande(d)"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -79,23 +110,22 @@
                     <path d="m6 6 12 12"/>
                   </svg>
                 </button>
-              </div>
 
-              <button
-                *ngIf="peutImprimer(d)"
-                type="button"
-                class="icon-btn print-btn"
-                title="Imprimer la demande validée par le DG"
-                aria-label="Imprimer la demande validée par le DG"
-                (click)="imprimerDemande(d)"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                  <path d="M6 9V2h12v7"/>
-                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-                  <path d="M6 14h12v8H6z"/>
-                </svg>
-              </button>
-              <span *ngIf="!peutModifier(d) && !peutImprimer(d)" class="no-action">-</span>
+                <button
+                  *ngIf="peutImprimer(d)"
+                  type="button"
+                  class="icon-btn print-btn"
+                  title="Imprimer"
+                  aria-label="Imprimer"
+                  (click)="imprimerDemande(d)"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M6 9V2h12v7"/>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                    <path d="M6 14h12v8H6z"/>
+                  </svg>
+                </button>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -115,32 +145,27 @@
 
     <header class="modal-header">
       <h2>Modifier la demande</h2>
-      <p>{{ demandeEnModification.id }} est encore en attente, vous pouvez ajuster les informations.</p>
+      <p>DEM-{{ demandeEnModification.id }} peut etre ajustee avant un nouveau submit.</p>
     </header>
 
     <label class="field">
       <span>Type</span>
-      <select name="type" [(ngModel)]="demandeForm.type">
+      <select name="typeDemande" [(ngModel)]="demandeForm.typeDemande">
         <option *ngFor="let type of editTypes" [value]="type">{{ type }}</option>
       </select>
     </label>
 
     <div class="date-grid">
       <label class="field">
-        <span>Date de début</span>
-        <input type="date" name="dateDebut" [(ngModel)]="demandeForm.dateDebut" required />
+        <span>Date de debut</span>
+        <input type="date" name="dateDebutEmp" [(ngModel)]="demandeForm.dateDebutEmp" required />
       </label>
 
       <label class="field">
         <span>Date de fin</span>
-        <input type="date" name="dateFin" [(ngModel)]="demandeForm.dateFin" required />
+        <input type="date" name="dateFinEmp" [(ngModel)]="demandeForm.dateFinEmp" required />
       </label>
     </div>
-
-    <label class="field">
-      <span>Commentaire</span>
-      <textarea name="commentaire" [(ngModel)]="demandeForm.commentaire"></textarea>
-    </label>
 
     <div class="modal-actions">
       <button type="button" class="btn-secondary" (click)="fermerModification()">Annuler</button>
@@ -150,29 +175,29 @@
 </div>
 
 <section class="print-sheet" *ngIf="demandeAImprimer">
-  <h1>Demande de congé</h1>
-  <p class="print-ref">{{ demandeAImprimer.id }}</p>
+  <h1>Demande de conge</h1>
+  <p class="print-ref">DEM-{{ demandeAImprimer.id }}</p>
 
   <dl>
     <div>
       <dt>Type</dt>
-      <dd>{{ demandeAImprimer.type }}</dd>
+      <dd>{{ demandeAImprimer.typeDemande }}</dd>
     </div>
     <div>
-      <dt>Date de dépôt</dt>
-      <dd>{{ demandeAImprimer.dateDepot }}</dd>
+      <dt>Date de depot</dt>
+      <dd>{{ formatDate(demandeAImprimer.createdAt) }}</dd>
     </div>
     <div>
-      <dt>Période</dt>
-      <dd>{{ demandeAImprimer.dateDebut }} -> {{ demandeAImprimer.dateFin }}</dd>
+      <dt>Periode</dt>
+      <dd>{{ formatDate(demandeAImprimer.dateDebutEmp) }} -> {{ formatDate(demandeAImprimer.dateFinEmp) }}</dd>
     </div>
     <div>
-      <dt>Durée</dt>
-      <dd>{{ demandeAImprimer.duree }} jour(s)</dd>
+      <dt>Jours deduits</dt>
+      <dd>{{ demandeAImprimer.joursDeduits || 0 }} jour(s)</dd>
     </div>
     <div>
       <dt>Statut</dt>
-      <dd>{{ getStatutLabel(demandeAImprimer.statut) }}</dd>
+      <dd>{{ getStatutLabel(demandeAImprimer.status) }}</dd>
     </div>
   </dl>
 </section>
