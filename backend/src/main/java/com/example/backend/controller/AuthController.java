@@ -2,7 +2,7 @@ package com.example.backend.controller;
 
 import com.example.backend.dto.auth.AuthUserResponse;
 import com.example.backend.dto.auth.LoginRequest;
-import com.example.backend.service.IAuthentificationService;
+import com.example.backend.service.interfaces.IAuthentificationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;

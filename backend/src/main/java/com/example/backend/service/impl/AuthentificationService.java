@@ -1,4 +1,4 @@
-package com.example.backend.service;
+package com.example.backend.service.impl;
 
 import com.example.backend.dto.auth.AuthUserResponse;
 import com.example.backend.exception.AuthException;
@@ -10,6 +10,7 @@ import com.example.backend.repository.EmployeRepository;
 import com.example.backend.repository.UtilisateurRepository;
 import com.example.backend.security.JwtAuthenticationFilter;
 import com.example.backend.security.JwtService;
+import com.example.backend.service.interfaces.IAuthentificationService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
