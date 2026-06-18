@@ -24,12 +24,16 @@ export class RhLayoutComponent {
   ) {}
 
   isSidebarCollapsed = signal(false);
-  currentUser = {
-    nom: 'Samar Haddad',
-    role: Role.RH,
-    avatar: 'RH',
-    departement: 'Ressources Humaines',
-  };
+
+  get currentUser() {
+    const user = this.authService.currentUser();
+    return {
+      nom: this.authService.getDisplayName(user),
+      role: user?.role ?? Role.RH,
+      avatar: this.authService.getInitials(user) || 'RH',
+      departement: user?.departementNom ?? 'Non defini',
+    };
+  }
 
   navItems: NavItem[] = [
     { label: 'Dashboard',       route: '/rh/dashboard',         icon: 'grid' },

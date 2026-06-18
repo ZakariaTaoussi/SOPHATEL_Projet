@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { ResponsableLayoutComponent } from '../../layouts/responsable-layout/responsable-layout.component';
+import { Role } from '../../core/enums/role.enum';
 
 export const RESPONSABLE_ROUTES: Routes = [
 	{
@@ -38,7 +39,8 @@ export const RESPONSABLE_ROUTES: Routes = [
 			},
 			{
 				path: 'profil',
-				loadComponent: () => import('./profil/profil.component').then(m => m.ResponsableProfilComponent),
+				data: { role: Role.RESPONSABLE },
+				loadComponent: () => import('../shared/profil/profil.component').then(m => m.SharedProfilComponent),
 			},
 			{
 				path: 'demandes-a-valider',

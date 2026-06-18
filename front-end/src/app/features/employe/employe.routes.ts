@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { EmployeLayoutComponent } from '../../layouts/employe-layout/employe-layout.component';
+import { Role } from '../../core/enums/role.enum';
 
 export const EMPLOYE_ROUTES: Routes = [
   {
@@ -34,8 +35,9 @@ export const EMPLOYE_ROUTES: Routes = [
       // 'Historique' removed per request; use 'Mes Demandes' with filters instead
       {
         path: 'profil',
+        data: { role: Role.EMPLOYE },
         loadComponent: () =>
-          import('./profil/profil.component').then(m => m.ProfilComponent),
+          import('../shared/profil/profil.component').then(m => m.SharedProfilComponent),
       },
       // Redirect par défaut
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },

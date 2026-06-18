@@ -1,0 +1,98 @@
+<div class="profil-page">
+  <p *ngIf="loading" class="state-message">Chargement...</p>
+  <p *ngIf="errorMessage" class="error-message">{{ errorMessage }}</p>
+  <p *ngIf="successMessage" class="success-message">{{ successMessage }}</p>
+
+  <div *ngIf="!loading && profil" class="profil-layout">
+    <section class="summary-card">
+      <div class="avatar">{{ initiales }}</div>
+      <h1>{{ nomComplet }}</h1>
+      <p class="role">{{ profil.role }}</p>
+      <p *ngIf="profil.departementNom" class="muted">{{ profil.departementNom }}</p>
+
+      <dl>
+        <div>
+          <dt>Matricule</dt>
+          <dd>{{ profil.matricule }}</dd>
+        </div>
+        <div>
+          <dt>Date d'embauche</dt>
+          <dd>{{ formatDate(profil.dateEmbauche) }}</dd>
+        </div>
+        <div *ngIf="afficherManager">
+          <dt>Manager</dt>
+          <dd>{{ profil.managerNomComplet || 'Non defini' }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="details-card">
+      <header class="details-header">
+        <div>
+          <h2>Coordonnees</h2>
+          <p>Seuls le nom et le prenom peuvent etre modifies.</p>
+        </div>
+        <button *ngIf="!editMode" type="button" class="btn-primary" (click)="activerEdition()">Modifier</button>
+      </header>
+
+      <form (ngSubmit)="enregistrer()">
+        <div class="field-grid">
+          <label class="field">
+            <span>Prenom</span>
+            <input name="prenom" [(ngModel)]="form.prenom" [readonly]="!editMode" />
+          </label>
+
+          <label class="field">
+            <span>Nom</span>
+            <input name="nom" [(ngModel)]="form.nom" [readonly]="!editMode" />
+          </label>
+
+          <label class="field">
+            <span>Email</span>
+            <input [value]="profil.email" readonly />
+          </label>
+
+          <label class="field">
+            <span>Role</span>
+            <input [value]="profil.role" readonly />
+          </label>
+
+          <label class="field">
+            <span>Departement</span>
+            <input [value]="profil.departementNom || 'Non defini'" readonly />
+          </label>
+
+          <label class="field" *ngIf="afficherManager">
+            <span>Manager</span>
+            <input [value]="profil.managerNomComplet || 'Non defini'" readonly />
+          </label>
+        </div>
+
+        <div class="form-actions" *ngIf="editMode">
+          <button type="button" class="btn-secondary" (click)="annulerEdition()" [disabled]="saving">Annuler</button>
+          <button type="submit" class="btn-primary" [disabled]="saving">
+            {{ saving ? 'Enregistrement...' : 'Enregistrer' }}
+          </button>
+        </div>
+      </form>
+
+      <section *ngIf="afficherSolde" class="solde-card">
+        <h2>Solde conge</h2>
+        <div class="solde-grid">
+          <div>
+            <span>Solde actuel</span>
+            <strong>{{ profil.soldeActuel }} j</strong>
+          </div>
+          <div>
+            <span>Solde total</span>
+            <strong>{{ profil.soldeTotal }} j</strong>
+          </div>
+          <div>
+            <span>Annee</span>
+            <strong>{{ profil.anneeSolde }}</strong>
+          </div>
+        </div>
+      </section>
+    </section>
+  </div>
+</div>

@@ -24,12 +24,16 @@ export class DirecteurGeneralLayoutComponent {
   ) {}
 
   isSidebarCollapsed = signal(false);
-  currentUser = {
-    nom: 'Directeur Général',
-    role: Role.DIRECTEUR_GENERAL,
-    avatar: 'DG',
-    departement: 'Direction Générale',
-  };
+
+  get currentUser() {
+    const user = this.authService.currentUser();
+    return {
+      nom: this.authService.getDisplayName(user),
+      role: user?.role ?? Role.DIRECTEUR_GENERAL,
+      avatar: this.authService.getInitials(user) || 'DG',
+      departement: user?.departementNom ?? 'Non defini',
+    };
+  }
 
   navItems: NavItem[] = [
     { label: 'Dashboard', route: '/directeur-general/dashboard', icon: 'grid' },

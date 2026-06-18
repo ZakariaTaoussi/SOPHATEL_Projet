@@ -46,6 +46,44 @@ export class AuthService {
     return this.currentUserSignal();
   }
 
+  updateCurrentUserProfileFromEmploye(nom: string, prenom: string): void {
+    const current = this.currentUserSignal();
+    if (!current) {
+      return;
+    }
+
+    this.currentUserSignal.set({
+      ...current,
+      nom,
+      prenom,
+    });
+  }
+
+  getDisplayName(user: AuthUser | null): string {
+    if (!user) {
+      return '';
+    }
+
+    if (user.role === Role.ADMINISTRATEUR) {
+      return 'Admin Admin';
+    }
+
+    const prenom = user.prenom?.trim();
+    const nom = user.nom?.trim();
+    const fullName = `${prenom || ''} ${nom || ''}`.trim();
+    return fullName || user.email || 'Utilisateur';
+  }
+
+  getInitials(user: AuthUser | null): string {
+    const displayName = this.getDisplayName(user);
+    return displayName
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(part => part.charAt(0).toUpperCase())
+      .join('');
+  }
+
   getCurrentUserFromApi(): Observable<AuthUser> {
     return this.http
       .get<AuthUser>(`${this.apiUrl}/me`, { withCredentials: true })

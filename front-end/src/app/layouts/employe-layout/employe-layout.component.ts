@@ -26,12 +26,16 @@ export class EmployeLayoutComponent {
   ) {}
 
   isSidebarCollapsed = signal(false);
-  currentUser = {
-    nom: 'Ahmed Benali',
-    role: Role.EMPLOYE,
-    avatar: 'AB',
-    departement: 'Informatique',
-  };
+
+  get currentUser() {
+    const user = this.authService.currentUser();
+    return {
+      nom: this.authService.getDisplayName(user),
+      role: user?.role ?? Role.EMPLOYE,
+      avatar: this.authService.getInitials(user) || 'UT',
+      departement: user?.departementNom ?? 'Non defini',
+    };
+  }
 
   navItems: NavItem[] = [
     { label: 'Dashboard',       route: '/employe/dashboard',        icon: 'grid' },

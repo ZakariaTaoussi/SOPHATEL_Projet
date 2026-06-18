@@ -24,19 +24,22 @@ export class AdminLayoutComponent {
   ) {}
 
   isSidebarCollapsed = signal(false);
-  currentUser = {
-    nom: 'Admin',
-    role: Role.ADMINISTRATEUR,
-    avatar: 'AD',
-    departement: 'Administration',
-  };
+
+  get currentUser() {
+    const user = this.authService.currentUser();
+    return {
+      nom: this.authService.getDisplayName(user) || 'Admin Admin',
+      role: user?.role ?? Role.ADMINISTRATEUR,
+      avatar: this.authService.getInitials(user) || 'AA',
+      departement: 'Administration',
+    };
+  }
 
   navItems: NavItem[] = [
     { label: 'Dashboard', route: '/admin/dashboard', icon: 'dashboard' },
     { label: 'Employes', route: '/admin/employes', icon: 'users' },
     { label: 'Departements', route: '/admin/departements', icon: 'building' },
     { label: 'Jour Ferie', route: '/admin/jour-ferie', icon: 'calendar-off' },
-    { label: 'Profil', route: '/admin/profil', icon: 'user' },
   ];
 
   toggleSidebar() {

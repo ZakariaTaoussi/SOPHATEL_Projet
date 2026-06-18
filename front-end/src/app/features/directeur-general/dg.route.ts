@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { DirecteurGeneralLayoutComponent } from '../../layouts/directeur-general-layout/directeur-general-layout.component';
+import { Role } from '../../core/enums/role.enum';
 
 export const DIRECTEUR_GENERAL_ROUTES: Routes = [
   {
@@ -42,7 +43,8 @@ export const DIRECTEUR_GENERAL_ROUTES: Routes = [
       },
       {
         path: 'profil',
-        loadComponent: () => import('./profil/profil.component').then(m => m.DirecteurGeneralProfilComponent),
+        data: { role: Role.DIRECTEUR_GENERAL },
+        loadComponent: () => import('../shared/profil/profil.component').then(m => m.SharedProfilComponent),
       },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],

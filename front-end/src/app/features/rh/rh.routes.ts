@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { RhLayoutComponent } from '../../layouts/rh-layout/rh-layout.component';
+import { Role } from '../../core/enums/role.enum';
 
 export const RH_ROUTES: Routes = [
 	{
@@ -21,7 +22,11 @@ export const RH_ROUTES: Routes = [
 				loadComponent: () => import('../shared/self-demande/nouvelle-demande.component').then(m => m.SelfNouvelleDemandeComponent),
 			},
 			{ path: 'notification', loadComponent: () => import('./notification/notification.component').then(m => m.RhNotificationComponent) },
-			{ path: 'profil', loadComponent: () => import('./profil/profil.component').then(m => m.RhProfilComponent) },
+			{
+				path: 'profil',
+				data: { role: Role.RH },
+				loadComponent: () => import('../shared/profil/profil.component').then(m => m.SharedProfilComponent),
+			},
 			{ path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 		],
 	},

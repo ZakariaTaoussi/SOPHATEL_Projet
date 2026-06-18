@@ -26,10 +26,6 @@ export const ADMIN_ROUTES: Routes = [
         path: 'regle',
         loadComponent: () => import('./regle/regle.component').then(m => m.AdminRegleComponent),
       },
-      {
-        path: 'profil',
-        loadComponent: () => import('./profil/profil.component').then(m => m.AdminProfilComponent),
-      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'employe', redirectTo: 'employes', pathMatch: 'full' },
       { path: 'departement', redirectTo: 'departements', pathMatch: 'full' },

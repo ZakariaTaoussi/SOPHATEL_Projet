@@ -70,6 +70,6 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Mon profil',
     icon: 'User',
     route: '/user/profil',
-    roles: ALL
+    roles: [Role.EMPLOYE, Role.RH, Role.RESPONSABLE, Role.DIRECTEUR_GENERAL]
   },
 ];

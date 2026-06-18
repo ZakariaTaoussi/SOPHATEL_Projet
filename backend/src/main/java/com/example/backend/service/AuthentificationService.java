@@ -2,6 +2,7 @@ package com.example.backend.service;
 
 import com.example.backend.dto.auth.AuthUserResponse;
 import com.example.backend.exception.AuthException;
+import com.example.backend.model.Departement;
 import com.example.backend.model.Employe;
 import com.example.backend.model.Utilisateur;
 import com.example.backend.model.enums.Role;
@@ -75,21 +76,61 @@ public class AuthentificationService implements IAuthentificationService {
 
     private AuthUserResponse toAuthUserResponse(Utilisateur utilisateur) {
         return employeRepository.findByUtilisateurId(utilisateur.getId())
-                .map(employe -> new AuthUserResponse(
-                        utilisateur.getId(),
-                        utilisateur.getEmail(),
-                        utilisateur.getRole(),
-                        employe.getNom(),
-                        employe.getPrenom()))
+                .map(employe -> responseFromEmploye(utilisateur, employe))
                 .orElseGet(() -> defaultResponse(utilisateur));
+    }
+
+    private AuthUserResponse responseFromEmploye(Utilisateur utilisateur, Employe employe) {
+        Departement departement = employe.getDepartement();
+        return new AuthUserResponse(
+                utilisateur.getId(),
+                utilisateur.getEmail(),
+                utilisateur.getRole(),
+                redirectUrl(utilisateur.getRole()),
+                employe.getIdEmp(),
+                employe.getNom(),
+                employe.getPrenom(),
+                employe.getMatricule(),
+                departement == null ? null : departement.getId(),
+                departement == null ? null : departement.getNom());
     }
 
     private AuthUserResponse defaultResponse(Utilisateur utilisateur) {
         if (utilisateur.getRole() == Role.ADMINISTRATEUR) {
-            return new AuthUserResponse(utilisateur.getId(), utilisateur.getEmail(), utilisateur.getRole(), "Systeme", "Admin");
+            return new AuthUserResponse(
+                    utilisateur.getId(),
+                    utilisateur.getEmail(),
+                    utilisateur.getRole(),
+                    redirectUrl(utilisateur.getRole()),
+                    null,
+                    "Admin",
+                    "Admin",
+                    null,
+                    null,
+                    null);
         }
 
-        return new AuthUserResponse(utilisateur.getId(), utilisateur.getEmail(), utilisateur.getRole(), "", "");
+        return new AuthUserResponse(
+                utilisateur.getId(),
+                utilisateur.getEmail(),
+                utilisateur.getRole(),
+                redirectUrl(utilisateur.getRole()),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
+    }
+
+    private String redirectUrl(Role role) {
+        return switch (role) {
+            case EMPLOYE -> "/employe/dashboard";
+            case RH -> "/rh/dashboard";
+            case RESPONSABLE -> "/responsable/dashboard";
+            case DIRECTEUR_GENERAL -> "/directeur-general/dashboard";
+            case ADMINISTRATEUR -> "/admin/dashboard";
+        };
     }
 
     private ResponseCookie buildCookie(String token, long maxAgeMillis) {

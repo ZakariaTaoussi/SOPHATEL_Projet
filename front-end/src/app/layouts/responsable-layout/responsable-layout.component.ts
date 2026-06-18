@@ -24,12 +24,16 @@ export class ResponsableLayoutComponent {
   ) {}
 
   isSidebarCollapsed = signal(false);
-  currentUser = {
-    nom: 'Karim Ouni',
-    role: Role.RESPONSABLE,
-    avatar: 'RS',
-    departement: 'Encadrement',
-  };
+
+  get currentUser() {
+    const user = this.authService.currentUser();
+    return {
+      nom: this.authService.getDisplayName(user),
+      role: user?.role ?? Role.RESPONSABLE,
+      avatar: this.authService.getInitials(user) || 'RS',
+      departement: user?.departementNom ?? 'Non defini',
+    };
+  }
 
   navItems: NavItem[] = [
     { label: 'Dashboard',           route: '/responsable/dashboard',         icon: 'grid' },
