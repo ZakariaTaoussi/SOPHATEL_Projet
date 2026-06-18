@@ -1,4 +1,4 @@
-package com.example.backend.controller.employe;
+package com.example.backend.controller.rh;
 
 import com.example.backend.dto.demande.DemandeCongeCreateRequest;
 import com.example.backend.dto.demande.DemandeCongeResponse;
@@ -21,13 +21,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/employe")
-public class EmployeDemandeCongeController {
+@RequestMapping("/api/rh")
+public class RhDemandeCongeController {
 
     private final ISelfDemandeCongeService demandeCongeService;
     private final ISoldeCongeService soldeCongeService;
 
-    public EmployeDemandeCongeController(
+    public RhDemandeCongeController(
             ISelfDemandeCongeService demandeCongeService,
             ISoldeCongeService soldeCongeService) {
         this.demandeCongeService = demandeCongeService;

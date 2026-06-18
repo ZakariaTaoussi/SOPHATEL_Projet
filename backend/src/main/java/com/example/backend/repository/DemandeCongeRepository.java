@@ -48,6 +48,18 @@ public interface DemandeCongeRepository extends JpaRepository<DemandeConge, Long
             @Param("departementId") Long departementId,
             @Param("statuses") Collection<StatusDemande> statuses);
 
+    @Query("""
+            select d from DemandeConge d
+            where d.employe.departement.id = :departementId
+              and d.employe.idEmp <> :employeId
+              and d.status in :statuses
+            order by d.updatedAt desc
+            """)
+    List<DemandeConge> findByEmployeDepartementIdAndEmployeIdNotAndStatusInOrderByUpdatedAtDesc(
+            @Param("departementId") Long departementId,
+            @Param("employeId") Long employeId,
+            @Param("statuses") Collection<StatusDemande> statuses);
+
     @Query("select d from DemandeConge d where d.status = :status order by d.updatedAt desc")
     List<DemandeConge> findByStatusOrderByUpdatedAtDesc(@Param("status") StatusDemande status);
 

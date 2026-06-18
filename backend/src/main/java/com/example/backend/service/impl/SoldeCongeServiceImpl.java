@@ -98,7 +98,7 @@ public class SoldeCongeServiceImpl implements ISoldeCongeService {
 
         SoldeConge solde = getOrCreateSolde(employeId, annee);
         if (solde.getSoldeActuel() < jours) {
-            throw new InvalidBusinessRequestException("Solde de conge insuffisant");
+            throw new InvalidBusinessRequestException("Solde insuffisant");
         }
 
         solde.setSoldeActuel(solde.getSoldeActuel() - jours);

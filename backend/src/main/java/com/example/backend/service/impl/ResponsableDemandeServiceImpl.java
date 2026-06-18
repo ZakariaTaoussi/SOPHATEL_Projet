@@ -51,9 +51,11 @@ public class ResponsableDemandeServiceImpl implements IResponsableDemandeService
 
     @Override
     public List<ResponsableDemandeResponse> getDemandesAValider() {
-        Departement departement = getDepartementResponsableConnecte();
-        return demandeCongeRepository.findByEmployeDepartementIdAndStatusInOrderByUpdatedAtDesc(
+        Employe responsable = getResponsableConnecte();
+        Departement departement = getDepartementResponsableConnecte(responsable);
+        return demandeCongeRepository.findByEmployeDepartementIdAndEmployeIdNotAndStatusInOrderByUpdatedAtDesc(
                         departement.getId(),
+                        responsable.getIdEmp(),
                         STATUTS_WORKFLOW_RESPONSABLE).stream()
                 .map(demandeCongeMapper::toResponsableResponse)
                 .toList();
@@ -61,8 +63,9 @@ public class ResponsableDemandeServiceImpl implements IResponsableDemandeService
 
     @Override
     public ResponsableDemandeResponse getDemandeAValiderById(Long demandeId) {
-        Departement departement = getDepartementResponsableConnecte();
-        DemandeConge demande = findDemandeDuDepartement(demandeId, departement);
+        Employe responsable = getResponsableConnecte();
+        Departement departement = getDepartementResponsableConnecte(responsable);
+        DemandeConge demande = findDemandeDuDepartement(demandeId, departement, responsable.getIdEmp());
         if (!STATUTS_WORKFLOW_RESPONSABLE.contains(demande.getStatus())) {
             throw new ResourceNotFoundException("Demande responsable introuvable");
         }
@@ -76,7 +79,7 @@ public class ResponsableDemandeServiceImpl implements IResponsableDemandeService
             ResponsableValidationDemandeRequest request) {
         Employe responsable = getResponsableConnecte();
         Departement departement = getDepartementResponsableConnecte(responsable);
-        DemandeConge demande = findDemandeDuDepartement(demandeId, departement);
+        DemandeConge demande = findDemandeDuDepartement(demandeId, departement, responsable.getIdEmp());
 
         if (demande.getStatus() == StatusDemande.VALIDE_RESPONSABLE) {
             return demandeCongeMapper.toResponsableResponse(demande);
@@ -103,8 +106,9 @@ public class ResponsableDemandeServiceImpl implements IResponsableDemandeService
     @Override
     @Transactional
     public ResponsableDemandeResponse refuserDemandeParResponsable(Long demandeId) {
-        Departement departement = getDepartementResponsableConnecte();
-        DemandeConge demande = findDemandeDuDepartement(demandeId, departement);
+        Employe responsable = getResponsableConnecte();
+        Departement departement = getDepartementResponsableConnecte(responsable);
+        DemandeConge demande = findDemandeDuDepartement(demandeId, departement, responsable.getIdEmp());
 
         if (demande.getStatus() != StatusDemande.VALIDE_EMPLOYE
                 && demande.getStatus() != StatusDemande.MODIFICATION_RESPONSABLE) {
@@ -119,8 +123,9 @@ public class ResponsableDemandeServiceImpl implements IResponsableDemandeService
     @Override
     @Transactional
     public ResponsableDemandeResponse passerEnModificationResponsable(Long demandeId) {
-        Departement departement = getDepartementResponsableConnecte();
-        DemandeConge demande = findDemandeDuDepartement(demandeId, departement);
+        Employe responsable = getResponsableConnecte();
+        Departement departement = getDepartementResponsableConnecte(responsable);
+        DemandeConge demande = findDemandeDuDepartement(demandeId, departement, responsable.getIdEmp());
 
         if (demande.getStatus() == StatusDemande.VALIDE_DG
                 || demande.getStatus() == StatusDemande.MODIFICATION_DG) {
@@ -159,12 +164,15 @@ public class ResponsableDemandeServiceImpl implements IResponsableDemandeService
         return responsable.getDepartement();
     }
 
-    private DemandeConge findDemandeDuDepartement(Long demandeId, Departement departement) {
+    private DemandeConge findDemandeDuDepartement(Long demandeId, Departement departement, Long responsableId) {
         DemandeConge demande = demandeCongeRepository.findById(demandeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Demande introuvable"));
         if (demande.getEmploye() == null
                 || demande.getEmploye().getDepartement() == null
                 || !departement.getId().equals(demande.getEmploye().getDepartement().getId())) {
+            throw new InvalidBusinessRequestException("Vous n'avez pas le droit d'acceder a cette demande");
+        }
+        if (demande.getEmploye().getIdEmp().equals(responsableId)) {
             throw new InvalidBusinessRequestException("Vous n'avez pas le droit d'acceder a cette demande");
         }
         return demande;
@@ -225,10 +233,10 @@ public class ResponsableDemandeServiceImpl implements IResponsableDemandeService
             throw new InvalidBusinessRequestException("Les dates de debut et de fin sont obligatoires");
         }
         if (dateDebut.isAfter(dateFin)) {
-            throw new InvalidBusinessRequestException("La date de debut ne peut pas etre apres la date de fin");
+            throw new InvalidBusinessRequestException("Dates invalides");
         }
         if (dateDebut.getYear() != dateFin.getYear()) {
-            throw new InvalidBusinessRequestException("Une demande ne peut pas traverser deux annees differentes");
+            throw new InvalidBusinessRequestException("Dates invalides");
         }
     }
 }

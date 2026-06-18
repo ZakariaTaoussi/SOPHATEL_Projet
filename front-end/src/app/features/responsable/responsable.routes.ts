@@ -16,11 +16,13 @@ export const RESPONSABLE_ROUTES: Routes = [
 			},
 			{
 				path: 'mes-demandes',
-				loadComponent: () => import('./mes-demandes/mes-demandes.component').then(m => m.ResponsableMesDemandesComponent),
+				data: { scope: 'responsable', baseRoute: '/responsable' },
+				loadComponent: () => import('../shared/self-demande/mes-demandes.component').then(m => m.SelfMesDemandesComponent),
 			},
 			{
 				path: 'nouvelle-demande',
-				loadComponent: () => import('./nouvelle-demande/nouvelle-demande.component').then(m => m.ResponsableNouvelleDemandeComponent),
+				data: { scope: 'responsable', baseRoute: '/responsable' },
+				loadComponent: () => import('../shared/self-demande/nouvelle-demande.component').then(m => m.SelfNouvelleDemandeComponent),
 			},
 			{
 				path: 'historique',

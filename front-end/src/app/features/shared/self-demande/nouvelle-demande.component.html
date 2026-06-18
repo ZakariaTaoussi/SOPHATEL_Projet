@@ -1,0 +1,86 @@
+<div class="request-page">
+  <header class="page-header">
+    <h1>Nouvelle demande</h1>
+    <p>Creez une demande de conge ou d'absence.</p>
+  </header>
+
+  <div class="request-layout">
+    <section class="form-card">
+      <div class="card-heading">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M8 2v4"/>
+          <path d="M16 2v4"/>
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <path d="M3 10h18"/>
+          <path d="M12 14v5"/>
+          <path d="M9.5 16.5h5"/>
+        </svg>
+        <h2>Formulaire de demande</h2>
+      </div>
+
+      <p class="form-note">Les conges deduisent le solde seulement au moment du submit.</p>
+      <p *ngIf="errorMessage" class="error-message">{{ errorMessage }}</p>
+
+      <form>
+        <div class="form-grid">
+          <label class="field field-small">
+            <span>Type de demande</span>
+            <select name="typeDemande" [(ngModel)]="form.typeDemande" (ngModelChange)="onFormChange()">
+              <option *ngFor="let type of typesDemande" [value]="type">{{ type }}</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Date de debut</span>
+            <input type="date" name="dateDebutEmp" [(ngModel)]="form.dateDebutEmp" (ngModelChange)="onFormChange()" />
+          </label>
+
+          <label class="field">
+            <span>Date de fin</span>
+            <input type="date" name="dateFinEmp" [(ngModel)]="form.dateFinEmp" (ngModelChange)="onFormChange()" />
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-draft" [disabled]="savingDraft || submitting" (click)="enregistrerBrouillon()">
+            {{ savingDraft ? 'Enregistrement...' : 'Enregistrer brouillon' }}
+          </button>
+          <button type="button" class="btn-submit" [disabled]="savingDraft || submitting" (click)="soumettreDemande()">
+            {{ submitting ? 'Submit...' : 'Submit' }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <aside class="side-column">
+      <section class="side-card">
+        <h2>Recapitulatif</h2>
+        <dl class="summary-list">
+          <div>
+            <dt>Type</dt>
+            <dd>{{ form.typeDemande }}</dd>
+          </div>
+          <div>
+            <dt>Periode</dt>
+            <dd>{{ periode }}</dd>
+          </div>
+          <div>
+            <dt>Jours deduits</dt>
+            <dd>{{ form.typeDemande === 'CONGE' ? (joursApercu === null ? '-' : joursApercu) : 0 }}</dd>
+          </div>
+        </dl>
+
+        <dl class="summary-list summary-balance">
+          <div>
+            <dt>Solde actuel</dt>
+            <dd>{{ loadingSolde ? 'Chargement...' : (solde ? (solde.soldeActuel + ' / ' + solde.soldeTotal + ' j') : '-') }}</dd>
+          </div>
+          <div>
+            <dt>Solde apres</dt>
+            <dd>{{ soldeApres }}</dd>
+          </div>
+        </dl>
+      </section>
+    </aside>
+  </div>
+</div>

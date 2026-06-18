@@ -31,6 +31,6 @@ public class EmployeConnecteProvider {
                 .orElseThrow(() -> new InvalidBusinessRequestException("Utilisateur connecte introuvable"));
 
         return employeRepository.findByUtilisateurId(utilisateur.getId())
-                .orElseThrow(() -> new InvalidBusinessRequestException("Aucun employe n'est lie a l'utilisateur connecte"));
+                .orElseThrow(() -> new InvalidBusinessRequestException("Utilisateur connecte sans Employe lie"));
     }
 }

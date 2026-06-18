@@ -27,6 +27,16 @@ export const DIRECTEUR_GENERAL_ROUTES: Routes = [
         loadComponent: () => import('./demande-employe/demande-employe.component').then(m => m.DirecteurGeneralDemandeEmployeComponent),
       },
       {
+        path: 'mes-demandes',
+        data: { scope: 'directeur-general', baseRoute: '/directeur-general' },
+        loadComponent: () => import('../shared/self-demande/mes-demandes.component').then(m => m.SelfMesDemandesComponent),
+      },
+      {
+        path: 'nouvelle-demande',
+        data: { scope: 'directeur-general', baseRoute: '/directeur-general' },
+        loadComponent: () => import('../shared/self-demande/nouvelle-demande.component').then(m => m.SelfNouvelleDemandeComponent),
+      },
+      {
         path: 'historique',
         loadComponent: () => import('./historique/historique.component').then(m => m.DirecteurGeneralHistoriqueComponent),
       },
