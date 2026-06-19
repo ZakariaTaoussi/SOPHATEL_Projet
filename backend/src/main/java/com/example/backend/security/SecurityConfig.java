@@ -86,6 +86,9 @@ public class SecurityConfig {
         if (path != null && path.startsWith("/api/responsable/mes-employes")) {
             return "Accès réservé au responsable.";
         }
+        if (path != null && path.startsWith("/api/directeur-general/employes")) {
+            return "Accès réservé au directeur général.";
+        }
         return "Accès refusé.";
     }
 

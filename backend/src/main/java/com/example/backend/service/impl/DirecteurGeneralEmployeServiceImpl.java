@@ -1,21 +1,21 @@
 package com.example.backend.service.impl;
 
 import com.example.backend.dto.common.PageResponse;
-import com.example.backend.dto.responsable.ResponsableEmployeResponse;
+import com.example.backend.dto.directeurgeneral.DirecteurGeneralEmployeResponse;
 import com.example.backend.exception.BadRequestException;
 import com.example.backend.exception.ForbiddenException;
 import com.example.backend.exception.ResourceNotFoundException;
-import com.example.backend.mapper.ResponsableEmployeMapper;
-import com.example.backend.model.Departement;
+import com.example.backend.mapper.DirecteurGeneralEmployeMapper;
 import com.example.backend.model.Employe;
 import com.example.backend.model.SoldeConge;
 import com.example.backend.model.Utilisateur;
 import com.example.backend.model.enums.Role;
 import com.example.backend.repository.EmployeRepository;
 import com.example.backend.repository.UtilisateurRepository;
-import com.example.backend.service.interfaces.IResponsableEmployeService;
+import com.example.backend.service.interfaces.IDirecteurGeneralEmployeService;
 import com.example.backend.service.interfaces.ISoldeCongeService;
 import java.time.LocalDate;
+import java.util.Locale;
 import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,67 +26,57 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class ResponsableEmployeServiceImpl implements IResponsableEmployeService {
+public class DirecteurGeneralEmployeServiceImpl implements IDirecteurGeneralEmployeService {
 
-    private static final Set<Role> ROLES_EQUIPE = Set.of(Role.EMPLOYE, Role.RH);
     private static final int DEFAULT_SIZE = 4;
     private static final int MAX_SIZE = 20;
+    private static final Set<Role> ROLES_AFFICHABLES = Set.of(Role.EMPLOYE, Role.RH, Role.RESPONSABLE);
 
     private final UtilisateurRepository utilisateurRepository;
     private final EmployeRepository employeRepository;
     private final ISoldeCongeService soldeCongeService;
-    private final ResponsableEmployeMapper responsableEmployeMapper;
+    private final DirecteurGeneralEmployeMapper directeurGeneralEmployeMapper;
 
-    public ResponsableEmployeServiceImpl(
+    public DirecteurGeneralEmployeServiceImpl(
             UtilisateurRepository utilisateurRepository,
             EmployeRepository employeRepository,
             ISoldeCongeService soldeCongeService,
-            ResponsableEmployeMapper responsableEmployeMapper) {
+            DirecteurGeneralEmployeMapper directeurGeneralEmployeMapper) {
         this.utilisateurRepository = utilisateurRepository;
         this.employeRepository = employeRepository;
         this.soldeCongeService = soldeCongeService;
-        this.responsableEmployeMapper = responsableEmployeMapper;
+        this.directeurGeneralEmployeMapper = directeurGeneralEmployeMapper;
     }
 
     @Override
     @Transactional
-    public PageResponse<ResponsableEmployeResponse> getMesEmployes(int page, int size) {
-        Employe responsable = getResponsableConnecte();
-        Departement departement = getDepartementResponsable(responsable);
-        Integer annee = LocalDate.now().getYear();
-        Pageable pageable = PageRequest.of(normalizePage(page), normalizeSize(size));
+    public PageResponse<DirecteurGeneralEmployeResponse> getEmployes(
+            int page,
+            int size,
+            String search,
+            String role,
+            Long departementId) {
+        verifierDirecteurGeneralConnecte();
 
-        Page<ResponsableEmployeResponse> result = employeRepository.findEmployesEquipeResponsable(
-                        departement.getId(),
-                        responsable.getIdEmp(),
-                        ROLES_EQUIPE,
+        int normalizedPage = normalizePage(page);
+        int normalizedSize = normalizeSize(size);
+        String searchPattern = normalizeSearchPattern(search);
+        Role roleFiltre = normalizeRole(role);
+        Pageable pageable = PageRequest.of(normalizedPage, normalizedSize);
+        Integer annee = LocalDate.now().getYear();
+
+        Page<DirecteurGeneralEmployeResponse> result = employeRepository.findEmployesForDirecteurGeneral(
+                        ROLES_AFFICHABLES,
+                        roleFiltre,
+                        departementId,
+                        searchPattern,
                         pageable)
-                .map(employe -> responsableEmployeMapper.toResponse(employe, getSolde(employe, annee), annee));
+                .map(employe -> directeurGeneralEmployeMapper.toResponse(employe, getSolde(employe, annee), annee));
 
         return PageResponse.from(result);
     }
 
-    @Override
-    @Transactional
-    public ResponsableEmployeResponse getEmployeDeMonDepartement(Long employeId) {
-        Employe responsable = getResponsableConnecte();
-        Departement departement = getDepartementResponsable(responsable);
-        Employe employe = employeRepository.findById(employeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Employé introuvable."));
-
-        Departement departementEmploye = employe.getDepartement();
-        if (departementEmploye == null
-                || departementEmploye.getId() == null
-                || !departementEmploye.getId().equals(departement.getId())
-                || employe.getIdEmp().equals(responsable.getIdEmp())) {
-            throw new ForbiddenException("Vous n’avez pas le droit d’accéder à cet employé.");
-        }
-
-        Integer annee = LocalDate.now().getYear();
-        return responsableEmployeMapper.toResponse(employe, getSolde(employe, annee), annee);
-    }
-
-    private Employe getResponsableConnecte() {
+    private void verifierDirecteurGeneralConnecte() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new ResourceNotFoundException("Utilisateur connecté introuvable.");
@@ -95,20 +85,9 @@ public class ResponsableEmployeServiceImpl implements IResponsableEmployeService
         Utilisateur utilisateur = utilisateurRepository.findByEmail(authentication.getName())
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur connecté introuvable."));
 
-        if (utilisateur.getRole() != Role.RESPONSABLE) {
-            throw new ForbiddenException("Accès réservé au responsable.");
+        if (utilisateur.getRole() != Role.DIRECTEUR_GENERAL) {
+            throw new ForbiddenException("Accès réservé au directeur général.");
         }
-
-        return employeRepository.findByUtilisateurId(utilisateur.getId())
-                .orElseThrow(() -> new BadRequestException("Utilisateur connecté sans employé lié."));
-    }
-
-    private Departement getDepartementResponsable(Employe responsable) {
-        Departement departement = responsable.getDepartement();
-        if (departement == null || departement.getId() == null) {
-            throw new BadRequestException("Responsable sans département.");
-        }
-        return departement;
     }
 
     private int normalizePage(int page) {
@@ -124,6 +103,31 @@ public class ResponsableEmployeServiceImpl implements IResponsableEmployeService
             throw new BadRequestException("Paramètres de pagination invalides.");
         }
         return normalizedSize;
+    }
+
+    private String normalizeSearchPattern(String search) {
+        if (search == null || search.trim().isEmpty()) {
+            return null;
+        }
+        return "%" + search.trim().toLowerCase(Locale.ROOT) + "%";
+    }
+
+    private Role normalizeRole(String role) {
+        if (role == null || role.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            Role parsedRole = Role.valueOf(role.trim().toUpperCase());
+            if (parsedRole == Role.ADMINISTRATEUR) {
+                throw new BadRequestException("Les administrateurs ne sont pas affichés dans cette page.");
+            }
+            if (!ROLES_AFFICHABLES.contains(parsedRole)) {
+                throw new BadRequestException("Rôle invalide.");
+            }
+            return parsedRole;
+        } catch (IllegalArgumentException exception) {
+            throw new BadRequestException("Rôle invalide.");
+        }
     }
 
     private SoldeConge getSolde(Employe employe, Integer annee) {

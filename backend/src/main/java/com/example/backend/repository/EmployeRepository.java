@@ -31,6 +31,43 @@ public interface EmployeRepository extends JpaRepository<Employe, Long> {
             @Param("responsableEmployeId") Long responsableEmployeId,
             @Param("roles") Set<Role> roles);
 
+    @Query("""
+            select e from Employe e
+            join e.utilisateur u
+            where e.departement.id = :departementId
+              and e.idEmp <> :responsableEmployeId
+              and u.role in :roles
+            order by e.nom asc, e.prenom asc
+            """)
+    Page<Employe> findEmployesEquipeResponsable(
+            @Param("departementId") Long departementId,
+            @Param("responsableEmployeId") Long responsableEmployeId,
+            @Param("roles") Set<Role> roles,
+            Pageable pageable);
+
+    @Query("""
+            select e from Employe e
+            join e.utilisateur u
+            left join e.departement d
+            where u.role in :roles
+              and (:role is null or u.role = :role)
+              and (:departementId is null or d.id = :departementId)
+              and (
+                    :searchPattern is null
+                    or lower(e.nom) like :searchPattern
+                    or lower(e.prenom) like :searchPattern
+                    or lower(u.email) like :searchPattern
+                    or lower(e.matricule) like :searchPattern
+              )
+            order by e.nom asc, e.prenom asc
+            """)
+    Page<Employe> findEmployesForDirecteurGeneral(
+            @Param("roles") Set<Role> roles,
+            @Param("role") Role role,
+            @Param("departementId") Long departementId,
+            @Param("searchPattern") String searchPattern,
+            Pageable pageable);
+
     boolean existsByMatricule(String matricule);
 
     boolean existsByMatriculeAndIdEmpNot(String matricule, Long idEmp);

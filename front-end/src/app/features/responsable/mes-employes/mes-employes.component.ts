@@ -22,6 +22,12 @@ export class ResponsableMesEmployesComponent implements OnInit {
   selectedRole = 'Tous';
   loading = false;
   errorMessage = '';
+  page = 0;
+  size = 4;
+  totalElements = 0;
+  totalPages = 0;
+  first = true;
+  last = true;
 
   readonly roles = ['Tous', 'EMPLOYE', 'RH'];
 
@@ -38,14 +44,20 @@ export class ResponsableMesEmployesComponent implements OnInit {
     this.loading = true;
     this.errorMessage = '';
 
-    this.responsableEmployeService.getMesEmployes().pipe(
+    this.responsableEmployeService.getMesEmployes(this.page, this.size).pipe(
       finalize(() => {
         this.loading = false;
         this.cdr.markForCheck();
       })
     ).subscribe({
-      next: data => {
-        this.employes = [...data];
+      next: response => {
+        this.employes = [...response.content];
+        this.page = response.page ?? response.currentPage ?? 0;
+        this.size = response.size;
+        this.totalElements = response.totalElements;
+        this.totalPages = response.totalPages;
+        this.first = response.first ?? this.page === 0;
+        this.last = response.last ?? this.page >= this.totalPages - 1;
         this.applyFilters();
         this.cdr.markForCheck();
       },
@@ -53,6 +65,10 @@ export class ResponsableMesEmployesComponent implements OnInit {
         this.errorMessage = this.extractErrorMessage(error);
         this.employes = [];
         this.filteredEmployes = [];
+        this.totalElements = 0;
+        this.totalPages = 0;
+        this.first = true;
+        this.last = true;
         this.cdr.markForCheck();
       },
     });
@@ -97,6 +113,22 @@ export class ResponsableMesEmployesComponent implements OnInit {
 
   voirDetail(employe: ResponsableEmploye): void {
     this.selectedEmploye = { ...employe };
+  }
+
+  previousPage(): void {
+    if (this.first) {
+      return;
+    }
+    this.page -= 1;
+    this.loadEmployes();
+  }
+
+  nextPage(): void {
+    if (this.last) {
+      return;
+    }
+    this.page += 1;
+    this.loadEmployes();
   }
 
   fermerDetail(): void {

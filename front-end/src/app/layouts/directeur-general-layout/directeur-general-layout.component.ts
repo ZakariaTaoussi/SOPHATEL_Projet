@@ -37,7 +37,7 @@ export class DirecteurGeneralLayoutComponent {
 
   navItems: NavItem[] = [
     { label: 'Dashboard', route: '/directeur-general/dashboard', icon: 'grid' },
-    { label: 'Employe', route: '/directeur-general/employe', icon: 'users' },
+    { label: 'Employes', route: '/directeur-general/employes', icon: 'users' },
     { label: 'Nouvelle Demande', route: '/directeur-general/nouvelle-demande', icon: 'plus-circle' },
     { label: 'Mes Demandes', route: '/directeur-general/mes-demandes', icon: 'file-text' },
     { label: 'Demandes a valider', route: '/directeur-general/demandes-a-valider', icon: 'file-text' },

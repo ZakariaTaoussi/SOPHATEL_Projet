@@ -1,7 +1,8 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { apiUrl } from '../config/api-url';
+import { PageResponse } from '../models/page-response.model';
 import { ResponsableEmploye } from '../models/responsable-employe.model';
 
 @Injectable({ providedIn: 'root' })
@@ -10,8 +11,15 @@ export class ResponsableEmployeService {
 
   constructor(private readonly http: HttpClient) {}
 
-  getMesEmployes(): Observable<ResponsableEmploye[]> {
-    return this.http.get<ResponsableEmploye[]>(this.baseUrl, { withCredentials: true });
+  getMesEmployes(page = 0, size = 4): Observable<PageResponse<ResponsableEmploye>> {
+    const params = new HttpParams()
+      .set('page', page)
+      .set('size', size);
+
+    return this.http.get<PageResponse<ResponsableEmploye>>(this.baseUrl, {
+      params,
+      withCredentials: true,
+    });
   }
 
   getEmployeById(id: number): Observable<ResponsableEmploye> {

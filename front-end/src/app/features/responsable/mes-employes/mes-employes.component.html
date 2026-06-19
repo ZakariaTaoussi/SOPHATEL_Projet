@@ -71,6 +71,12 @@
         </tbody>
       </table>
     </div>
+
+    <div class="pagination-bar" *ngIf="totalPages > 0">
+      <button type="button" (click)="previousPage()" [disabled]="first">Precedent</button>
+      <span>Page {{ page + 1 }} / {{ totalPages }}</span>
+      <button type="button" (click)="nextPage()" [disabled]="last">Suivant</button>
+    </div>
   </section>
 </div>
 

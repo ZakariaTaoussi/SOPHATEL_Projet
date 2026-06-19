@@ -12,8 +12,13 @@ export const DIRECTEUR_GENERAL_ROUTES: Routes = [
         loadComponent: () => import('./dashboard/dashboard.component').then(m => m.DirecteurGeneralDashboardComponent),
       },
       {
-        path: 'employe',
+        path: 'employes',
         loadComponent: () => import('./employe/employe.component').then(m => m.DirecteurGeneralEmployeComponent),
+      },
+      {
+        path: 'employe',
+        redirectTo: 'employes',
+        pathMatch: 'full',
       },
       {
         path: 'demande-employe',

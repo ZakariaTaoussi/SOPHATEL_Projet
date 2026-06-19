@@ -1,66 +1,91 @@
 <div class="employes-page">
   <header class="page-header">
     <div>
-      <span class="page-kicker">Direction Générale</span>
-      <h1>Employe</h1>
-      <p>Absences des employés de tous les départements.</p>
+      <span class="page-kicker">Direction Generale</span>
+      <h1>Employes</h1>
+      <p>Tous les employes de l'entreprise.</p>
     </div>
   </header>
 
   <section class="filters-card">
     <label class="field search-field">
-      <span>Recherche employé</span>
-      <input type="search" [(ngModel)]="searchTerm" placeholder="Nom de l'employé" />
+      <span>Recherche</span>
+      <input
+        type="search"
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="onSearchChange()"
+        placeholder="Nom, email ou matricule"
+      />
     </label>
 
     <label class="field">
-      <span>Département</span>
-      <select [(ngModel)]="selectedDepartement">
-        <option *ngFor="let departement of departements" [value]="departement">{{ departement }}</option>
+      <span>Role</span>
+      <select [(ngModel)]="selectedRole" (ngModelChange)="onFilterChange()">
+        <option *ngFor="let role of roles" [value]="role.value">{{ role.label }}</option>
       </select>
+    </label>
+
+    <label class="field">
+      <span>Departement ID</span>
+      <input
+        type="number"
+        min="1"
+        [(ngModel)]="departementId"
+        (ngModelChange)="onFilterChange()"
+        placeholder="Tous"
+      />
     </label>
   </section>
 
-  <section class="demandes-card">
+  <p *ngIf="loading" class="state-message">Chargement...</p>
+  <p *ngIf="errorMessage" class="error-message">{{ errorMessage }}</p>
+
+  <section class="demandes-card" *ngIf="!loading && !errorMessage">
     <div class="card-title">
       <div>
-        <h2>Absences déclarées</h2>
-        <p>{{ absencesFiltrees.length }} absence(s) trouvée(s)</p>
+        <h2>Liste des employes</h2>
+        <p>{{ totalElements }} resultat(s)</p>
       </div>
     </div>
 
-    <div class="table-wrapper">
+    <p *ngIf="employes.length === 0" class="empty-cell">Aucun resultat trouve</p>
+
+    <div class="table-wrapper" *ngIf="employes.length > 0">
       <table class="demandes-table">
         <thead>
           <tr>
-            <th>Réf.</th>
-            <th>Employé</th>
-            <th>Département</th>
-            <th>Période</th>
-            <th>Durée</th>
-            <th>Motif</th>
-            <th>Justificatif</th>
+            <th>Matricule</th>
+            <th>Nom complet</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Departement</th>
+            <th>Date d'embauche</th>
+            <th>Solde actuel</th>
+            <th>Solde total</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let absence of absencesFiltrees">
-            <td class="ref-cell">{{ absence.reference }}</td>
+          <tr *ngFor="let employe of employes">
+            <td class="ref-cell">{{ employe.matricule || 'Non defini' }}</td>
             <td>
-              <strong>{{ absence.employe }}</strong>
-              <span class="matricule">{{ absence.matricule }}</span>
+              <strong>{{ nomComplet(employe) }}</strong>
+              <span class="matricule">{{ employe.id }}</span>
             </td>
-            <td>{{ absence.departement }}</td>
-            <td class="date-cell">{{ absence.dateDebut }} - {{ absence.dateFin }}</td>
-            <td><span class="duree-chip">{{ absence.duree }} j</span></td>
-            <td>{{ absence.motif }}</td>
-            <td><span class="file-chip">{{ absence.justificatif }}</span></td>
-          </tr>
-
-          <tr *ngIf="absencesFiltrees.length === 0">
-            <td colspan="7" class="empty-cell">Aucune absence ne correspond aux filtres.</td>
+            <td>{{ employe.email || 'Non defini' }}</td>
+            <td><span class="badge">{{ employe.role || 'Non defini' }}</span></td>
+            <td>{{ employe.departementNom || 'Non defini' }}</td>
+            <td class="date-cell">{{ formatDate(employe.dateEmbauche) }}</td>
+            <td>{{ formatNumber(employe.soldeActuel) }}</td>
+            <td>{{ formatNumber(employe.soldeTotal) }}</td>
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <div class="pagination-bar" *ngIf="totalPages > 0">
+      <button type="button" (click)="previousPage()" [disabled]="first">Precedent</button>
+      <span>Page {{ page + 1 }} / {{ totalPages }}</span>
+      <button type="button" (click)="nextPage()" [disabled]="last">Suivant</button>
     </div>
   </section>
 </div>
