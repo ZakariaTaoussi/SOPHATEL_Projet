@@ -1,6 +1,7 @@
 package com.example.backend.security;
 
 import jakarta.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,7 +29,9 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomUserDetailsService userDetailsService;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, CustomUserDetailsService userDetailsService) {
+    public SecurityConfig(
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            CustomUserDetailsService userDetailsService) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.userDetailsService = userDetailsService;
     }
@@ -66,7 +69,33 @@ public class SecurityConfig {
 
     @Bean
     public AccessDeniedHandler accessDeniedHandler() {
-        return (request, response, accessDeniedException) -> response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        return (request, response, accessDeniedException) -> {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+
+            String path = request.getRequestURI();
+            String message = forbiddenMessage(path);
+            response.getWriter().write("""
+                    {"timestamp":"%s","status":403,"error":"Forbidden","message":"%s","path":"%s"}"""
+                    .formatted(LocalDateTime.now(), jsonEscape(message), jsonEscape(path)));
+        };
+    }
+
+    private String forbiddenMessage(String path) {
+        if (path != null && path.startsWith("/api/responsable/mes-employes")) {
+            return "Accès réservé au responsable.";
+        }
+        return "Accès refusé.";
+    }
+
+    private String jsonEscape(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"");
     }
 
     @Bean

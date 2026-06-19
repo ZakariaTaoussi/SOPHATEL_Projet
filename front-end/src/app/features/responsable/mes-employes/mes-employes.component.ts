@@ -1,33 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-
-type StatutEquipe = 'En attente' | 'Acceptée' | 'Rejetée';
-
-interface DemandeEquipe {
-  id: string;
-  employe: string;
-  poste: string;
-  type: 'Congé' | 'Rattrapage';
-  dateDebut: string;
-  dateFin: string;
-  mois: string;
-  statut: StatutEquipe;
-}
-
-interface AbsenceEquipe {
-  id: string;
-  employe: string;
-  dateDebut: string;
-  dateFin: string;
-  motif: string;
-}
-
-interface EmployeEquipe {
-  nom: string;
-  poste: string;
-  departement: string;
-}
+import { finalize } from 'rxjs';
+import { ResponsableEmploye } from '../../../core/models/responsable-employe.model';
+import { ResponsableEmployeService } from '../../../core/services/responsable-employe.service';
 
 @Component({
   selector: 'app-responsable-mes-employes',
@@ -36,68 +13,102 @@ interface EmployeEquipe {
   templateUrl: './mes-employes.component.html',
   styleUrls: ['./mes-employes.component.scss'],
 })
-export class ResponsableMesEmployesComponent {
+export class ResponsableMesEmployesComponent implements OnInit {
+  employes: ResponsableEmploye[] = [];
+  filteredEmployes: ResponsableEmploye[] = [];
+  selectedEmploye?: ResponsableEmploye;
+
   searchTerm = '';
-  selectedMonth = 'Tous';
-  employeHistorique?: EmployeEquipe;
+  selectedRole = 'Tous';
+  loading = false;
+  errorMessage = '';
 
-  employes: EmployeEquipe[] = [
-    { nom: 'Ahmed Benali', poste: 'Développeur Full-Stack', departement: 'Informatique' },
-    { nom: 'Lina Mansouri', poste: 'Analyste QA', departement: 'Informatique' },
-    { nom: 'Youssef Idrissi', poste: 'Chef de projet', departement: 'Informatique' },
-    { nom: 'Nadia El Fassi', poste: 'UX Designer', departement: 'Informatique' },
-  ];
+  readonly roles = ['Tous', 'EMPLOYE', 'RH'];
 
-  demandes: DemandeEquipe[] = [
-    { id: 'EQ-001', employe: 'Ahmed Benali', poste: 'Développeur Full-Stack', type: 'Congé', dateDebut: '12/06/2026', dateFin: '14/06/2026', mois: 'Juin', statut: 'En attente' },
-    { id: 'EQ-002', employe: 'Lina Mansouri', poste: 'Analyste QA', type: 'Rattrapage', dateDebut: '20/06/2026', dateFin: '20/06/2026', mois: 'Juin', statut: 'En attente' },
-    { id: 'EQ-003', employe: 'Youssef Idrissi', poste: 'Chef de projet', type: 'Congé', dateDebut: '04/07/2026', dateFin: '08/07/2026', mois: 'Juillet', statut: 'Acceptée' },
-  ];
+  constructor(
+    private readonly responsableEmployeService: ResponsableEmployeService,
+    private readonly cdr: ChangeDetectorRef
+  ) {}
 
-  absences: AbsenceEquipe[] = [
-    { id: 'ABS-001', employe: 'Ahmed Benali', dateDebut: '05/05/2026', dateFin: '05/05/2026', motif: 'Maladie' },
-    { id: 'ABS-002', employe: 'Ahmed Benali', dateDebut: '17/05/2026', dateFin: '17/05/2026', motif: 'Rendez-vous médical' },
-    { id: 'ABS-003', employe: 'Lina Mansouri', dateDebut: '09/05/2026', dateFin: '10/05/2026', motif: 'Événement familial' },
-    { id: 'ABS-004', employe: 'Nadia El Fassi', dateDebut: '12/04/2026', dateFin: '12/04/2026', motif: 'Maladie' },
-  ];
+  ngOnInit(): void {
+    this.loadEmployes();
+  }
 
-  months = ['Tous', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+  loadEmployes(): void {
+    this.loading = true;
+    this.errorMessage = '';
 
-  get demandesFiltrees(): DemandeEquipe[] {
-    const search = this.searchTerm.trim().toLowerCase();
-    return this.demandes.filter(demande => {
-      const matchSearch = !search || demande.employe.toLowerCase().includes(search);
-      const matchMonth = this.selectedMonth === 'Tous' || demande.mois === this.selectedMonth;
-      return matchSearch && matchMonth;
+    this.responsableEmployeService.getMesEmployes().pipe(
+      finalize(() => {
+        this.loading = false;
+        this.cdr.markForCheck();
+      })
+    ).subscribe({
+      next: data => {
+        this.employes = [...data];
+        this.applyFilters();
+        this.cdr.markForCheck();
+      },
+      error: error => {
+        this.errorMessage = this.extractErrorMessage(error);
+        this.employes = [];
+        this.filteredEmployes = [];
+        this.cdr.markForCheck();
+      },
     });
   }
 
-  get employesFiltres(): EmployeEquipe[] {
+  applyFilters(): void {
     const search = this.searchTerm.trim().toLowerCase();
-    return this.employes.filter(employe => !search || employe.nom.toLowerCase().includes(search));
+    const result = this.employes.filter(employe => {
+      const matchSearch = !search || [
+        employe.nom,
+        employe.prenom,
+        employe.email,
+        employe.matricule,
+      ].some(value => (value ?? '').toLowerCase().includes(search));
+
+      const matchRole = this.selectedRole === 'Tous' || employe.role === this.selectedRole;
+      return matchSearch && matchRole;
+    });
+
+    this.filteredEmployes = [...result];
   }
 
-  accepter(demande: DemandeEquipe) {
-    demande.statut = 'Acceptée';
+  nomComplet(employe: ResponsableEmploye): string {
+    const fullName = `${employe.prenom ?? ''} ${employe.nom ?? ''}`.trim();
+    return fullName || 'Non defini';
   }
 
-  rejeter(demande: DemandeEquipe) {
-    demande.statut = 'Rejetée';
+  formatDate(value?: string | null): string {
+    if (!value) {
+      return 'Non defini';
+    }
+    return new Intl.DateTimeFormat('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(new Date(value));
   }
 
-  compterAbsences(employe: string): number {
-    return this.absences.filter(absence => absence.employe === employe).length;
+  formatNumber(value?: number | null): string {
+    return value === null || value === undefined ? 'Non defini' : `${value} j`;
   }
 
-  historiqueAbsences(employe: string): AbsenceEquipe[] {
-    return this.absences.filter(absence => absence.employe === employe);
+  voirDetail(employe: ResponsableEmploye): void {
+    this.selectedEmploye = { ...employe };
   }
 
-  ouvrirHistorique(employe: EmployeEquipe) {
-    this.employeHistorique = employe;
+  fermerDetail(): void {
+    this.selectedEmploye = undefined;
   }
 
-  fermerHistorique() {
-    this.employeHistorique = undefined;
+  private extractErrorMessage(error: unknown): string {
+    if (error instanceof HttpErrorResponse) {
+      return typeof error.error === 'string'
+        ? error.error
+        : error.error?.message ?? 'Erreur lors du chargement des employes';
+    }
+    return 'Erreur lors du chargement des employes';
   }
 }

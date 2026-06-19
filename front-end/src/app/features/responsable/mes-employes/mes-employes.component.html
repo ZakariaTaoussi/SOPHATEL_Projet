@@ -1,100 +1,112 @@
 <div class="team-page">
   <header class="page-header">
     <div>
-      <h1>Mes Employés</h1>
-      <p>Suivi des demandes, absences et historiques de votre équipe.</p>
+      <h1>Mes employes</h1>
+      <p>Employes rattaches a votre departement</p>
     </div>
   </header>
 
   <section class="filters-card">
     <label class="field search-field">
       <span>Recherche</span>
-      <input type="search" [(ngModel)]="searchTerm" placeholder="Nom de l'employé" />
+      <input
+        type="search"
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="applyFilters()"
+        placeholder="Nom, email ou matricule"
+      />
     </label>
 
     <label class="field">
-      <span>Mois</span>
-      <select [(ngModel)]="selectedMonth">
-        <option *ngFor="let month of months" [value]="month">{{ month }}</option>
+      <span>Role</span>
+      <select [(ngModel)]="selectedRole" (ngModelChange)="applyFilters()">
+        <option *ngFor="let role of roles" [value]="role">{{ role }}</option>
       </select>
     </label>
   </section>
 
-  <section class="card">
+  <p *ngIf="loading" class="state-message">Chargement...</p>
+  <p *ngIf="errorMessage" class="error-message">{{ errorMessage }}</p>
+
+  <section class="card" *ngIf="!loading && !errorMessage">
     <div class="card-title">
-      <h2>Demandes en validation</h2>
-      <p>{{ demandesFiltrees.length }} demande(s)</p>
+      <h2>Equipe</h2>
+      <p>{{ filteredEmployes.length }} employe(s)</p>
     </div>
 
-    <div class="table-wrapper">
+    <p *ngIf="filteredEmployes.length === 0" class="empty-state">Aucun employe trouve</p>
+
+    <div class="table-wrapper" *ngIf="filteredEmployes.length > 0">
       <table class="data-table">
         <thead>
           <tr>
-            <th>Réf.</th>
-            <th>Employé</th>
-            <th>Type</th>
-            <th>Période</th>
-            <th>Statut</th>
-            <th>Action</th>
+            <th>Matricule</th>
+            <th>Nom complet</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Departement</th>
+            <th>Date d'embauche</th>
+            <th>Solde actuel</th>
+            <th>Solde total</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let demande of demandesFiltrees">
-            <td class="ref-cell">{{ demande.id }}</td>
+          <tr *ngFor="let employe of filteredEmployes">
+            <td class="ref-cell">{{ employe.matricule || 'Non defini' }}</td>
             <td>
-              <strong>{{ demande.employe }}</strong>
-              <span>{{ demande.poste }}</span>
+              <strong>{{ nomComplet(employe) }}</strong>
+              <span>{{ employe.id }}</span>
             </td>
-            <td>{{ demande.type }}</td>
-            <td class="date-cell">{{ demande.dateDebut }} - {{ demande.dateFin }}</td>
-            <td><span class="badge" [attr.data-status]="demande.statut">{{ demande.statut }}</span></td>
+            <td>{{ employe.email || 'Non defini' }}</td>
+            <td><span class="badge">{{ employe.role || 'Non defini' }}</span></td>
+            <td>{{ employe.departementNom || 'Non defini' }}</td>
+            <td class="date-cell">{{ formatDate(employe.dateEmbauche) }}</td>
+            <td>{{ formatNumber(employe.soldeActuel) }}</td>
+            <td>{{ formatNumber(employe.soldeTotal) }}</td>
             <td>
-              <div class="action-group" *ngIf="demande.statut === 'En attente'; else noAction">
-                <button type="button" class="accept-btn" (click)="accepter(demande)">Accepter</button>
-                <button type="button" class="reject-btn" (click)="rejeter(demande)">Rejeter</button>
-              </div>
-              <ng-template #noAction><span class="no-action">-</span></ng-template>
+              <button type="button" class="history-btn" (click)="voirDetail(employe)">Voir detail</button>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
   </section>
-
-  <section class="employees-grid">
-    <article class="employee-card" *ngFor="let employe of employesFiltres">
-      <div>
-        <h2>{{ employe.nom }}</h2>
-        <p>{{ employe.poste }}</p>
-        <span>{{ employe.departement }}</span>
-      </div>
-      <div class="absence-count">
-        <strong>{{ compterAbsences(employe.nom) }}</strong>
-        <span>absence(s)</span>
-      </div>
-      <button type="button" class="history-btn" (click)="ouvrirHistorique(employe)">
-        Historique absences
-      </button>
-    </article>
-  </section>
 </div>
 
-<div class="modal-backdrop" *ngIf="employeHistorique" (click)="fermerHistorique()">
+<div class="modal-backdrop" *ngIf="selectedEmploye" (click)="fermerDetail()">
   <section class="history-modal" (click)="$event.stopPropagation()">
-    <button type="button" class="modal-close" aria-label="Fermer" (click)="fermerHistorique()">×</button>
+    <button type="button" class="modal-close" aria-label="Fermer" (click)="fermerDetail()">x</button>
     <header>
-      <h2>{{ employeHistorique.nom }}</h2>
-      <p>Historique des absences déclarées</p>
+      <h2>{{ nomComplet(selectedEmploye) }}</h2>
+      <p>{{ selectedEmploye.role || 'Non defini' }}</p>
     </header>
 
-    <div class="absence-list">
-      <article *ngFor="let absence of historiqueAbsences(employeHistorique.nom)">
-        <strong>{{ absence.dateDebut }} - {{ absence.dateFin }}</strong>
-        <span>{{ absence.motif }}</span>
-      </article>
-      <p class="empty" *ngIf="historiqueAbsences(employeHistorique.nom).length === 0">
-        Aucune absence déclarée.
-      </p>
+    <div class="detail-grid">
+      <div>
+        <span>Matricule</span>
+        <strong>{{ selectedEmploye.matricule || 'Non defini' }}</strong>
+      </div>
+      <div>
+        <span>Email</span>
+        <strong>{{ selectedEmploye.email || 'Non defini' }}</strong>
+      </div>
+      <div>
+        <span>Departement</span>
+        <strong>{{ selectedEmploye.departementNom || 'Non defini' }}</strong>
+      </div>
+      <div>
+        <span>Date d'embauche</span>
+        <strong>{{ formatDate(selectedEmploye.dateEmbauche) }}</strong>
+      </div>
+      <div>
+        <span>Solde actuel</span>
+        <strong>{{ formatNumber(selectedEmploye.soldeActuel) }}</strong>
+      </div>
+      <div>
+        <span>Solde total</span>
+        <strong>{{ formatNumber(selectedEmploye.soldeTotal) }}</strong>
+      </div>
     </div>
   </section>
 </div>

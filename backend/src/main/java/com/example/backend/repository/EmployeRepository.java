@@ -2,7 +2,9 @@ package com.example.backend.repository;
 
 import com.example.backend.model.Employe;
 import com.example.backend.model.enums.Role;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,6 +17,19 @@ public interface EmployeRepository extends JpaRepository<Employe, Long> {
     Optional<Employe> findFirstByUtilisateurRole(Role role);
 
     Optional<Employe> findFirstByDepartementIdAndUtilisateurRole(Long departementId, Role role);
+
+    @Query("""
+            select e from Employe e
+            join e.utilisateur u
+            where e.departement.id = :departementId
+              and e.idEmp <> :responsableEmployeId
+              and u.role in :roles
+            order by e.nom asc, e.prenom asc
+            """)
+    List<Employe> findEmployesEquipeResponsable(
+            @Param("departementId") Long departementId,
+            @Param("responsableEmployeId") Long responsableEmployeId,
+            @Param("roles") Set<Role> roles);
 
     boolean existsByMatricule(String matricule);
 
