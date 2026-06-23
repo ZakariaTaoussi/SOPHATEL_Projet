@@ -35,6 +35,7 @@
           <tr>
             <th>Ref.</th>
             <th>Type</th>
+            <th>Nature</th>
             <th>Deposee le</th>
             <th>Periode</th>
             <th>Jours deduits</th>
@@ -46,6 +47,7 @@
           <tr *ngFor="let d of filteredDemandes">
             <td class="ref-cell">DEM-{{ d.id }}</td>
             <td class="type-cell">{{ d.typeDemande }}</td>
+            <td>{{ d.typeDemande === 'CONGE' ? getNatureLabel(d.natureConge) : '-' }}</td>
             <td class="date-cell">{{ formatDate(d.createdAt) }}</td>
             <td class="date-cell">{{ formatDate(d.dateDebutDg || d.dateDebutResp || d.dateDebutEmp) }} -> {{ formatDate(d.dateFinDg || d.dateFinResp || d.dateFinEmp) }}</td>
             <td><span class="duree-chip">{{ d.joursDeduits || 0 }}j</span></td>
@@ -164,6 +166,14 @@
       </select>
     </label>
 
+    <label class="field" *ngIf="demandeForm.typeDemande === 'CONGE'">
+      <span>Nature du conge</span>
+      <select name="natureConge" [(ngModel)]="demandeForm.natureConge" required>
+        <option [ngValue]="null">Choisir</option>
+        <option *ngFor="let nature of naturesConge" [ngValue]="nature.value">{{ nature.label }}</option>
+      </select>
+    </label>
+
     <div class="date-grid">
       <label class="field">
         <span>Date de debut</span>
@@ -193,6 +203,10 @@
     <div>
       <dt>Type</dt>
       <dd>{{ demandeAImprimer.typeDemande }}</dd>
+    </div>
+    <div>
+      <dt>Nature</dt>
+      <dd>{{ demandeAImprimer.typeDemande === 'CONGE' ? getNatureLabel(demandeAImprimer.natureConge) : '-' }}</dd>
     </div>
     <div>
       <dt>Date de depot</dt>

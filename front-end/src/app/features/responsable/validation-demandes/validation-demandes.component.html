@@ -41,6 +41,7 @@
             <th>Employe</th>
             <th>Departement</th>
             <th>Type demande</th>
+            <th>Nature</th>
             <th>Date debut employe</th>
             <th>Date fin employe</th>
             <th>Statut</th>
@@ -57,6 +58,7 @@
             </td>
             <td>{{ demande.departementNom || '-' }}</td>
             <td>{{ demande.typeDemande }}</td>
+            <td>{{ demande.typeDemande === 'CONGE' ? getNatureLabel(demande.natureConge) : '-' }}</td>
             <td>{{ formatDate(demande.dateDebutEmp) }}</td>
             <td>{{ formatDate(demande.dateFinEmp) }}</td>
             <td><span class="badge">{{ getStatusLabel(demande.status) }}</span></td>

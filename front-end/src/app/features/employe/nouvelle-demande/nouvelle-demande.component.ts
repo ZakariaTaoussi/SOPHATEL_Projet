@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 import { finalize, Subscription } from 'rxjs';
 import { DemandeCongeService } from '../../../core/services/demande-conge.service';
 import { NotificationService } from '../../../core/services/notification.service';
-import { SoldeConge, TypeDemande } from '../../../core/models/demande-conge.model';
+import { NatureConge, SoldeConge, TypeDemande } from '../../../core/models/demande-conge.model';
 
 @Component({
   selector: 'app-nouvelle-demande',
@@ -17,9 +17,16 @@ import { SoldeConge, TypeDemande } from '../../../core/models/demande-conge.mode
 })
 export class NouvellDemandeComponent implements OnInit, OnDestroy {
   typesDemande: TypeDemande[] = ['CONGE', 'ABSENCE'];
+  naturesConge = [
+    { value: NatureConge.ANNUEL, label: 'Annuel' },
+    { value: NatureConge.MALADIE, label: 'Maladie' },
+    { value: NatureConge.MATERNITE, label: 'Maternite' },
+    { value: NatureConge.MISE_EN_DISPONIBILITE, label: 'Mise en disponibilite' },
+  ];
 
   form = {
     typeDemande: 'CONGE' as TypeDemande,
+    natureConge: null as NatureConge | null,
     dateDebutEmp: '',
     dateFinEmp: '',
   };
@@ -88,6 +95,9 @@ export class NouvellDemandeComponent implements OnInit, OnDestroy {
   onFormChange(): void {
     this.errorMessage = '';
     this.demandeBrouillonId = undefined;
+    if (this.form.typeDemande === 'ABSENCE') {
+      this.form.natureConge = null;
+    }
     this.calculerJours();
     this.cdr.detectChanges();
   }
@@ -187,6 +197,7 @@ export class NouvellDemandeComponent implements OnInit, OnDestroy {
       dateDebutEmp: this.form.dateDebutEmp,
       dateFinEmp: this.form.dateFinEmp,
       typeDemande: this.form.typeDemande,
+      natureConge: this.form.typeDemande === 'CONGE' ? this.form.natureConge : null,
     };
   }
 
@@ -198,6 +209,11 @@ export class NouvellDemandeComponent implements OnInit, OnDestroy {
 
     if (this.form.dateDebutEmp > this.form.dateFinEmp) {
       this.errorMessage = 'La date de debut ne peut pas etre apres la date de fin.';
+      return false;
+    }
+
+    if (this.form.typeDemande === 'CONGE' && !this.form.natureConge) {
+      this.errorMessage = 'Veuillez choisir la nature du conge.';
       return false;
     }
 

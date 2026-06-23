@@ -20,6 +20,7 @@ public class DemandeCongeMapper {
         demande.setDateDebutEmp(request.getDateDebutEmp());
         demande.setDateFinEmp(request.getDateFinEmp());
         demande.setTypeDemande(request.getTypeDemande());
+        demande.setNatureConge(request.getNatureConge());
         demande.setStatus(StatusDemande.BROUILLON);
         demande.setJoursDeduits(0D);
         return demande;
@@ -29,6 +30,7 @@ public class DemandeCongeMapper {
         demande.setDateDebutEmp(request.getDateDebutEmp());
         demande.setDateFinEmp(request.getDateFinEmp());
         demande.setTypeDemande(request.getTypeDemande());
+        demande.setNatureConge(request.getNatureConge());
     }
 
     public DemandeCongeResponse toResponse(DemandeConge demande) {
@@ -44,6 +46,7 @@ public class DemandeCongeMapper {
                 demande.getDateDebutDg(),
                 demande.getDateFinDg(),
                 demande.getTypeDemande(),
+                demande.getNatureConge(),
                 demande.getStatus(),
                 demande.getJoursDeduits(),
                 demande.getCreatedAt(),
@@ -66,6 +69,7 @@ public class DemandeCongeMapper {
                 demande.getDateDebutDg(),
                 demande.getDateFinDg(),
                 demande.getTypeDemande(),
+                demande.getNatureConge(),
                 demande.getStatus(),
                 demande.getJoursDeduits(),
                 demande.getCreatedAt(),
@@ -90,6 +94,7 @@ public class DemandeCongeMapper {
                 demande.getDateDebutDg(),
                 demande.getDateFinDg(),
                 demande.getTypeDemande(),
+                demande.getNatureConge(),
                 demande.getStatus(),
                 demande.getJoursDeduits(),
                 demande.getCreatedAt(),

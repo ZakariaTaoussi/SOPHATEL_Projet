@@ -1,5 +1,6 @@
 package com.example.backend.dto.demande;
 
+import com.example.backend.model.enums.NatureConge;
 import com.example.backend.model.enums.TypeDemande;
 import java.time.LocalDate;
 
@@ -7,6 +8,7 @@ public class DemandeCongeUpdateRequest {
     private LocalDate dateDebutEmp;
     private LocalDate dateFinEmp;
     private TypeDemande typeDemande;
+    private NatureConge natureConge;
 
     public LocalDate getDateDebutEmp() {
         return dateDebutEmp;
@@ -30,5 +32,13 @@ public class DemandeCongeUpdateRequest {
 
     public void setTypeDemande(TypeDemande typeDemande) {
         this.typeDemande = typeDemande;
+    }
+
+    public NatureConge getNatureConge() {
+        return natureConge;
+    }
+
+    public void setNatureConge(NatureConge natureConge) {
+        this.natureConge = natureConge;
     }
 }

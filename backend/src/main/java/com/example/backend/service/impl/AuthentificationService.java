@@ -12,6 +12,8 @@ import com.example.backend.security.JwtAuthenticationFilter;
 import com.example.backend.security.JwtService;
 import com.example.backend.service.interfaces.IAuthentificationService;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.transaction.Transactional;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;

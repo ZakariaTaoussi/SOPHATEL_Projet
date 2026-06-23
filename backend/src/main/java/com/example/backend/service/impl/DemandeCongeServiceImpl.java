@@ -9,6 +9,7 @@ import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.mapper.DemandeCongeMapper;
 import com.example.backend.model.DemandeConge;
 import com.example.backend.model.Employe;
+import com.example.backend.model.enums.NatureConge;
 import com.example.backend.model.enums.Role;
 import com.example.backend.model.enums.StatusDemande;
 import com.example.backend.model.enums.TypeDemande;
@@ -55,8 +56,10 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
         validateCreateRequest(request);
         validateDates(request.getDateDebutEmp(), request.getDateFinEmp());
         validateTypeDemande(request.getTypeDemande());
+        validateNatureConge(request.getTypeDemande(), request.getNatureConge());
 
         DemandeConge demande = demandeCongeMapper.toEntity(request, employe);
+        nettoyerNatureCongeSiAbsence(demande);
         return demandeCongeMapper.toResponse(demandeCongeRepository.save(demande));
     }
 
@@ -68,10 +71,12 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
         validateUpdateRequest(request);
         validateDates(request.getDateDebutEmp(), request.getDateFinEmp());
         validateTypeDemande(request.getTypeDemande());
+        validateNatureConge(request.getTypeDemande(), request.getNatureConge());
         Role role = getRole(employe);
         validateModificationAutorisee(demande, role);
 
         demandeCongeMapper.updateEntity(demande, request);
+        nettoyerNatureCongeSiAbsence(demande);
         appliquerDatesEffectivesApresModification(demande, role);
         return demandeCongeMapper.toResponse(demandeCongeRepository.save(demande));
     }
@@ -244,6 +249,18 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
     private void validateTypeDemande(TypeDemande typeDemande) {
         if (typeDemande == null) {
             throw new InvalidBusinessRequestException("Le type de demande est obligatoire");
+        }
+    }
+
+    private void validateNatureConge(TypeDemande typeDemande, NatureConge natureConge) {
+        if (typeDemande == TypeDemande.CONGE && natureConge == null) {
+            throw new InvalidBusinessRequestException("La nature du conge est obligatoire pour une demande de conge.");
+        }
+    }
+
+    private void nettoyerNatureCongeSiAbsence(DemandeConge demande) {
+        if (demande.getTypeDemande() == TypeDemande.ABSENCE) {
+            demande.setNatureConge(null);
         }
     }
 

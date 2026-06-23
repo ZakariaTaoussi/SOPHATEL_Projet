@@ -7,6 +7,7 @@ import { finalize, Observable } from 'rxjs';
 import {
   DirecteurGeneralDemande,
   DirecteurGeneralValidationDemandeRequest,
+  NatureConge,
   StatusDemande,
 } from '../../../core/models/demande-conge.model';
 import { DirecteurGeneralDemandeService } from '../../../core/services/directeur-general-demande.service';
@@ -85,6 +86,15 @@ export class DirecteurGeneralDemandeEmployeComponent implements OnInit {
     return ['Tous', ...Array.from(new Set(
       this.demandes.map(demande => demande.departementNom || '-')
     )).sort()];
+  }
+
+  get naturesConge() {
+    return [
+      { value: NatureConge.ANNUEL, label: 'Annuel' },
+      { value: NatureConge.MALADIE, label: 'Maladie' },
+      { value: NatureConge.MATERNITE, label: 'Maternite' },
+      { value: NatureConge.MISE_EN_DISPONIBILITE, label: 'Mise en disponibilite' },
+    ];
   }
 
   loadDemandes(): void {
@@ -250,6 +260,10 @@ export class DirecteurGeneralDemandeEmployeComponent implements OnInit {
     };
 
     return labels[status] ?? status;
+  }
+
+  getNatureLabel(nature?: NatureConge | null): string {
+    return this.naturesConge.find(option => option.value === nature)?.label ?? '-';
   }
 
   private hasValidId(demande: DirecteurGeneralDemande | null | undefined): demande is DirecteurGeneralDemande {

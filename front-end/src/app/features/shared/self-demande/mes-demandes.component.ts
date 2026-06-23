@@ -7,6 +7,7 @@ import { finalize } from 'rxjs';
 import {
   DemandeConge,
   DemandeCongeUpdateRequest,
+  NatureConge,
   SoldeConge,
   StatusDemande,
   TypeDemande,
@@ -19,6 +20,7 @@ import { NotificationService } from '../../../core/services/notification.service
 
 type DemandeForm = {
   typeDemande: TypeDemande;
+  natureConge: NatureConge | null;
   dateDebutEmp: string;
   dateFinEmp: string;
 };
@@ -39,6 +41,7 @@ export class SelfMesDemandesComponent implements OnInit {
   demandeEnModification?: DemandeConge;
   demandeForm: DemandeForm = {
     typeDemande: 'CONGE',
+    natureConge: null,
     dateDebutEmp: '',
     dateFinEmp: '',
   };
@@ -54,6 +57,12 @@ export class SelfMesDemandesComponent implements OnInit {
 
   types: Array<TypeDemande | 'Tous'> = ['Tous', 'CONGE', 'ABSENCE'];
   editTypes: TypeDemande[] = ['CONGE', 'ABSENCE'];
+  naturesConge = [
+    { value: NatureConge.ANNUEL, label: 'Annuel' },
+    { value: NatureConge.MALADIE, label: 'Maladie' },
+    { value: NatureConge.MATERNITE, label: 'Maternite' },
+    { value: NatureConge.MISE_EN_DISPONIBILITE, label: 'Mise en disponibilite' },
+  ];
   statuses: Array<StatusDemande | 'Tous'> = [
     'Tous',
     'BROUILLON',
@@ -244,6 +253,7 @@ export class SelfMesDemandesComponent implements OnInit {
     this.demandeEnModification = demande;
     this.demandeForm = {
       typeDemande: demande.typeDemande,
+      natureConge: demande.typeDemande === 'CONGE' ? demande.natureConge ?? null : null,
       dateDebutEmp: this.dateDebutEdition(demande),
       dateFinEmp: this.dateFinEdition(demande),
     };
@@ -258,10 +268,15 @@ export class SelfMesDemandesComponent implements OnInit {
       this.errorMessage = 'Id de demande manquant';
       return;
     }
+    if (this.demandeForm.typeDemande === 'CONGE' && !this.demandeForm.natureConge) {
+      this.errorMessage = 'Veuillez choisir la nature du conge.';
+      return;
+    }
 
     const demandeId = this.demandeEnModification.id;
     const payload: DemandeCongeUpdateRequest = {
       typeDemande: this.demandeForm.typeDemande,
+      natureConge: this.demandeForm.typeDemande === 'CONGE' ? this.demandeForm.natureConge : null,
       dateDebutEmp: this.demandeForm.dateDebutEmp,
       dateFinEmp: this.demandeForm.dateFinEmp,
     };
@@ -334,6 +349,10 @@ export class SelfMesDemandesComponent implements OnInit {
       month: '2-digit',
       year: 'numeric',
     }).format(new Date(value));
+  }
+
+  getNatureLabel(nature?: NatureConge | null): string {
+    return this.naturesConge.find(option => option.value === nature)?.label ?? '-';
   }
 
   private runAction(

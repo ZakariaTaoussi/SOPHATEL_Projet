@@ -55,6 +55,7 @@
             <th>Employe</th>
             <th>Departement</th>
             <th>Type</th>
+            <th>Nature</th>
             <th>Dates employe</th>
             <th>Dates responsable</th>
             <th>Dates DG</th>
@@ -66,7 +67,7 @@
         </thead>
         <tbody>
           <tr *ngIf="loading">
-            <td colspan="11" class="empty-cell">Chargement...</td>
+            <td colspan="12" class="empty-cell">Chargement...</td>
           </tr>
 
           <tr *ngFor="let demande of demandesFiltrees">
@@ -82,6 +83,7 @@
               </span>
             </td>
             <td>{{ demande.typeDemande }}</td>
+            <td>{{ demande.typeDemande === 'CONGE' ? getNatureLabel(demande.natureConge) : '-' }}</td>
             <td class="date-cell">
               {{ formatDate(demande.dateDebutEmp) }} - {{ formatDate(demande.dateFinEmp) }}
             </td>
@@ -149,7 +151,7 @@
           </tr>
 
           <tr *ngIf="!loading && demandesFiltrees.length === 0">
-            <td colspan="11" class="empty-cell">{{ emptyMessage }}</td>
+            <td colspan="12" class="empty-cell">{{ emptyMessage }}</td>
           </tr>
         </tbody>
       </table>

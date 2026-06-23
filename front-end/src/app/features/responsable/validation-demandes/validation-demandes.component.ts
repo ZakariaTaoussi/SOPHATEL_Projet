@@ -4,6 +4,7 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import {
+  NatureConge,
   ResponsableDemande,
   ResponsableValidationDemandeRequest,
   StatusDemande,
@@ -38,6 +39,13 @@ export class ResponsableValidationDemandesComponent implements OnInit {
     'VALIDE_EMPLOYE',
     'VALIDE_RESPONSABLE',
     'MODIFICATION_RESPONSABLE',
+  ];
+
+  readonly naturesConge = [
+    { value: NatureConge.ANNUEL, label: 'Annuel' },
+    { value: NatureConge.MALADIE, label: 'Maladie' },
+    { value: NatureConge.MATERNITE, label: 'Maternite' },
+    { value: NatureConge.MISE_EN_DISPONIBILITE, label: 'Mise en disponibilite' },
   ];
 
   constructor(
@@ -214,6 +222,10 @@ export class ResponsableValidationDemandesComponent implements OnInit {
     };
 
     return labels[status] ?? status;
+  }
+
+  getNatureLabel(nature?: NatureConge | null): string {
+    return this.naturesConge.find(option => option.value === nature)?.label ?? '-';
   }
 
   private hasValidId(demande: ResponsableDemande | null | undefined): demande is ResponsableDemande {

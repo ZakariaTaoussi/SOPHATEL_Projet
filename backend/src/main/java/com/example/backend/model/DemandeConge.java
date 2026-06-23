@@ -1,6 +1,7 @@
 package com.example.backend.model;
 
 import com.example.backend.model.enums.StatusDemande;
+import com.example.backend.model.enums.NatureConge;
 import com.example.backend.model.enums.TypeDemande;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -47,6 +48,10 @@ public class DemandeConge {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TypeDemande typeDemande;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "nature_conge")
+    private NatureConge natureConge;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -152,6 +157,14 @@ public class DemandeConge {
 
     public void setTypeDemande(TypeDemande typeDemande) {
         this.typeDemande = typeDemande;
+    }
+
+    public NatureConge getNatureConge() {
+        return natureConge;
+    }
+
+    public void setNatureConge(NatureConge natureConge) {
+        this.natureConge = natureConge;
     }
 
     public StatusDemande getStatus() {

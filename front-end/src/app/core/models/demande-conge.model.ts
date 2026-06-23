@@ -1,5 +1,12 @@
 export type TypeDemande = 'CONGE' | 'ABSENCE';
 
+export enum NatureConge {
+  ANNUEL = 'ANNUEL',
+  MALADIE = 'MALADIE',
+  MATERNITE = 'MATERNITE',
+  MISE_EN_DISPONIBILITE = 'MISE_EN_DISPONIBILITE',
+}
+
 export type StatusDemande =
   | 'BROUILLON'
   | 'VALIDE_EMPLOYE'
@@ -25,6 +32,7 @@ export interface DemandeConge {
   dateDebutDg?: string | null;
   dateFinDg?: string | null;
   typeDemande: TypeDemande;
+  natureConge?: NatureConge | null;
   status: StatusDemande;
   joursDeduits: number;
   createdAt: string;
@@ -35,12 +43,14 @@ export interface DemandeCongeCreateRequest {
   dateDebutEmp: string;
   dateFinEmp: string;
   typeDemande: TypeDemande;
+  natureConge?: NatureConge | null;
 }
 
 export interface DemandeCongeUpdateRequest {
   dateDebutEmp: string;
   dateFinEmp: string;
   typeDemande: TypeDemande;
+  natureConge?: NatureConge | null;
 }
 
 export interface ResponsableDemande {
@@ -56,6 +66,7 @@ export interface ResponsableDemande {
   dateDebutDg: string | null;
   dateFinDg: string | null;
   typeDemande: TypeDemande;
+  natureConge?: NatureConge | null;
   status: StatusDemande;
   joursDeduits: number;
   createdAt: string;
@@ -81,6 +92,7 @@ export interface DirecteurGeneralDemande {
   dateDebutDg: string | null;
   dateFinDg: string | null;
   typeDemande: TypeDemande;
+  natureConge?: NatureConge | null;
   status: StatusDemande;
   joursDeduits: number;
   createdAt: string;

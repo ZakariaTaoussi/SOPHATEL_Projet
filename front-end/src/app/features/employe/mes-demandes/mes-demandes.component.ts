@@ -3,12 +3,13 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { finalize, Subscription } from 'rxjs';
-import { DemandeConge, DemandeCongeUpdateRequest, StatusDemande, TypeDemande } from '../../../core/models/demande-conge.model';
+import { DemandeConge, DemandeCongeUpdateRequest, NatureConge, StatusDemande, TypeDemande } from '../../../core/models/demande-conge.model';
 import { DemandeCongeService } from '../../../core/services/demande-conge.service';
 import { NotificationService } from '../../../core/services/notification.service';
 
 type DemandeForm = {
   typeDemande: TypeDemande;
+  natureConge: NatureConge | null;
   dateDebutEmp: string;
   dateFinEmp: string;
 };
@@ -26,6 +27,7 @@ export class MesDemandesComponent implements OnInit, OnDestroy {
   demandeEnModification?: DemandeConge;
   demandeForm: DemandeForm = {
     typeDemande: 'CONGE',
+    natureConge: null,
     dateDebutEmp: '',
     dateFinEmp: '',
   };
@@ -38,6 +40,12 @@ export class MesDemandesComponent implements OnInit, OnDestroy {
 
   types: Array<TypeDemande | 'Tous'> = ['Tous', 'CONGE', 'ABSENCE'];
   editTypes: TypeDemande[] = ['CONGE', 'ABSENCE'];
+  naturesConge = [
+    { value: NatureConge.ANNUEL, label: 'Annuel' },
+    { value: NatureConge.MALADIE, label: 'Maladie' },
+    { value: NatureConge.MATERNITE, label: 'Maternite' },
+    { value: NatureConge.MISE_EN_DISPONIBILITE, label: 'Mise en disponibilite' },
+  ];
   statuses: Array<StatusDemande | 'Tous'> = [
     'Tous',
     'BROUILLON',
@@ -190,6 +198,7 @@ export class MesDemandesComponent implements OnInit, OnDestroy {
     this.demandeEnModification = demande;
     this.demandeForm = {
       typeDemande: demande.typeDemande,
+      natureConge: demande.typeDemande === 'CONGE' ? demande.natureConge ?? null : null,
       dateDebutEmp: demande.dateDebutEmp,
       dateFinEmp: demande.dateFinEmp,
     };
@@ -203,9 +212,14 @@ export class MesDemandesComponent implements OnInit, OnDestroy {
     if (!this.demandeEnModification) {
       return;
     }
+    if (this.demandeForm.typeDemande === 'CONGE' && !this.demandeForm.natureConge) {
+      this.errorMessage = 'Veuillez choisir la nature du conge.';
+      return;
+    }
 
     const payload: DemandeCongeUpdateRequest = {
       typeDemande: this.demandeForm.typeDemande,
+      natureConge: this.demandeForm.typeDemande === 'CONGE' ? this.demandeForm.natureConge : null,
       dateDebutEmp: this.demandeForm.dateDebutEmp,
       dateFinEmp: this.demandeForm.dateFinEmp,
     };
@@ -277,6 +291,10 @@ export class MesDemandesComponent implements OnInit, OnDestroy {
       month: '2-digit',
       year: 'numeric',
     }).format(new Date(value));
+  }
+
+  getNatureLabel(nature?: NatureConge | null): string {
+    return this.naturesConge.find(option => option.value === nature)?.label ?? '-';
   }
 
   private handleError(error: unknown): void {

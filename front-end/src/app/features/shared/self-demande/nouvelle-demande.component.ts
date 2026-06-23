@@ -6,6 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import {
   DemandeCongeCreateRequest,
+  NatureConge,
   SoldeConge,
   TypeDemande,
 } from '../../../core/models/demande-conge.model';
@@ -24,9 +25,16 @@ import { NotificationService } from '../../../core/services/notification.service
 })
 export class SelfNouvelleDemandeComponent implements OnInit {
   typesDemande: TypeDemande[] = ['CONGE', 'ABSENCE'];
+  naturesConge = [
+    { value: NatureConge.ANNUEL, label: 'Annuel' },
+    { value: NatureConge.MALADIE, label: 'Maladie' },
+    { value: NatureConge.MATERNITE, label: 'Maternite' },
+    { value: NatureConge.MISE_EN_DISPONIBILITE, label: 'Mise en disponibilite' },
+  ];
 
   form: DemandeCongeCreateRequest = {
     typeDemande: 'CONGE',
+    natureConge: null,
     dateDebutEmp: '',
     dateFinEmp: '',
   };
@@ -92,6 +100,9 @@ export class SelfNouvelleDemandeComponent implements OnInit {
   onFormChange(): void {
     this.errorMessage = '';
     this.demandeBrouillonId = undefined;
+    if (this.form.typeDemande === 'ABSENCE') {
+      this.form.natureConge = null;
+    }
     this.calculerJours();
   }
 
@@ -183,6 +194,11 @@ export class SelfNouvelleDemandeComponent implements OnInit {
 
     if (this.form.dateDebutEmp > this.form.dateFinEmp) {
       this.errorMessage = 'Dates invalides';
+      return false;
+    }
+
+    if (this.form.typeDemande === 'CONGE' && !this.form.natureConge) {
+      this.errorMessage = 'Veuillez choisir la nature du conge.';
       return false;
     }
 

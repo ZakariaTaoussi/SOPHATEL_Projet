@@ -1,5 +1,6 @@
 package com.example.backend.dto.demande;
 
+import com.example.backend.model.enums.NatureConge;
 import com.example.backend.model.enums.StatusDemande;
 import com.example.backend.model.enums.TypeDemande;
 import java.time.LocalDate;
@@ -18,6 +19,7 @@ public class ResponsableDemandeResponse {
     private LocalDate dateDebutDg;
     private LocalDate dateFinDg;
     private TypeDemande typeDemande;
+    private NatureConge natureConge;
     private StatusDemande status;
     private Double joursDeduits;
     private LocalDateTime createdAt;
@@ -36,6 +38,7 @@ public class ResponsableDemandeResponse {
             LocalDate dateDebutDg,
             LocalDate dateFinDg,
             TypeDemande typeDemande,
+            NatureConge natureConge,
             StatusDemande status,
             Double joursDeduits,
             LocalDateTime createdAt,
@@ -52,6 +55,7 @@ public class ResponsableDemandeResponse {
         this.dateDebutDg = dateDebutDg;
         this.dateFinDg = dateFinDg;
         this.typeDemande = typeDemande;
+        this.natureConge = natureConge;
         this.status = status;
         this.joursDeduits = joursDeduits;
         this.createdAt = createdAt;
@@ -104,6 +108,10 @@ public class ResponsableDemandeResponse {
 
     public TypeDemande getTypeDemande() {
         return typeDemande;
+    }
+
+    public NatureConge getNatureConge() {
+        return natureConge;
     }
 
     public StatusDemande getStatus() {

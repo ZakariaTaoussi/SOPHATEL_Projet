@@ -30,6 +30,14 @@
             </select>
           </label>
 
+          <label class="field field-small" *ngIf="form.typeDemande === 'CONGE'">
+            <span>Nature du conge</span>
+            <select name="natureConge" [(ngModel)]="form.natureConge" (ngModelChange)="onFormChange()">
+              <option [ngValue]="null">Choisir</option>
+              <option *ngFor="let nature of naturesConge" [ngValue]="nature.value">{{ nature.label }}</option>
+            </select>
+          </label>
+
           <label class="field">
             <span>Date de debut</span>
             <input type="date" name="dateDebutEmp" [(ngModel)]="form.dateDebutEmp" (ngModelChange)="onFormChange()" />
@@ -59,6 +67,10 @@
           <div>
             <dt>Type</dt>
             <dd>{{ form.typeDemande }}</dd>
+          </div>
+          <div *ngIf="form.typeDemande === 'CONGE'">
+            <dt>Nature</dt>
+            <dd>{{ form.natureConge || '-' }}</dd>
           </div>
           <div>
             <dt>Periode</dt>
