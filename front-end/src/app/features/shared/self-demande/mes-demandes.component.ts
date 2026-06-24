@@ -47,16 +47,16 @@ export class SelfMesDemandesComponent implements OnInit {
   };
 
   solde?: SoldeConge;
-  selectedType: TypeDemande | 'Tous' = 'Tous';
   selectedStatus: StatusDemande | 'Tous' = 'Tous';
+  currentPage = 1;
+  readonly pageSize = 5;
   loading = false;
   actionLoadingId: number | null = null;
   actionLoadingName: ActionName | null = null;
   errorMessage = '';
   successMessage = '';
 
-  types: Array<TypeDemande | 'Tous'> = ['Tous', 'CONGE', 'ABSENCE'];
-  editTypes: TypeDemande[] = ['CONGE', 'ABSENCE'];
+  editTypes: TypeDemande[] = ['CONGE'];
   naturesConge = [
     { value: NatureConge.ANNUEL, label: 'Annuel' },
     { value: NatureConge.MALADIE, label: 'Maladie' },
@@ -104,7 +104,7 @@ export class SelfMesDemandesComponent implements OnInit {
       })
     ).subscribe({
       next: demandes => {
-        this.demandes = [...demandes];
+        this.demandes = demandes.filter(demande => demande.typeDemande === 'CONGE');
         this.applyFilters();
         this.cdr.markForCheck();
       },
@@ -127,24 +127,43 @@ export class SelfMesDemandesComponent implements OnInit {
     });
   }
 
-  setType(value: string): void {
-    this.selectedType = value as TypeDemande | 'Tous';
-    this.applyFilters();
-  }
-
   setStatus(value: string): void {
     this.selectedStatus = value as StatusDemande | 'Tous';
+    this.currentPage = 1;
     this.applyFilters();
   }
 
   applyFilters(): void {
     const result = this.demandes.filter(demande => {
-      const matchType = this.selectedType === 'Tous' || demande.typeDemande === this.selectedType;
       const matchStatus = this.selectedStatus === 'Tous' || demande.status === this.selectedStatus;
-      return matchType && matchStatus;
+      return demande.typeDemande === 'CONGE' && matchStatus;
     });
     this.filteredDemandes = [...result];
+    this.ensureValidPage();
     this.cdr.markForCheck();
+  }
+
+  get pagedDemandes(): DemandeConge[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filteredDemandes.slice(start, start + this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredDemandes.length / this.pageSize));
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.cdr.markForCheck();
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.cdr.markForCheck();
+    }
   }
 
   getStatutLabel(statut: StatusDemande | 'Tous'): string {
@@ -252,8 +271,8 @@ export class SelfMesDemandesComponent implements OnInit {
 
     this.demandeEnModification = demande;
     this.demandeForm = {
-      typeDemande: demande.typeDemande,
-      natureConge: demande.typeDemande === 'CONGE' ? demande.natureConge ?? null : null,
+      typeDemande: 'CONGE',
+      natureConge: demande.natureConge ?? null,
       dateDebutEmp: this.dateDebutEdition(demande),
       dateFinEmp: this.dateFinEdition(demande),
     };
@@ -431,5 +450,14 @@ export class SelfMesDemandesComponent implements OnInit {
     const effectiveDate = new Date(dateDebut);
     effectiveDate.setHours(0, 0, 0, 0);
     return effectiveDate > today;
+  }
+
+  private ensureValidPage(): void {
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = this.totalPages;
+    }
+    if (this.currentPage < 1) {
+      this.currentPage = 1;
+    }
   }
 }

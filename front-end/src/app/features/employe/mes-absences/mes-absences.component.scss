@@ -92,6 +92,65 @@
   font-size: .9rem;
 }
 
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 18px 24px 0;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: #334155;
+    font-size: .82rem;
+    font-weight: 800;
+  }
+
+  select {
+    min-width: 160px;
+    height: 36px;
+    border: 1px solid #d7e0e8;
+    border-radius: 8px;
+    background: #fff;
+    color: #0f172a;
+    padding: 0 10px;
+  }
+}
+
+.error-message {
+  margin: 12px 24px 0;
+  color: #b91c1c;
+  font-size: .9rem;
+  font-weight: 700;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 0 24px 20px;
+  color: #475569;
+  font-size: .88rem;
+
+  button {
+    min-height: 34px;
+    padding: 0 14px;
+    border: 1px solid #d7e0e8;
+    border-radius: 8px;
+    background: #fff;
+    color: #087da0;
+    font-weight: 800;
+    cursor: pointer;
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: .5;
+    }
+  }
+}
+
 .table-wrapper {
   width: 100%;
   overflow-x: auto;

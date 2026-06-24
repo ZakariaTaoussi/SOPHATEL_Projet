@@ -1,13 +1,16 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, map, Observable, tap } from 'rxjs';
 import { apiUrl } from '../config/api-url';
 import {
   DemandeConge,
   DemandeCongeCreateRequest,
   DemandeCongeUpdateRequest,
+  AbsenceStatsResponse,
   SoldeConge,
 } from '../models/demande-conge.model';
+
+type DemandeListResponse = DemandeConge[] | { content: DemandeConge[] };
 
 @Injectable({ providedIn: 'root' })
 export class DemandeCongeService {
@@ -24,8 +27,22 @@ export class DemandeCongeService {
   constructor(private readonly http: HttpClient) {}
 
   getMesDemandes(): Observable<DemandeConge[]> {
-    return this.http.get<DemandeConge[]>(`${this.employeUrl}/demandes`, { withCredentials: true })
+    return this.http.get<DemandeListResponse>(`${this.employeUrl}/demandes`, { withCredentials: true })
+      .pipe(map(response => this.toDemandesArray(response)))
       .pipe(tap(demandes => this.mesDemandesSubject.next(demandes)));
+  }
+
+  getMesAbsences(): Observable<DemandeConge[]> {
+    return this.http.get<DemandeListResponse>(`${this.employeUrl}/absences`, { withCredentials: true })
+      .pipe(map(response => this.toDemandesArray(response)));
+  }
+
+  getAbsenceStats(year: number): Observable<AbsenceStatsResponse[]> {
+    const params = new HttpParams().set('year', year);
+    return this.http.get<AbsenceStatsResponse[]>(`${this.employeUrl}/absences/stats`, {
+      params,
+      withCredentials: true,
+    });
   }
 
   getDemandeById(id: number): Observable<DemandeConge> {
@@ -106,5 +123,9 @@ export class DemandeCongeService {
       : [demande, ...demandes];
 
     this.mesDemandesSubject.next(updated);
+  }
+
+  private toDemandesArray(response: DemandeListResponse): DemandeConge[] {
+    return Array.isArray(response) ? response : response.content ?? [];
   }
 }

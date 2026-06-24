@@ -9,6 +9,7 @@ public class DemandeCongeCreateRequest {
     private LocalDate dateFinEmp;
     private TypeDemande typeDemande;
     private NatureConge natureConge;
+    private Boolean soumettre;
 
     public LocalDate getDateDebutEmp() {
         return dateDebutEmp;
@@ -40,5 +41,13 @@ public class DemandeCongeCreateRequest {
 
     public void setNatureConge(NatureConge natureConge) {
         this.natureConge = natureConge;
+    }
+
+    public Boolean getSoumettre() {
+        return soumettre;
+    }
+
+    public void setSoumettre(Boolean soumettre) {
+        this.soumettre = soumettre;
     }
 }

@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -45,6 +46,11 @@ public class DirecteurGeneralDemandeController {
         return ResponseEntity.ok(directeurGeneralDemandeService.getDemandesAValider());
     }
 
+    @GetMapping("/absences-a-valider")
+    public ResponseEntity<List<DirecteurGeneralDemandeResponse>> absencesAValider() {
+        return ResponseEntity.ok(directeurGeneralDemandeService.getAbsencesAValider());
+    }
+
     @GetMapping("/demandes-a-valider/{id}")
     public ResponseEntity<DirecteurGeneralDemandeResponse> demandeAValider(@PathVariable Long id) {
         return ResponseEntity.ok(directeurGeneralDemandeService.getDemandeAValiderById(id));
@@ -59,6 +65,18 @@ public class DirecteurGeneralDemandeController {
 
     @PostMapping("/demandes/{id}/refuser")
     public ResponseEntity<DirecteurGeneralDemandeResponse> refuserDemande(@PathVariable Long id) {
+        return ResponseEntity.ok(directeurGeneralDemandeService.refuserDemandeParDg(id));
+    }
+
+    @RequestMapping(path = "/absences/{id}/valider", method = {RequestMethod.POST, RequestMethod.PUT})
+    public ResponseEntity<DirecteurGeneralDemandeResponse> validerAbsence(
+            @PathVariable Long id,
+            @RequestBody(required = false) DirecteurGeneralValidationDemandeRequest request) {
+        return ResponseEntity.ok(directeurGeneralDemandeService.validerDemandeParDg(id, request));
+    }
+
+    @RequestMapping(path = "/absences/{id}/refuser", method = {RequestMethod.POST, RequestMethod.PUT})
+    public ResponseEntity<DirecteurGeneralDemandeResponse> refuserAbsence(@PathVariable Long id) {
         return ResponseEntity.ok(directeurGeneralDemandeService.refuserDemandeParDg(id));
     }
 

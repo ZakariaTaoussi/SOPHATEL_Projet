@@ -1,5 +1,6 @@
 package com.example.backend.controller.rh;
 
+import com.example.backend.dto.demande.AbsenceStatsResponse;
 import com.example.backend.dto.demande.DemandeCongeCreateRequest;
 import com.example.backend.dto.demande.DemandeCongeResponse;
 import com.example.backend.dto.demande.DemandeCongeUpdateRequest;
@@ -37,6 +38,16 @@ public class RhDemandeCongeController {
     @GetMapping("/demandes")
     public ResponseEntity<List<DemandeCongeResponse>> mesDemandes() {
         return ResponseEntity.ok(demandeCongeService.mesDemandes());
+    }
+
+    @GetMapping("/absences")
+    public ResponseEntity<List<DemandeCongeResponse>> mesAbsences() {
+        return ResponseEntity.ok(demandeCongeService.mesAbsences());
+    }
+
+    @GetMapping("/absences/stats")
+    public ResponseEntity<List<AbsenceStatsResponse>> statsAbsences(@RequestParam int year) {
+        return ResponseEntity.ok(demandeCongeService.getMesAbsencesStats(year));
     }
 
     @GetMapping("/demandes/{id}")

@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import {
   NatureConge,
@@ -50,6 +51,7 @@ export class ResponsableValidationDemandesComponent implements OnInit {
 
   constructor(
     private readonly responsableDemandeService: ResponsableDemandeService,
+    private readonly router: Router,
     private readonly cdr: ChangeDetectorRef
   ) {}
 
@@ -61,7 +63,11 @@ export class ResponsableValidationDemandesComponent implements OnInit {
     this.loading = true;
     this.errorMessage = '';
 
-    this.responsableDemandeService.getDemandesAValider().pipe(
+    const request$ = this.isAbsencesMode
+      ? this.responsableDemandeService.getAbsencesAValider()
+      : this.responsableDemandeService.getDemandesAValider();
+
+    request$.pipe(
       finalize(() => {
         this.loading = false;
         this.cdr.markForCheck();
@@ -100,8 +106,10 @@ export class ResponsableValidationDemandesComponent implements OnInit {
     this.executerAction(
       demande.id,
       'valider',
-      'Demande validee par le responsable.',
-      () => this.responsableDemandeService.validerDemande(demande.id, payload),
+      demande.typeDemande === 'ABSENCE' ? 'Absence validee par le responsable.' : 'Demande validee par le responsable.',
+      () => demande.typeDemande === 'ABSENCE'
+        ? this.responsableDemandeService.validerAbsence(demande.id, payload)
+        : this.responsableDemandeService.validerDemande(demande.id, payload),
       'Erreur lors de la validation'
     );
   }
@@ -139,8 +147,10 @@ export class ResponsableValidationDemandesComponent implements OnInit {
     this.executerAction(
       demande.id,
       'modifier',
-      'Demande validee avec les dates responsable.',
-      () => this.responsableDemandeService.validerDemande(demande.id, payload),
+      demande.typeDemande === 'ABSENCE' ? 'Absence validee avec les dates responsable.' : 'Demande validee avec les dates responsable.',
+      () => demande.typeDemande === 'ABSENCE'
+        ? this.responsableDemandeService.validerAbsence(demande.id, payload)
+        : this.responsableDemandeService.validerDemande(demande.id, payload),
       'Erreur lors de la validation avec modification',
       () => this.fermerModification()
     );
@@ -155,8 +165,10 @@ export class ResponsableValidationDemandesComponent implements OnInit {
     this.executerAction(
       demande.id,
       'refuser',
-      'Demande refusee par le responsable.',
-      () => this.responsableDemandeService.refuserDemande(demande.id),
+      demande.typeDemande === 'ABSENCE' ? 'Absence refusee par le responsable.' : 'Demande refusee par le responsable.',
+      () => demande.typeDemande === 'ABSENCE'
+        ? this.responsableDemandeService.refuserAbsence(demande.id)
+        : this.responsableDemandeService.refuserDemande(demande.id),
       'Erreur lors du refus'
     );
   }
@@ -266,6 +278,10 @@ export class ResponsableValidationDemandesComponent implements OnInit {
   private clearMessages(): void {
     this.errorMessage = '';
     this.successMessage = '';
+  }
+
+  private get isAbsencesMode(): boolean {
+    return this.router.url.includes('/absences-a-valider');
   }
 
   private getErrorMessage(error: unknown, fallback: string): string {

@@ -53,6 +53,32 @@
   font-family: 'Inter', sans-serif;
 }
 
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 18px;
+  color: #475569;
+  font-size: .88rem;
+
+  button {
+    min-height: 34px;
+    padding: 0 14px;
+    border: 1px solid #d7e0e8;
+    border-radius: 8px;
+    background: #fff;
+    color: #1B3A6B;
+    font-weight: 700;
+    cursor: pointer;
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: .5;
+    }
+  }
+}
+
 /* make header controls (button + filters) sit together on smaller spacing */
 .page-header { align-items: center; }
 .page-header .filters { margin-left: 12px; }

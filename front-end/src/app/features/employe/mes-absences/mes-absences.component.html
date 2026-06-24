@@ -2,15 +2,15 @@
   <header class="page-header">
     <div>
       <h1>Absences</h1>
-      <p>Déclarez et consultez vos absences</p>
+      <p>Declarez et consultez vos absences.</p>
     </div>
 
-    <button type="button" class="declare-btn" (click)="ouvrirModal()">
+    <button type="button" class="declare-btn" (click)="declarerAbsence()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
         <line x1="12" y1="5" x2="12" y2="19"/>
         <line x1="5" y1="12" x2="19" y2="12"/>
       </svg>
-      Déclarer une absence
+      Declarer une absence
     </button>
   </header>
 
@@ -24,39 +24,60 @@
         <path d="m15 14-4 4"/>
         <path d="m11 14 4 4"/>
       </svg>
-      <h2>Absences enregistrées</h2>
+      <h2>Absences enregistrees</h2>
     </div>
 
-    <p class="result-count">{{ absences.length }} absence(s) trouvée(s)</p>
+    <p *ngIf="errorMessage" class="error-message">{{ errorMessage }}</p>
+
+    <div class="filters">
+      <label>
+        Annee
+        <select [(ngModel)]="selectedYear" (ngModelChange)="onFilterChange()">
+          <option *ngFor="let year of years" [ngValue]="year">{{ year }}</option>
+        </select>
+      </label>
+      <label>
+        Mois
+        <select [(ngModel)]="selectedMonth" (ngModelChange)="onFilterChange()">
+          <option *ngFor="let month of months" [ngValue]="month.value">{{ month.label }}</option>
+        </select>
+      </label>
+    </div>
+
+    <p class="result-count">{{ loading ? 'Chargement...' : (filteredAbsences.length + ' absence(s) trouvee(s)') }}</p>
 
     <div class="table-wrapper">
       <table class="absences-table">
         <thead>
           <tr>
-            <th>N°</th>
-            <th>Période</th>
-            <th>Durée</th>
-            <th>Motif</th>
+            <th>N</th>
+            <th>Date debut</th>
+            <th>Date fin</th>
+            <th>Statut</th>
+            <th>Duree</th>
+            <th>Date creation</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let absence of absences">
-            <td class="id-cell">#{{ absence.numero }}</td>
-            <td>{{ absence.periode }}</td>
-            <td>{{ absence.duree }} j</td>
-            <td>{{ absence.motif }}</td>
+          <tr *ngFor="let absence of pagedAbsences">
+            <td class="id-cell">#{{ absence.id }}</td>
+            <td>{{ formatDate(absence.dateDebutEmp) }}</td>
+            <td>{{ formatDate(absence.dateFinEmp) }}</td>
+            <td>{{ getStatusLabel(absence.status) }}</td>
+            <td>{{ dureeAbsence(absence) }} j</td>
+            <td>{{ formatDate(absence.createdAt) }}</td>
           </tr>
-          <tr *ngIf="absences.length === 0">
-            <td colspan="4" class="empty-cell">Aucune absence trouvée.</td>
+          <tr *ngIf="!loading && filteredAbsences.length === 0">
+            <td colspan="6" class="empty-cell">Aucune absence trouvee.</td>
           </tr>
         </tbody>
       </table>
     </div>
+
+    <div class="pagination" *ngIf="!loading && filteredAbsences.length > pageSize">
+      <button type="button" (click)="previousPage()" [disabled]="currentPage === 1">Previous</button>
+      <span>Page {{ currentPage }} / {{ totalPages }}</span>
+      <button type="button" (click)="nextPage()" [disabled]="currentPage === totalPages">Next</button>
+    </div>
   </section>
 </div>
-
-<app-declaration-absence
-  *ngIf="isModalOpen"
-  (closed)="fermerModal()"
-  (saved)="enregistrerAbsence($event)"
-></app-declaration-absence>

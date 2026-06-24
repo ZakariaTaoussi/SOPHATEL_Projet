@@ -62,6 +62,19 @@ public class ResponsableDemandeServiceImpl implements IResponsableDemandeService
     }
 
     @Override
+    public List<ResponsableDemandeResponse> getAbsencesAValider() {
+        Employe responsable = getResponsableConnecte();
+        Departement departement = getDepartementResponsableConnecte(responsable);
+        return demandeCongeRepository.findByEmployeDepartementIdAndEmployeIdNotAndTypeDemandeAndStatusInOrderByUpdatedAtDesc(
+                        departement.getId(),
+                        responsable.getIdEmp(),
+                        TypeDemande.ABSENCE,
+                        STATUTS_WORKFLOW_RESPONSABLE).stream()
+                .map(demandeCongeMapper::toResponsableResponse)
+                .toList();
+    }
+
+    @Override
     public ResponsableDemandeResponse getDemandeAValiderById(Long demandeId) {
         Employe responsable = getResponsableConnecte();
         Departement departement = getDepartementResponsableConnecte(responsable);

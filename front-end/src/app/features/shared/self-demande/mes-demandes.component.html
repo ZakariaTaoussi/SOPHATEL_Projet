@@ -7,12 +7,6 @@
     <div class="header-controls">
       <div class="filters">
         <label>
-          Type:
-          <select #typeSelect (change)="setType(typeSelect.value)">
-            <option *ngFor="let t of types" [value]="t">{{ t }}</option>
-          </select>
-        </label>
-        <label>
           Statut:
           <select #statusSelect (change)="setStatus(statusSelect.value)">
             <option *ngFor="let s of statuses" [value]="s">{{ getStatutLabel(s) }}</option>
@@ -44,7 +38,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let d of filteredDemandes">
+          <tr *ngFor="let d of pagedDemandes">
             <td class="ref-cell">DEM-{{ d.id }}</td>
             <td class="type-cell">{{ d.typeDemande }}</td>
             <td>{{ d.typeDemande === 'CONGE' ? getNatureLabel(d.natureConge) : '-' }}</td>
@@ -141,6 +135,12 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <div class="pagination" *ngIf="!loading && filteredDemandes.length > pageSize">
+      <button type="button" (click)="previousPage()" [disabled]="currentPage === 1">Previous</button>
+      <span>Page {{ currentPage }} / {{ totalPages }}</span>
+      <button type="button" (click)="nextPage()" [disabled]="currentPage === totalPages">Next</button>
     </div>
   </div>
 </div>

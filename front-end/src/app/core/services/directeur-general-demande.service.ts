@@ -19,6 +19,12 @@ export class DirecteurGeneralDemandeService {
     });
   }
 
+  getAbsencesAValider(): Observable<DirecteurGeneralDemande[]> {
+    return this.http.get<DirecteurGeneralDemande[]>(`${this.directeurGeneralUrl}/absences-a-valider`, {
+      withCredentials: true,
+    });
+  }
+
   getDemandeById(id: number): Observable<DirecteurGeneralDemande> {
     return this.http.get<DirecteurGeneralDemande>(`${this.directeurGeneralUrl}/demandes-a-valider/${id}`, {
       withCredentials: true,
@@ -40,6 +46,25 @@ export class DirecteurGeneralDemandeService {
     }
 
     return this.http.post<DirecteurGeneralDemande>(`${this.directeurGeneralUrl}/demandes/${id}/refuser`, {}, {
+      withCredentials: true,
+    });
+  }
+
+  validerAbsence(
+    id: number,
+    payload: DirecteurGeneralValidationDemandeRequest
+  ): Observable<DirecteurGeneralDemande> {
+    return this.http.post<DirecteurGeneralDemande>(`${this.directeurGeneralUrl}/absences/${id}/valider`, payload, {
+      withCredentials: true,
+    });
+  }
+
+  refuserAbsence(id: number): Observable<DirecteurGeneralDemande> {
+    if (!this.isValidId(id)) {
+      return throwError(() => new Error('id demande manquant'));
+    }
+
+    return this.http.post<DirecteurGeneralDemande>(`${this.directeurGeneralUrl}/absences/${id}/refuser`, {}, {
       withCredentials: true,
     });
   }

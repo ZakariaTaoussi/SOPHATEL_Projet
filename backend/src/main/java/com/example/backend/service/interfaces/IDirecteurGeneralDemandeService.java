@@ -8,6 +8,8 @@ public interface IDirecteurGeneralDemandeService {
 
     List<DirecteurGeneralDemandeResponse> getDemandesAValider();
 
+    List<DirecteurGeneralDemandeResponse> getAbsencesAValider();
+
     List<DirecteurGeneralDemandeResponse> getDemandesValidees();
 
     DirecteurGeneralDemandeResponse getDemandeAValiderById(Long demandeId);

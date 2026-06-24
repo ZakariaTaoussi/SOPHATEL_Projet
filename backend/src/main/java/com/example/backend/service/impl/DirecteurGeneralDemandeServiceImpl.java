@@ -52,6 +52,16 @@ public class DirecteurGeneralDemandeServiceImpl implements IDirecteurGeneralDema
 
     @Override
     @Transactional(readOnly = true)
+    public List<DirecteurGeneralDemandeResponse> getAbsencesAValider() {
+        return demandeCongeRepository.findByTypeDemandeAndStatusOrderByUpdatedAtDesc(
+                        TypeDemande.ABSENCE,
+                        StatusDemande.VALIDE_RESPONSABLE).stream()
+                .map(demandeCongeMapper::toDirecteurGeneralResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<DirecteurGeneralDemandeResponse> getDemandesValidees() {
         return demandeCongeRepository.findByStatusInOrderByUpdatedAtDesc(Set.of(
                         StatusDemande.VALIDE_DG,

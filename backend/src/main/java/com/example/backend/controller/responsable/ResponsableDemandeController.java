@@ -1,5 +1,6 @@
 package com.example.backend.controller.responsable;
 
+import com.example.backend.dto.demande.AbsenceStatsResponse;
 import com.example.backend.dto.demande.DemandeCongeCreateRequest;
 import com.example.backend.dto.demande.DemandeCongeResponse;
 import com.example.backend.dto.demande.DemandeCongeUpdateRequest;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -45,6 +47,11 @@ public class ResponsableDemandeController {
         return ResponseEntity.ok(responsableDemandeService.getDemandesAValider());
     }
 
+    @GetMapping("/absences-a-valider")
+    public ResponseEntity<List<ResponsableDemandeResponse>> absencesAValider() {
+        return ResponseEntity.ok(responsableDemandeService.getAbsencesAValider());
+    }
+
     @GetMapping("/demandes-a-valider/{id}")
     public ResponseEntity<ResponsableDemandeResponse> demandeAValider(@PathVariable Long id) {
         return ResponseEntity.ok(responsableDemandeService.getDemandeAValiderById(id));
@@ -62,6 +69,18 @@ public class ResponsableDemandeController {
         return ResponseEntity.ok(responsableDemandeService.refuserDemandeParResponsable(id));
     }
 
+    @RequestMapping(path = "/absences/{id}/valider", method = {RequestMethod.POST, RequestMethod.PUT})
+    public ResponseEntity<ResponsableDemandeResponse> validerAbsence(
+            @PathVariable Long id,
+            @RequestBody(required = false) ResponsableValidationDemandeRequest request) {
+        return ResponseEntity.ok(responsableDemandeService.validerDemandeParResponsable(id, request));
+    }
+
+    @RequestMapping(path = "/absences/{id}/refuser", method = {RequestMethod.POST, RequestMethod.PUT})
+    public ResponseEntity<ResponsableDemandeResponse> refuserAbsence(@PathVariable Long id) {
+        return ResponseEntity.ok(responsableDemandeService.refuserDemandeParResponsable(id));
+    }
+
     @PostMapping({"/demandes/{id}/modifier", "/demandes/{id}/demander-modification"})
     public ResponseEntity<ResponsableDemandeResponse> demanderModification(@PathVariable Long id) {
         return ResponseEntity.ok(responsableDemandeService.passerEnModificationResponsable(id));
@@ -70,6 +89,16 @@ public class ResponsableDemandeController {
     @GetMapping("/mes-demandes")
     public ResponseEntity<List<DemandeCongeResponse>> mesDemandes() {
         return ResponseEntity.ok(selfDemandeCongeService.mesDemandes());
+    }
+
+    @GetMapping("/absences")
+    public ResponseEntity<List<DemandeCongeResponse>> mesAbsences() {
+        return ResponseEntity.ok(selfDemandeCongeService.mesAbsences());
+    }
+
+    @GetMapping("/absences/stats")
+    public ResponseEntity<List<AbsenceStatsResponse>> statsAbsences(@RequestParam int year) {
+        return ResponseEntity.ok(selfDemandeCongeService.getMesAbsencesStats(year));
     }
 
     @GetMapping("/mes-demandes/{id}")

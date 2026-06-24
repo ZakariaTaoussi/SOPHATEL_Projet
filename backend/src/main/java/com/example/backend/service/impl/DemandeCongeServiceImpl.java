@@ -1,5 +1,6 @@
 package com.example.backend.service.impl;
 
+import com.example.backend.dto.demande.AbsenceStatsResponse;
 import com.example.backend.dto.demande.DemandeCongeCreateRequest;
 import com.example.backend.dto.demande.DemandeCongeResponse;
 import com.example.backend.dto.demande.DemandeCongeUpdateRequest;
@@ -18,8 +19,10 @@ import com.example.backend.service.interfaces.IDemandeCongeService;
 import com.example.backend.service.interfaces.ISignatureDemandeService;
 import com.example.backend.service.interfaces.ISoldeCongeService;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.IntStream;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,10 +60,15 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
         validateDates(request.getDateDebutEmp(), request.getDateFinEmp());
         validateTypeDemande(request.getTypeDemande());
         validateNatureConge(request.getTypeDemande(), request.getNatureConge());
+        validateCreationAbsenceAutorisee(request.getTypeDemande(), getRole(employe));
 
         DemandeConge demande = demandeCongeMapper.toEntity(request, employe);
-        nettoyerNatureCongeSiAbsence(demande);
-        return demandeCongeMapper.toResponse(demandeCongeRepository.save(demande));
+        normaliserAbsence(demande);
+        DemandeConge saved = demandeCongeRepository.save(demande);
+        if (Boolean.TRUE.equals(request.getSoumettre())) {
+            return submitDemande(saved.getId());
+        }
+        return demandeCongeMapper.toResponse(saved);
     }
 
     @Override
@@ -73,10 +81,11 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
         validateTypeDemande(request.getTypeDemande());
         validateNatureConge(request.getTypeDemande(), request.getNatureConge());
         Role role = getRole(employe);
+        validateCreationAbsenceAutorisee(request.getTypeDemande(), role);
         validateModificationAutorisee(demande, role);
 
         demandeCongeMapper.updateEntity(demande, request);
-        nettoyerNatureCongeSiAbsence(demande);
+        normaliserAbsence(demande);
         appliquerDatesEffectivesApresModification(demande, role);
         return demandeCongeMapper.toResponse(demandeCongeRepository.save(demande));
     }
@@ -207,6 +216,43 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
     }
 
     @Override
+    public List<DemandeCongeResponse> mesAbsences() {
+        Employe employe = employeConnecteProvider.getEmployeConnecte();
+        return demandeCongeRepository.findByEmployeIdAndTypeDemandeOrderByCreatedAtDesc(
+                        employe.getIdEmp(),
+                        TypeDemande.ABSENCE).stream()
+                .map(demandeCongeMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    public List<AbsenceStatsResponse> getMesAbsencesStats(int year) {
+        if (year < 1900 || year > 3000) {
+            throw new InvalidBusinessRequestException("Annee invalide");
+        }
+        Employe employe = employeConnecteProvider.getEmployeConnecte();
+        List<DemandeConge> absences = demandeCongeRepository
+                .findByEmployeIdAndTypeDemandeAndStatusAndDateDebutEmpBetween(
+                        employe.getIdEmp(),
+                        TypeDemande.ABSENCE,
+                        StatusDemande.VALIDE_DG,
+                        LocalDate.of(year, 1, 1),
+                        LocalDate.of(year, 12, 31));
+
+        return IntStream.rangeClosed(1, 12)
+                .mapToObj(month -> {
+                    List<DemandeConge> absencesDuMois = absences.stream()
+                            .filter(absence -> absence.getDateDebutEmp().getMonthValue() == month)
+                            .toList();
+                    long totalJours = absencesDuMois.stream()
+                            .mapToLong(this::calculerJoursAbsenceInclusifs)
+                            .sum();
+                    return new AbsenceStatsResponse(month, absencesDuMois.size(), totalJours);
+                })
+                .toList();
+    }
+
+    @Override
     public DemandeCongeResponse getMaDemande(Long demandeId) {
         Employe employe = employeConnecteProvider.getEmployeConnecte();
         return demandeCongeMapper.toResponse(findMaDemande(demandeId, employe));
@@ -258,9 +304,19 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
         }
     }
 
-    private void nettoyerNatureCongeSiAbsence(DemandeConge demande) {
+    private void validateCreationAbsenceAutorisee(TypeDemande typeDemande, Role role) {
+        if (typeDemande == TypeDemande.ABSENCE
+                && role != Role.EMPLOYE
+                && role != Role.RH
+                && role != Role.RESPONSABLE) {
+            throw new InvalidBusinessRequestException("Ce role ne peut pas declarer une absence");
+        }
+    }
+
+    private void normaliserAbsence(DemandeConge demande) {
         if (demande.getTypeDemande() == TypeDemande.ABSENCE) {
             demande.setNatureConge(null);
+            demande.setJoursDeduits(0D);
         }
     }
 
@@ -400,5 +456,9 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
             return demande.getDateDebutResp().getYear();
         }
         return demande.getDateDebutEmp().getYear();
+    }
+
+    private long calculerJoursAbsenceInclusifs(DemandeConge demande) {
+        return ChronoUnit.DAYS.between(demande.getDateDebutEmp(), demande.getDateFinEmp()) + 1;
     }
 }

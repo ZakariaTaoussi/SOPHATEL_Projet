@@ -44,6 +44,7 @@ export interface DemandeCongeCreateRequest {
   dateFinEmp: string;
   typeDemande: TypeDemande;
   natureConge?: NatureConge | null;
+  soumettre?: boolean;
 }
 
 export interface DemandeCongeUpdateRequest {
@@ -110,4 +111,10 @@ export interface SoldeConge {
   annee: number;
   soldeActuel: number;
   soldeTotal: number;
+}
+
+export interface AbsenceStatsResponse {
+  month: number;
+  totalAbsences: number;
+  totalJoursAbsence: number;
 }

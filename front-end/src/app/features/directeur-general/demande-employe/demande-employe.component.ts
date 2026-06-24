@@ -12,7 +12,7 @@ import {
 } from '../../../core/models/demande-conge.model';
 import { DirecteurGeneralDemandeService } from '../../../core/services/directeur-general-demande.service';
 
-type ModePage = 'a-valider' | 'validees';
+type ModePage = 'a-valider' | 'absences-a-valider' | 'validees';
 type ActionDg = 'valider' | 'refuser' | 'modifier';
 
 @Component({
@@ -59,20 +59,32 @@ export class DirecteurGeneralDemandeEmployeComponent implements OnInit {
   }
 
   get pageTitle(): string {
+    if (this.mode === 'absences-a-valider') {
+      return 'Absences a valider';
+    }
     return this.isModeValidees ? 'Demandes validees DG' : 'Demandes a valider';
   }
 
   get pageDescription(): string {
+    if (this.mode === 'absences-a-valider') {
+      return 'Absences validees par les responsables et en attente de decision DG.';
+    }
     return this.isModeValidees
       ? 'Demandes deja validees par le directeur general.'
       : 'Demandes validees par les responsables et en attente de decision DG.';
   }
 
   get tableTitle(): string {
+    if (this.mode === 'absences-a-valider') {
+      return 'Absences en attente DG';
+    }
     return this.isModeValidees ? 'Demandes validees' : 'Demandes en attente DG';
   }
 
   get emptyMessage(): string {
+    if (this.mode === 'absences-a-valider') {
+      return 'Aucune absence a valider pour le directeur general.';
+    }
     return this.isModeValidees
       ? 'Aucune demande validee par le directeur general.'
       : 'Aucune demande a valider pour le directeur general.';
@@ -104,6 +116,8 @@ export class DirecteurGeneralDemandeEmployeComponent implements OnInit {
 
     const request$ = this.isModeValidees
       ? this.directeurGeneralDemandeService.getDemandesValidees()
+      : this.mode === 'absences-a-valider'
+        ? this.directeurGeneralDemandeService.getAbsencesAValider()
       : this.directeurGeneralDemandeService.getDemandesAValider();
 
     request$.pipe(
@@ -145,11 +159,18 @@ export class DirecteurGeneralDemandeEmployeComponent implements OnInit {
     this.executerAction(
       demande,
       'valider',
-      this.directeurGeneralDemandeService.validerDemande(demande.id, {
+      demande.typeDemande === 'ABSENCE'
+        ? this.directeurGeneralDemandeService.validerAbsence(demande.id, {
+          dateDebutDg: null,
+          dateFinDg: null,
+        })
+        : this.directeurGeneralDemandeService.validerDemande(demande.id, {
         dateDebutDg: null,
         dateFinDg: null,
       }),
-      'Demande validee par le directeur general.'
+      demande.typeDemande === 'ABSENCE'
+        ? 'Absence validee par le directeur general.'
+        : 'Demande validee par le directeur general.'
     );
   }
 
@@ -162,8 +183,12 @@ export class DirecteurGeneralDemandeEmployeComponent implements OnInit {
     this.executerAction(
       demande,
       'refuser',
-      this.directeurGeneralDemandeService.refuserDemande(demande.id),
-      'Demande refusee par le directeur general.'
+      demande.typeDemande === 'ABSENCE'
+        ? this.directeurGeneralDemandeService.refuserAbsence(demande.id)
+        : this.directeurGeneralDemandeService.refuserDemande(demande.id),
+      demande.typeDemande === 'ABSENCE'
+        ? 'Absence refusee par le directeur general.'
+        : 'Demande refusee par le directeur general.'
     );
   }
 
@@ -215,8 +240,12 @@ export class DirecteurGeneralDemandeEmployeComponent implements OnInit {
     this.executerAction(
       this.demandeEnModification,
       'valider',
-      this.directeurGeneralDemandeService.validerDemande(this.demandeEnModification.id, payload),
-      'Demande validee avec les dates finales DG.',
+      this.demandeEnModification.typeDemande === 'ABSENCE'
+        ? this.directeurGeneralDemandeService.validerAbsence(this.demandeEnModification.id, payload)
+        : this.directeurGeneralDemandeService.validerDemande(this.demandeEnModification.id, payload),
+      this.demandeEnModification.typeDemande === 'ABSENCE'
+        ? 'Absence validee avec les dates finales DG.'
+        : 'Demande validee avec les dates finales DG.',
       () => this.fermerModal()
     );
   }
@@ -302,7 +331,11 @@ export class DirecteurGeneralDemandeEmployeComponent implements OnInit {
   }
 
   private syncModeFromUrl(): void {
-    this.mode = this.router.url.includes('/demandes-validees') ? 'validees' : 'a-valider';
+    if (this.router.url.includes('/demandes-validees')) {
+      this.mode = 'validees';
+      return;
+    }
+    this.mode = this.router.url.includes('/absences-a-valider') ? 'absences-a-valider' : 'a-valider';
   }
 
   private getErrorMessage(error: unknown): string {

@@ -19,6 +19,12 @@ export class ResponsableDemandeService {
     });
   }
 
+  getAbsencesAValider(): Observable<ResponsableDemande[]> {
+    return this.http.get<ResponsableDemande[]>(`${this.responsableUrl}/absences-a-valider`, {
+      withCredentials: true,
+    });
+  }
+
   getDemandeById(id: number): Observable<ResponsableDemande> {
     return this.http.get<ResponsableDemande>(`${this.responsableUrl}/demandes-a-valider/${id}`, {
       withCredentials: true,
@@ -40,6 +46,25 @@ export class ResponsableDemandeService {
     }
 
     return this.http.post<ResponsableDemande>(`${this.responsableUrl}/demandes/${id}/refuser`, {}, {
+      withCredentials: true,
+    });
+  }
+
+  validerAbsence(
+    id: number,
+    payload: ResponsableValidationDemandeRequest
+  ): Observable<ResponsableDemande> {
+    return this.http.post<ResponsableDemande>(`${this.responsableUrl}/absences/${id}/valider`, payload, {
+      withCredentials: true,
+    });
+  }
+
+  refuserAbsence(id: number): Observable<ResponsableDemande> {
+    if (!this.isValidId(id)) {
+      return throwError(() => new Error('id demande manquant'));
+    }
+
+    return this.http.post<ResponsableDemande>(`${this.responsableUrl}/absences/${id}/refuser`, {}, {
       withCredentials: true,
     });
   }

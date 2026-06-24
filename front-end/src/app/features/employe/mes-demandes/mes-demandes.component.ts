@@ -32,14 +32,14 @@ export class MesDemandesComponent implements OnInit, OnDestroy {
     dateFinEmp: '',
   };
 
-  selectedType: TypeDemande | 'Tous' = 'Tous';
   selectedStatus: StatusDemande | 'Tous' = 'Tous';
+  currentPage = 1;
+  readonly pageSize = 5;
   loading = false;
   errorMessage = '';
   private readonly subscriptions = new Subscription();
 
-  types: Array<TypeDemande | 'Tous'> = ['Tous', 'CONGE', 'ABSENCE'];
-  editTypes: TypeDemande[] = ['CONGE', 'ABSENCE'];
+  editTypes: TypeDemande[] = ['CONGE'];
   naturesConge = [
     { value: NatureConge.ANNUEL, label: 'Annuel' },
     { value: NatureConge.MALADIE, label: 'Maladie' },
@@ -69,7 +69,8 @@ export class MesDemandesComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.subscriptions.add(
       this.demandeCongeService.mesDemandes$.subscribe(demandes => {
-        this.demandes = demandes;
+        this.demandes = demandes.filter(demande => demande.typeDemande === 'CONGE');
+        this.ensureValidPage();
         this.cdr.detectChanges();
       })
     );
@@ -92,7 +93,8 @@ export class MesDemandesComponent implements OnInit, OnDestroy {
     ).subscribe({
       next: demandes => {
         this.loading = false;
-        this.demandes = demandes;
+        this.demandes = demandes.filter(demande => demande.typeDemande === 'CONGE');
+        this.ensureValidPage();
         this.cdr.detectChanges();
       },
       error: error => {
@@ -102,22 +104,40 @@ export class MesDemandesComponent implements OnInit, OnDestroy {
     });
   }
 
-  setType(value: string) {
-    this.selectedType = value as TypeDemande | 'Tous';
-    this.cdr.detectChanges();
-  }
-
   setStatus(value: string) {
     this.selectedStatus = value as StatusDemande | 'Tous';
+    this.currentPage = 1;
     this.cdr.detectChanges();
   }
 
   get filteredDemandes(): DemandeConge[] {
     return this.demandes.filter(d => {
-      const matchType = this.selectedType === 'Tous' || d.typeDemande === this.selectedType;
       const matchStatus = this.selectedStatus === 'Tous' || d.status === this.selectedStatus;
-      return matchType && matchStatus;
+      return d.typeDemande === 'CONGE' && matchStatus;
     });
+  }
+
+  get pagedDemandes(): DemandeConge[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filteredDemandes.slice(start, start + this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredDemandes.length / this.pageSize));
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.cdr.detectChanges();
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.cdr.detectChanges();
+    }
   }
 
   getStatutLabel(statut: StatusDemande | 'Tous'): string {
@@ -197,8 +217,8 @@ export class MesDemandesComponent implements OnInit, OnDestroy {
 
     this.demandeEnModification = demande;
     this.demandeForm = {
-      typeDemande: demande.typeDemande,
-      natureConge: demande.typeDemande === 'CONGE' ? demande.natureConge ?? null : null,
+      typeDemande: 'CONGE',
+      natureConge: demande.natureConge ?? null,
       dateDebutEmp: demande.dateDebutEmp,
       dateFinEmp: demande.dateFinEmp,
     };
@@ -307,5 +327,14 @@ export class MesDemandesComponent implements OnInit, OnDestroy {
     }
 
     this.errorMessage = 'Une erreur est survenue.';
+  }
+
+  private ensureValidPage(): void {
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = this.totalPages;
+    }
+    if (this.currentPage < 1) {
+      this.currentPage = 1;
+    }
   }
 }

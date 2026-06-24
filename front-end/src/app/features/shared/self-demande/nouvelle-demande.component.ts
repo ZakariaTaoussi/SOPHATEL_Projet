@@ -62,6 +62,10 @@ export class SelfNouvelleDemandeComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    if (this.scope === 'directeur-general') {
+      this.typesDemande = ['CONGE'];
+      this.form.typeDemande = 'CONGE';
+    }
     this.loadSolde();
   }
 
@@ -132,7 +136,13 @@ export class SelfNouvelleDemandeComponent implements OnInit {
     this.savingDraft = true;
     this.errorMessage = '';
 
-    this.demandeService.creerDemande(this.scope, this.form).pipe(
+    const payload: DemandeCongeCreateRequest = {
+      ...this.form,
+      natureConge: this.form.typeDemande === 'CONGE' ? this.form.natureConge : null,
+      soumettre: false,
+    };
+
+    this.demandeService.creerDemande(this.scope, payload).pipe(
       finalize(() => {
         this.savingDraft = false;
         this.cdr.markForCheck();
@@ -165,7 +175,7 @@ export class SelfNouvelleDemandeComponent implements OnInit {
         next: demande => {
           this.notificationService.add(`Demande DEM-${demande.id} soumise.`, 'success');
           this.loadSolde();
-          this.router.navigate([this.baseRoute, 'mes-demandes']);
+          this.router.navigate([this.baseRoute, demande.typeDemande === 'ABSENCE' ? 'mes-absences' : 'mes-demandes']);
         },
         error: error => this.handleError(error),
       });
@@ -176,12 +186,25 @@ export class SelfNouvelleDemandeComponent implements OnInit {
       return;
     }
 
-    this.demandeService.creerDemande(this.scope, this.form).subscribe({
-      next: demande => submitDraft(demande.id),
-      error: error => {
+    const payload: DemandeCongeCreateRequest = {
+      ...this.form,
+      natureConge: this.form.typeDemande === 'CONGE' ? this.form.natureConge : null,
+      soumettre: true,
+    };
+
+    this.demandeService.creerDemande(this.scope, payload).pipe(
+      finalize(() => {
         this.submitting = false;
-        this.handleError(error);
         this.cdr.markForCheck();
+      })
+    ).subscribe({
+      next: demande => {
+        this.notificationService.add(`Demande DEM-${demande.id} soumise.`, 'success');
+        this.loadSolde();
+        this.router.navigate([this.baseRoute, demande.typeDemande === 'ABSENCE' ? 'mes-absences' : 'mes-demandes']);
+      },
+      error: error => {
+        this.handleError(error);
       },
     });
   }

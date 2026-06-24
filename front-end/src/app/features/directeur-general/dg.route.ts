@@ -29,6 +29,10 @@ export const DIRECTEUR_GENERAL_ROUTES: Routes = [
         loadComponent: () => import('./demande-employe/demande-employe.component').then(m => m.DirecteurGeneralDemandeEmployeComponent),
       },
       {
+        path: 'absences-a-valider',
+        loadComponent: () => import('./demande-employe/demande-employe.component').then(m => m.DirecteurGeneralDemandeEmployeComponent),
+      },
+      {
         path: 'demandes-validees',
         loadComponent: () => import('./demande-employe/demande-employe.component').then(m => m.DirecteurGeneralDemandeEmployeComponent),
       },

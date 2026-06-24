@@ -129,7 +129,7 @@ export class NouvellDemandeComponent implements OnInit, OnDestroy {
     this.savingDraft = true;
     this.errorMessage = '';
 
-    this.demandeCongeService.creerDemande(this.buildPayload()).pipe(
+    this.demandeCongeService.creerDemande(this.buildPayload(false)).pipe(
       finalize(() => {
         this.savingDraft = false;
         this.cdr.detectChanges();
@@ -168,7 +168,7 @@ export class NouvellDemandeComponent implements OnInit, OnDestroy {
           this.submitting = false;
           this.notificationService.add(`Demande DEM-${demande.id} soumise.`, 'success');
           this.cdr.detectChanges();
-          this.router.navigate(['/employe/mes-demandes']);
+          this.router.navigate([demande.typeDemande === 'ABSENCE' ? '/employe/mes-absences' : '/employe/mes-demandes']);
         },
         error: error => {
           this.handleError(error);
@@ -182,22 +182,29 @@ export class NouvellDemandeComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.demandeCongeService.creerDemande(this.buildPayload()).subscribe({
-      next: demande => submitDraft(demande.id),
-      error: error => {
+    this.demandeCongeService.creerDemande(this.buildPayload(true)).pipe(
+      finalize(() => {
         this.submitting = false;
-        this.handleError(error);
         this.cdr.detectChanges();
+      })
+    ).subscribe({
+      next: demande => {
+        this.notificationService.add(`Demande DEM-${demande.id} soumise.`, 'success');
+        this.router.navigate([demande.typeDemande === 'ABSENCE' ? '/employe/mes-absences' : '/employe/mes-demandes']);
+      },
+      error: error => {
+        this.handleError(error);
       },
     });
   }
 
-  private buildPayload() {
+  private buildPayload(soumettre: boolean) {
     return {
       dateDebutEmp: this.form.dateDebutEmp,
       dateFinEmp: this.form.dateFinEmp,
       typeDemande: this.form.typeDemande,
       natureConge: this.form.typeDemande === 'CONGE' ? this.form.natureConge : null,
+      soumettre,
     };
   }
 

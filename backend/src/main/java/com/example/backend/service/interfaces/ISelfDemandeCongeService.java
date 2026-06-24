@@ -1,5 +1,6 @@
 package com.example.backend.service.interfaces;
 
+import com.example.backend.dto.demande.AbsenceStatsResponse;
 import com.example.backend.dto.demande.DemandeCongeCreateRequest;
 import com.example.backend.dto.demande.DemandeCongeResponse;
 import com.example.backend.dto.demande.DemandeCongeUpdateRequest;
@@ -18,6 +19,10 @@ public interface ISelfDemandeCongeService {
     DemandeCongeResponse annulerDemande(Long demandeId);
 
     List<DemandeCongeResponse> mesDemandes();
+
+    List<DemandeCongeResponse> mesAbsences();
+
+    List<AbsenceStatsResponse> getMesAbsencesStats(int year);
 
     DemandeCongeResponse getMaDemande(Long demandeId);
 

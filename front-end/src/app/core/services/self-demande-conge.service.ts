@@ -1,22 +1,38 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
+import { map, Observable, throwError } from 'rxjs';
 import { apiUrl } from '../config/api-url';
 import {
   DemandeConge,
   DemandeCongeCreateRequest,
   DemandeCongeUpdateRequest,
+  AbsenceStatsResponse,
   SoldeConge,
 } from '../models/demande-conge.model';
 
 export type SelfDemandeScope = 'employe' | 'rh' | 'responsable' | 'directeur-general';
+type DemandeListResponse = DemandeConge[] | { content: DemandeConge[] };
 
 @Injectable({ providedIn: 'root' })
 export class SelfDemandeCongeService {
   constructor(private readonly http: HttpClient) {}
 
   getMesDemandes(scope: SelfDemandeScope): Observable<DemandeConge[]> {
-    return this.http.get<DemandeConge[]>(this.demandesUrl(scope), { withCredentials: true });
+    return this.http.get<DemandeListResponse>(this.demandesUrl(scope), { withCredentials: true })
+      .pipe(map(response => this.toDemandesArray(response)));
+  }
+
+  getMesAbsences(scope: SelfDemandeScope): Observable<DemandeConge[]> {
+    return this.http.get<DemandeListResponse>(this.absencesUrl(scope), { withCredentials: true })
+      .pipe(map(response => this.toDemandesArray(response)));
+  }
+
+  getAbsenceStats(scope: SelfDemandeScope, year: number): Observable<AbsenceStatsResponse[]> {
+    const params = new HttpParams().set('year', year);
+    return this.http.get<AbsenceStatsResponse[]>(`${this.absencesUrl(scope)}/stats`, {
+      params,
+      withCredentials: true,
+    });
   }
 
   getDemandeById(scope: SelfDemandeScope, id: number): Observable<DemandeConge> {
@@ -95,6 +111,17 @@ export class SelfDemandeCongeService {
     }
   }
 
+  private absencesUrl(scope: SelfDemandeScope): string {
+    switch (scope) {
+      case 'rh':
+        return apiUrl('/api/rh/absences');
+      case 'responsable':
+        return apiUrl('/api/responsable/absences');
+      default:
+        return apiUrl('/api/employe/absences');
+    }
+  }
+
   private soldeUrl(scope: SelfDemandeScope): string {
     switch (scope) {
       case 'rh':
@@ -110,5 +137,9 @@ export class SelfDemandeCongeService {
 
   private isValidId(id: number): boolean {
     return Number.isFinite(id) && id > 0;
+  }
+
+  private toDemandesArray(response: DemandeListResponse): DemandeConge[] {
+    return Array.isArray(response) ? response : response.content ?? [];
   }
 }

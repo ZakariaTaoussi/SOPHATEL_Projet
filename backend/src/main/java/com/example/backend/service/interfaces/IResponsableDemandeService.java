@@ -7,6 +7,8 @@ import java.util.List;
 public interface IResponsableDemandeService {
     List<ResponsableDemandeResponse> getDemandesAValider();
 
+    List<ResponsableDemandeResponse> getAbsencesAValider();
+
     ResponsableDemandeResponse getDemandeAValiderById(Long demandeId);
 
     ResponsableDemandeResponse validerDemandeParResponsable(
