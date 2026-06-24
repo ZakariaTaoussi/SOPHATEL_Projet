@@ -9,6 +9,8 @@ public interface IResponsableDemandeService {
 
     List<ResponsableDemandeResponse> getAbsencesAValider();
 
+    List<ResponsableDemandeResponse> getDemandesValidees();
+
     ResponsableDemandeResponse getDemandeAValiderById(Long demandeId);
 
     ResponsableDemandeResponse validerDemandeParResponsable(

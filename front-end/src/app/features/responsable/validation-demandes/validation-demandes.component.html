@@ -2,14 +2,14 @@
   <header class="page-header">
     <div>
       <span class="eyebrow">Validation</span>
-      <h1>Demandes a valider</h1>
-      <p>Demandes soumises par les employes de votre departement.</p>
+      <h1>{{ pageTitle }}</h1>
+      <p>{{ pageDescription }}</p>
     </div>
 
     <div class="filters">
       <label>
         <span>Type</span>
-        <select [(ngModel)]="selectedType" (ngModelChange)="applyFilters()">
+        <select [(ngModel)]="selectedType" (ngModelChange)="onFilterChange()">
           <option value="Tous">Tous</option>
           <option value="CONGE">CONGE</option>
           <option value="ABSENCE">ABSENCE</option>
@@ -18,7 +18,7 @@
 
       <label>
         <span>Statut</span>
-        <select [(ngModel)]="selectedStatus" (ngModelChange)="applyFilters()">
+        <select [(ngModel)]="selectedStatus" (ngModelChange)="onFilterChange()">
           <option *ngFor="let status of statusOptions" [value]="status">
             {{ status === 'Tous' ? 'Tous' : getStatusLabel(status) }}
           </option>
@@ -32,7 +32,7 @@
 
   <section class="card">
     <p *ngIf="loading" class="empty-state">Chargement...</p>
-    <p *ngIf="!loading && filteredDemandes.length === 0" class="empty-state">Aucune demande a valider</p>
+    <p *ngIf="!loading && filteredDemandes.length === 0" class="empty-state">{{ emptyMessage }}</p>
 
     <div class="table-wrapper" *ngIf="!loading && filteredDemandes.length > 0">
       <table class="data-table">
@@ -51,7 +51,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let demande of filteredDemandes">
+          <tr *ngFor="let demande of pagedDemandes">
             <td>
               <strong>{{ demande.employeNomComplet || '-' }}</strong>
               <span>DEM-{{ demande.id }}</span>
@@ -62,7 +62,7 @@
             <td>{{ formatDate(demande.dateDebutEmp) }}</td>
             <td>{{ formatDate(demande.dateFinEmp) }}</td>
             <td><span class="badge">{{ getStatusLabel(demande.status) }}</span></td>
-            <td>{{ demande.joursDeduits || 0 }} j</td>
+            <td>{{ dureeDemande(demande) }} j</td>
             <td>{{ formatDate(demande.createdAt) }}</td>
             <td>
               <div class="action-group">
@@ -101,11 +101,25 @@
                   (click)="refuserDemande(demande)">
                   {{ isActionLoading(demande, 'refuser') ? 'Refus...' : 'Refuser' }}
                 </button>
+
+                <button
+                  *ngIf="peutImprimer(demande)"
+                  type="button"
+                  class="print-btn"
+                  (click)="imprimerDemande(demande)">
+                  Imprimer
+                </button>
               </div>
             </td>
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <div class="pagination" *ngIf="!loading && filteredDemandes.length > pageSize">
+      <button type="button" (click)="previousPage()" [disabled]="currentPage === 1">Previous</button>
+      <span>Page {{ currentPage }} / {{ totalPages }}</span>
+      <button type="button" (click)="nextPage()" [disabled]="currentPage === totalPages">Next</button>
     </div>
   </section>
 </div>

@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import {
   DemandeConge,
@@ -83,6 +83,7 @@ export class SelfMesDemandesComponent implements OnInit {
     private readonly demandeService: SelfDemandeCongeService,
     private readonly notificationService: NotificationService,
     private readonly route: ActivatedRoute,
+    private readonly router: Router,
     private readonly cdr: ChangeDetectorRef
   ) {
     this.scope = this.route.snapshot.data['scope'] as SelfDemandeScope;
@@ -248,7 +249,8 @@ export class SelfMesDemandesComponent implements OnInit {
   }
 
   peutImprimer(demande: DemandeConge): boolean {
-    return demande.status === 'VALIDE_DG';
+    return demande.typeDemande === 'CONGE'
+      && ['VALIDE_DG', 'ANNULE', 'REFUSE_RESPONSABLE', 'REFUSE_DG'].includes(demande.status);
   }
 
   isActionLoading(demande: DemandeConge, action: ActionName): boolean {
@@ -260,8 +262,7 @@ export class SelfMesDemandesComponent implements OnInit {
       return;
     }
 
-    this.demandeAImprimer = demande;
-    setTimeout(() => window.print());
+    this.router.navigate(['/demande-conge', demande.id, 'impression']);
   }
 
   ouvrirModification(demande: DemandeConge): void {

@@ -118,3 +118,27 @@ export interface AbsenceStatsResponse {
   totalAbsences: number;
   totalJoursAbsence: number;
 }
+
+export interface DemandeCongeImpression {
+  id: number;
+  nom: string;
+  prenom: string;
+  fonction: string;
+  service: string;
+  typeDemande: TypeDemande;
+  natureConge?: NatureConge | null;
+  dateDebutEmp: string;
+  dateFinEmp: string;
+  dateDebutDg?: string | null;
+  dateFinDg?: string | null;
+  joursDeduits?: number | null;
+  anneeDebut?: number | null;
+  anneeFin?: number | null;
+  reliquatConge?: number | null;
+  status: StatusDemande;
+  statutDemandeur: string;
+  statutResponsable: string;
+  statutDirecteurGeneral: string;
+  createdAt: string;
+  updatedAt: string;
+}

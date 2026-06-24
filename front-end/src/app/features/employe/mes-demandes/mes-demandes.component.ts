@@ -2,6 +2,7 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { finalize, Subscription } from 'rxjs';
 import { DemandeConge, DemandeCongeUpdateRequest, NatureConge, StatusDemande, TypeDemande } from '../../../core/models/demande-conge.model';
 import { DemandeCongeService } from '../../../core/services/demande-conge.service';
@@ -63,6 +64,7 @@ export class MesDemandesComponent implements OnInit, OnDestroy {
   constructor(
     private readonly demandeCongeService: DemandeCongeService,
     private readonly notificationService: NotificationService,
+    private readonly router: Router,
     private readonly cdr: ChangeDetectorRef
   ) {}
 
@@ -198,7 +200,8 @@ export class MesDemandesComponent implements OnInit, OnDestroy {
   }
 
   peutImprimer(demande: DemandeConge): boolean {
-    return demande.status === 'VALIDE_DG';
+    return demande.typeDemande === 'CONGE'
+      && ['VALIDE_DG', 'ANNULE', 'REFUSE_RESPONSABLE', 'REFUSE_DG'].includes(demande.status);
   }
 
   imprimerDemande(demande: DemandeConge): void {
@@ -206,8 +209,7 @@ export class MesDemandesComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.demandeAImprimer = demande;
-    setTimeout(() => window.print());
+    this.router.navigate(['/demande-conge', demande.id, 'impression']);
   }
 
   ouvrirModification(demande: DemandeConge): void {

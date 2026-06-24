@@ -27,7 +27,7 @@
             class="nav-link"
             [title]="item.label"
           >
-            <span class="nav-icon" [innerHTML]="getIcon(item.icon)"></span>
+            <span class="nav-icon"><app-nav-icon [name]="item.icon" /></span>
             <span class="nav-label">{{ item.label }}</span>
             <span class="active-indicator"></span>
           </a>

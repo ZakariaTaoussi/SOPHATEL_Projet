@@ -47,6 +47,11 @@ public class ResponsableDemandeController {
         return ResponseEntity.ok(responsableDemandeService.getDemandesAValider());
     }
 
+    @GetMapping("/demandes-validees")
+    public ResponseEntity<List<ResponsableDemandeResponse>> demandesValidees() {
+        return ResponseEntity.ok(responsableDemandeService.getDemandesValidees());
+    }
+
     @GetMapping("/absences-a-valider")
     public ResponseEntity<List<ResponsableDemandeResponse>> absencesAValider() {
         return ResponseEntity.ok(responsableDemandeService.getAbsencesAValider());

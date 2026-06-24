@@ -1,0 +1,116 @@
+<div class="no-print" *ngIf="loading">
+  Chargement...
+</div>
+
+<div class="no-print error" *ngIf="errorMessage">
+  {{ errorMessage }}
+</div>
+
+<button type="button" class="no-print print-button" *ngIf="demande" (click)="print()">
+  Imprimer
+</button>
+
+<div class="print-page" *ngIf="demande">
+  <div class="company">
+    <strong>SOPHATEL</strong><br>
+    Casablanca
+  </div>
+
+  <h1>*** DEMANDE DE CONGE ***</h1>
+
+  <div class="info-grid">
+    <div>
+      <span>Nom :</span>
+      <strong>{{ demande.nom || '-' }}</strong>
+    </div>
+
+    <div>
+      <span>Prenom :</span>
+      <strong>{{ demande.prenom || '-' }}</strong>
+    </div>
+
+    <div>
+      <span>Fonction :</span>
+      <strong>{{ demande.fonction || '-' }}</strong>
+    </div>
+
+    <div>
+      <span>Service :</span>
+      <strong>{{ demande.service || '-' }}</strong>
+    </div>
+  </div>
+
+  <h2>NATURE DU CONGE</h2>
+
+  <div class="nature-grid">
+    <div>Annuel : {{ isNature('ANNUEL') ? 'X' : '-' }}</div>
+    <div>Maternite : {{ isNature('MATERNITE') ? 'X' : '-' }}</div>
+    <div>Maladie : {{ isNature('MALADIE') ? 'X' : '-' }}</div>
+    <div>Mise en disponibilite : {{ isNature('MISE_EN_DISPONIBILITE') ? 'X' : '-' }}</div>
+  </div>
+
+  <h2>PERIODE</h2>
+
+  <div class="period-row">
+    <div>Date Depart : {{ demande.dateDebutEmp | date:'dd/MM/yyyy' }}</div>
+    <div>Date Fin : {{ demande.dateFinEmp | date:'dd/MM/yyyy' }}</div>
+    <div>Date Reprise : {{ demande.dateFinEmp | date:'dd/MM/yyyy' }}</div>
+  </div>
+
+  <div class="direction-section">
+    <h2>PARTIE RESERVEE A LA DIRECTION</h2>
+
+    <p><strong>Periode de conge accordee :</strong></p>
+
+    <div class="period-row">
+      <div>
+        Date Depart :
+        {{ demande.dateDebutDg ? (demande.dateDebutDg | date:'dd/MM/yyyy') : '- - -' }}
+      </div>
+
+      <div>
+        Date Fin :
+        {{ demande.dateFinDg ? (demande.dateFinDg | date:'dd/MM/yyyy') : '- - -' }}
+      </div>
+
+      <div>
+        Date Reprise :
+        {{ demande.dateFinDg ? (demande.dateFinDg | date:'dd/MM/yyyy') : '- - -' }}
+      </div>
+    </div>
+
+    <p>Nombre de jours : {{ demande.joursDeduits ?? '-' }}</p>
+
+    <p>
+      Annee(s) concernee(s) :
+      <span *ngIf="demande.anneeDebut === demande.anneeFin">
+        {{ demande.anneeDebut ?? '-' }}
+      </span>
+      <span *ngIf="demande.anneeDebut !== demande.anneeFin">
+        {{ demande.anneeDebut ?? '-' }} - {{ demande.anneeFin ?? '-' }}
+      </span>
+    </p>
+
+    <p>Reliquat de droit de conge : {{ demande.reliquatConge ?? '-' }}</p>
+  </div>
+
+  <div class="signature-grid">
+    <div>
+      <strong>Le demandeur</strong>
+      <p>{{ formatStatus(demande.statutDemandeur) }}</p>
+      <span>Fait, le {{ demande.updatedAt | date:'dd/MM/yyyy' }}</span>
+    </div>
+
+    <div>
+      <strong>Le Directeur de Departement</strong>
+      <p>{{ formatStatus(demande.statutResponsable) }}</p>
+      <span>Fait, le {{ demande.updatedAt | date:'dd/MM/yyyy' }}</span>
+    </div>
+
+    <div>
+      <strong>Le Directeur General</strong>
+      <p>{{ formatStatus(demande.statutDirecteurGeneral) }}</p>
+      <span>Fait, le {{ demande.updatedAt | date:'dd/MM/yyyy' }}</span>
+    </div>
+  </div>
+</div>

@@ -30,6 +30,11 @@ public class ResponsableDemandeServiceImpl implements IResponsableDemandeService
             StatusDemande.VALIDE_RESPONSABLE,
             StatusDemande.MODIFICATION_RESPONSABLE);
 
+    private static final Set<StatusDemande> STATUTS_TRAITES_RESPONSABLE = EnumSet.of(
+            StatusDemande.VALIDE_RESPONSABLE,
+            StatusDemande.REFUSE_RESPONSABLE,
+            StatusDemande.MODIFICATION_RESPONSABLE);
+
     private final DemandeCongeRepository demandeCongeRepository;
     private final DemandeCongeMapper demandeCongeMapper;
     private final ISoldeCongeService soldeCongeService;
@@ -70,6 +75,18 @@ public class ResponsableDemandeServiceImpl implements IResponsableDemandeService
                         responsable.getIdEmp(),
                         TypeDemande.ABSENCE,
                         STATUTS_WORKFLOW_RESPONSABLE).stream()
+                .map(demandeCongeMapper::toResponsableResponse)
+                .toList();
+    }
+
+    @Override
+    public List<ResponsableDemandeResponse> getDemandesValidees() {
+        Employe responsable = getResponsableConnecte();
+        Departement departement = getDepartementResponsableConnecte(responsable);
+        return demandeCongeRepository.findByEmployeDepartementIdAndEmployeIdNotAndStatusInOrderByUpdatedAtDesc(
+                        departement.getId(),
+                        responsable.getIdEmp(),
+                        STATUTS_TRAITES_RESPONSABLE).stream()
                 .map(demandeCongeMapper::toResponsableResponse)
                 .toList();
     }

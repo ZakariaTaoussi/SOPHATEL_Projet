@@ -65,6 +65,7 @@ public class DirecteurGeneralDemandeServiceImpl implements IDirecteurGeneralDema
     public List<DirecteurGeneralDemandeResponse> getDemandesValidees() {
         return demandeCongeRepository.findByStatusInOrderByUpdatedAtDesc(Set.of(
                         StatusDemande.VALIDE_DG,
+                        StatusDemande.REFUSE_DG,
                         StatusDemande.MODIFICATION_DG)).stream()
                 .map(demandeCongeMapper::toDirecteurGeneralResponse)
                 .toList();

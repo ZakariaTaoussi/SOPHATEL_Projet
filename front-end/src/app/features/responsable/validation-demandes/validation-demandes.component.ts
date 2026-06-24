@@ -12,6 +12,8 @@ import {
 } from '../../../core/models/demande-conge.model';
 import { ResponsableDemandeService } from '../../../core/services/responsable-demande.service';
 
+type ModePage = 'a-valider' | 'absences-a-valider' | 'validees';
+
 @Component({
   selector: 'app-responsable-validation-demandes',
   standalone: true,
@@ -24,6 +26,9 @@ export class ResponsableValidationDemandesComponent implements OnInit {
   filteredDemandes: ResponsableDemande[] = [];
   selectedType = 'Tous';
   selectedStatus = 'Tous';
+  mode: ModePage = 'a-valider';
+  currentPage = 1;
+  readonly pageSize = 4;
   loading = false;
   actionLoadingId: number | null = null;
   actionLoadingType: 'valider' | 'refuser' | 'modifier' | null = null;
@@ -39,6 +44,7 @@ export class ResponsableValidationDemandesComponent implements OnInit {
     'Tous',
     'VALIDE_EMPLOYE',
     'VALIDE_RESPONSABLE',
+    'REFUSE_RESPONSABLE',
     'MODIFICATION_RESPONSABLE',
   ];
 
@@ -56,14 +62,46 @@ export class ResponsableValidationDemandesComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.syncModeFromUrl();
     this.loadDemandes();
+  }
+
+  get pageTitle(): string {
+    if (this.mode === 'validees') {
+      return 'Demandes validees';
+    }
+    return this.mode === 'absences-a-valider' ? 'Absences a valider' : 'Demandes a valider';
+  }
+
+  get pageDescription(): string {
+    if (this.mode === 'validees') {
+      return 'Demandes deja traitees par le responsable.';
+    }
+    return this.mode === 'absences-a-valider'
+      ? 'Absences soumises par les employes de votre departement.'
+      : 'Demandes soumises par les employes de votre departement.';
+  }
+
+  get emptyMessage(): string {
+    return this.mode === 'validees' ? 'Aucune demande traitee' : 'Aucune demande a valider';
+  }
+
+  get pagedDemandes(): ResponsableDemande[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filteredDemandes.slice(start, start + this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredDemandes.length / this.pageSize));
   }
 
   loadDemandes(): void {
     this.loading = true;
     this.errorMessage = '';
 
-    const request$ = this.isAbsencesMode
+    const request$ = this.mode === 'validees'
+      ? this.responsableDemandeService.getDemandesValidees()
+      : this.isAbsencesMode
       ? this.responsableDemandeService.getAbsencesAValider()
       : this.responsableDemandeService.getDemandesAValider();
 
@@ -81,6 +119,7 @@ export class ResponsableValidationDemandesComponent implements OnInit {
         console.error('Erreur chargement demandes responsable', error);
         this.demandes = [];
         this.filteredDemandes = [];
+        this.currentPage = 1;
         this.errorMessage = this.getErrorMessage(error, 'Erreur lors du chargement des demandes');
       },
     });
@@ -90,11 +129,31 @@ export class ResponsableValidationDemandesComponent implements OnInit {
     const result = this.demandes.filter(demande => {
       const matchType = this.selectedType === 'Tous' || demande.typeDemande === this.selectedType;
       const matchStatus = this.selectedStatus === 'Tous' || demande.status === this.selectedStatus;
-      return matchType && matchStatus;
+      return this.statusMatchesMode(demande.status) && matchType && matchStatus;
     });
 
     this.filteredDemandes = [...result];
+    this.ensureValidPage();
     this.cdr.markForCheck();
+  }
+
+  onFilterChange(): void {
+    this.currentPage = 1;
+    this.applyFilters();
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.cdr.markForCheck();
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.cdr.markForCheck();
+    }
   }
 
   validerSansModification(demande: ResponsableDemande): void {
@@ -188,10 +247,16 @@ export class ResponsableValidationDemandesComponent implements OnInit {
   }
 
   peutValider(demande: ResponsableDemande): boolean {
+    if (this.mode === 'validees') {
+      return false;
+    }
     return demande.status === 'VALIDE_EMPLOYE' || demande.status === 'MODIFICATION_RESPONSABLE';
   }
 
   peutModifierDates(demande: ResponsableDemande): boolean {
+    if (this.mode === 'validees') {
+      return false;
+    }
     return demande.status === 'VALIDE_EMPLOYE' || demande.status === 'MODIFICATION_RESPONSABLE';
   }
 
@@ -200,7 +265,30 @@ export class ResponsableValidationDemandesComponent implements OnInit {
   }
 
   peutRefuser(demande: ResponsableDemande): boolean {
+    if (this.mode === 'validees') {
+      return false;
+    }
     return demande.status === 'VALIDE_EMPLOYE' || demande.status === 'MODIFICATION_RESPONSABLE';
+  }
+
+  peutImprimer(demande: ResponsableDemande): boolean {
+    return demande.typeDemande === 'CONGE'
+      && ['VALIDE_DG', 'ANNULE', 'REFUSE_RESPONSABLE', 'REFUSE_DG'].includes(demande.status);
+  }
+
+  imprimerDemande(demande: ResponsableDemande): void {
+    if (this.peutImprimer(demande)) {
+      this.router.navigate(['/demande-conge', demande.id, 'impression']);
+    }
+  }
+
+  dureeDemande(demande: ResponsableDemande): number {
+    if (demande.typeDemande === 'CONGE') {
+      return demande.joursDeduits || 0;
+    }
+    const debut = new Date(demande.dateDebutEmp);
+    const fin = new Date(demande.dateFinEmp);
+    return Math.max(1, Math.round((fin.getTime() - debut.getTime()) / 86_400_000) + 1);
   }
 
   isActionLoading(demande: ResponsableDemande, type: 'valider' | 'refuser' | 'modifier'): boolean {
@@ -282,6 +370,30 @@ export class ResponsableValidationDemandesComponent implements OnInit {
 
   private get isAbsencesMode(): boolean {
     return this.router.url.includes('/absences-a-valider');
+  }
+
+  private syncModeFromUrl(): void {
+    if (this.router.url.includes('/demandes-validees')) {
+      this.mode = 'validees';
+      return;
+    }
+    this.mode = this.router.url.includes('/absences-a-valider') ? 'absences-a-valider' : 'a-valider';
+  }
+
+  private statusMatchesMode(status: StatusDemande): boolean {
+    if (this.mode === 'validees') {
+      return ['VALIDE_RESPONSABLE', 'REFUSE_RESPONSABLE', 'MODIFICATION_RESPONSABLE'].includes(status);
+    }
+    return status === 'VALIDE_EMPLOYE';
+  }
+
+  private ensureValidPage(): void {
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = this.totalPages;
+    }
+    if (this.currentPage < 1) {
+      this.currentPage = 1;
+    }
   }
 
   private getErrorMessage(error: unknown, fallback: string): string {

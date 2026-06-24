@@ -616,3 +616,19 @@ body .page-content .empty {
     grid-template-columns: 1fr;
   }
 }
+
+@media print {
+  app-root,
+  app-demande-conge-print {
+    display: block !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-page {
+    display: block !important;
+    visibility: visible !important;
+  }
+}

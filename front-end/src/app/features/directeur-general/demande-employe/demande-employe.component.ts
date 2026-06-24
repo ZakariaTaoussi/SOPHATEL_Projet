@@ -26,6 +26,8 @@ export class DirecteurGeneralDemandeEmployeComponent implements OnInit {
   searchTerm = '';
   selectedType = 'Tous';
   selectedDepartement = 'Tous';
+  currentPage = 1;
+  readonly pageSize = 4;
 
   mode: ModePage = 'a-valider';
   demandes: DirecteurGeneralDemande[] = [];
@@ -100,6 +102,15 @@ export class DirecteurGeneralDemandeEmployeComponent implements OnInit {
     )).sort()];
   }
 
+  get pagedDemandes(): DirecteurGeneralDemande[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.demandesFiltrees.slice(start, start + this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.demandesFiltrees.length / this.pageSize));
+  }
+
   get naturesConge() {
     return [
       { value: NatureConge.ANNUEL, label: 'Annuel' },
@@ -134,6 +145,7 @@ export class DirecteurGeneralDemandeEmployeComponent implements OnInit {
         console.error('Erreur demandes DG', error);
         this.demandes = [];
         this.demandesFiltrees = [];
+        this.currentPage = 1;
         this.errorMessage = this.getErrorMessage(error);
       },
     });
@@ -149,10 +161,31 @@ export class DirecteurGeneralDemandeEmployeComponent implements OnInit {
       const matchType = this.selectedType === 'Tous' || demande.typeDemande === this.selectedType;
       const matchDepartement = this.selectedDepartement === 'Tous' || departement === this.selectedDepartement;
 
-      return matchSearch && matchType && matchDepartement;
+      return this.statusMatchesMode(demande.status) && matchSearch && matchType && matchDepartement;
     });
 
     this.demandesFiltrees = [...result];
+    this.ensureValidPage();
+    this.cdr.markForCheck();
+  }
+
+  onFilterChange(): void {
+    this.currentPage = 1;
+    this.applyFilters();
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.cdr.markForCheck();
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.cdr.markForCheck();
+    }
   }
 
   validerSansModification(demande: DirecteurGeneralDemande): void {
@@ -227,6 +260,17 @@ export class DirecteurGeneralDemandeEmployeComponent implements OnInit {
     return demande.status === 'MODIFICATION_DG';
   }
 
+  peutImprimer(demande: DirecteurGeneralDemande): boolean {
+    return demande.typeDemande === 'CONGE'
+      && ['VALIDE_DG', 'ANNULE', 'REFUSE_RESPONSABLE', 'REFUSE_DG'].includes(demande.status);
+  }
+
+  imprimerDemande(demande: DirecteurGeneralDemande): void {
+    if (this.peutImprimer(demande)) {
+      this.router.navigate(['/demande-conge', demande.id, 'impression']);
+    }
+  }
+
   validerAvecModification(): void {
     if (!this.demandeEnModification) {
       return;
@@ -295,6 +339,15 @@ export class DirecteurGeneralDemandeEmployeComponent implements OnInit {
     return this.naturesConge.find(option => option.value === nature)?.label ?? '-';
   }
 
+  dureeDemande(demande: DirecteurGeneralDemande): number {
+    if (demande.typeDemande === 'CONGE') {
+      return demande.joursDeduits || 0;
+    }
+    const debut = new Date(demande.dateDebutEmp);
+    const fin = new Date(demande.dateFinEmp);
+    return Math.max(1, Math.round((fin.getTime() - debut.getTime()) / 86_400_000) + 1);
+  }
+
   private hasValidId(demande: DirecteurGeneralDemande | null | undefined): demande is DirecteurGeneralDemande {
     return Number.isFinite(demande?.id) && Number(demande?.id) > 0;
   }
@@ -336,6 +389,22 @@ export class DirecteurGeneralDemandeEmployeComponent implements OnInit {
       return;
     }
     this.mode = this.router.url.includes('/absences-a-valider') ? 'absences-a-valider' : 'a-valider';
+  }
+
+  private statusMatchesMode(status: StatusDemande): boolean {
+    if (this.mode === 'validees') {
+      return ['VALIDE_DG', 'REFUSE_DG', 'MODIFICATION_DG'].includes(status);
+    }
+    return status === 'VALIDE_RESPONSABLE';
+  }
+
+  private ensureValidPage(): void {
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = this.totalPages;
+    }
+    if (this.currentPage < 1) {
+      this.currentPage = 1;
+    }
   }
 
   private getErrorMessage(error: unknown): string {

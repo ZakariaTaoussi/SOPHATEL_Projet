@@ -233,6 +233,7 @@
 .accept-btn,
 .reject-btn,
 .edit-btn,
+.print-btn,
 .refresh-btn,
 .secondary-btn,
 .close-btn {
@@ -270,6 +271,13 @@
   color: #1d4ed8;
 }
 
+.print-btn {
+  padding: 0 12px;
+  border: 1px solid #d7e0e8;
+  background: #fff;
+  color: #163b68;
+}
+
 .refresh-btn {
   padding: 0 14px;
   border: 1px solid #087da0;
@@ -281,6 +289,33 @@
   padding: 28px 18px;
   color: #64748b;
   text-align: center;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid #eef2f7;
+  color: #475569;
+  font-size: .88rem;
+
+  button {
+    min-height: 34px;
+    padding: 0 14px;
+    border: 1px solid #d7e0e8;
+    border-radius: 8px;
+    background: #fff;
+    color: #087da0;
+    font-weight: 800;
+    cursor: pointer;
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: .55;
+    }
+  }
 }
 
 .modal-backdrop {

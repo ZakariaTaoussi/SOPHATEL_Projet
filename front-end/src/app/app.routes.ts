@@ -40,6 +40,14 @@ export const routes: Routes = [
       import('./features/directeur-general/dg.route').then(m => m.DIRECTEUR_GENERAL_ROUTES),
   },
   {
+    path: 'demande-conge/:id/impression',
+    canActivate: [roleGuard],
+    data: { roles: [Role.EMPLOYE, Role.RH, Role.RESPONSABLE, Role.DIRECTEUR_GENERAL] },
+    loadComponent: () =>
+      import('./features/shared/demande-conge-print/demande-conge-print.component')
+        .then(m => m.DemandeCongePrintComponent),
+  },
+  {
     path: 'admin',
     canActivate: [roleGuard],
     data: { roles: [Role.ADMINISTRATEUR] },

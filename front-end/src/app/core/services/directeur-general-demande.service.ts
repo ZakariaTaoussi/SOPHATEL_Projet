@@ -1,11 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
+import { map, Observable, throwError } from 'rxjs';
 import { apiUrl } from '../config/api-url';
 import {
   DirecteurGeneralDemande,
   DirecteurGeneralValidationDemandeRequest,
 } from '../models/demande-conge.model';
+
+type DirecteurGeneralDemandeListResponse = DirecteurGeneralDemande[] | { content: DirecteurGeneralDemande[] };
 
 @Injectable({ providedIn: 'root' })
 export class DirecteurGeneralDemandeService {
@@ -14,15 +16,15 @@ export class DirecteurGeneralDemandeService {
   constructor(private readonly http: HttpClient) {}
 
   getDemandesAValider(): Observable<DirecteurGeneralDemande[]> {
-    return this.http.get<DirecteurGeneralDemande[]>(`${this.directeurGeneralUrl}/demandes-a-valider`, {
+    return this.http.get<DirecteurGeneralDemandeListResponse>(`${this.directeurGeneralUrl}/demandes-a-valider`, {
       withCredentials: true,
-    });
+    }).pipe(map(response => this.toDemandesArray(response)));
   }
 
   getAbsencesAValider(): Observable<DirecteurGeneralDemande[]> {
-    return this.http.get<DirecteurGeneralDemande[]>(`${this.directeurGeneralUrl}/absences-a-valider`, {
+    return this.http.get<DirecteurGeneralDemandeListResponse>(`${this.directeurGeneralUrl}/absences-a-valider`, {
       withCredentials: true,
-    });
+    }).pipe(map(response => this.toDemandesArray(response)));
   }
 
   getDemandeById(id: number): Observable<DirecteurGeneralDemande> {
@@ -76,12 +78,16 @@ export class DirecteurGeneralDemandeService {
   }
 
   getDemandesValidees(): Observable<DirecteurGeneralDemande[]> {
-    return this.http.get<DirecteurGeneralDemande[]>(`${this.directeurGeneralUrl}/demandes-validees`, {
+    return this.http.get<DirecteurGeneralDemandeListResponse>(`${this.directeurGeneralUrl}/demandes-validees`, {
       withCredentials: true,
-    });
+    }).pipe(map(response => this.toDemandesArray(response)));
   }
 
   private isValidId(id: number): boolean {
     return Number.isFinite(id) && id > 0;
+  }
+
+  private toDemandesArray(response: DirecteurGeneralDemandeListResponse): DirecteurGeneralDemande[] {
+    return Array.isArray(response) ? response : response.content ?? [];
   }
 }

@@ -97,6 +97,33 @@
   font-size: .95rem;
 }
 
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 18px;
+  border-top: 1px solid #eef2f7;
+  color: #475569;
+  font-size: .88rem;
+
+  button {
+    min-height: 34px;
+    padding: 0 14px;
+    border: 1px solid #d6dfec;
+    border-radius: 8px;
+    background: #fff;
+    color: #1B3A6B;
+    font-weight: 800;
+    cursor: pointer;
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: .55;
+    }
+  }
+}
+
 .table-wrapper {
   overflow-x: auto;
 }
@@ -170,6 +197,7 @@ button {
 .accept-btn,
 .edit-btn,
 .reject-btn,
+.print-btn,
 .secondary-btn {
   min-height: 36px;
   padding: 0 12px;
@@ -196,6 +224,12 @@ button {
   border: 1px solid #d6dfec;
   background: #fff;
   color: #334155;
+}
+
+.print-btn {
+  border: 1px solid #d7e0e8;
+  background: #fff;
+  color: #1B3A6B;
 }
 
 .modal-backdrop {

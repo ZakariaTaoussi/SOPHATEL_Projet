@@ -13,21 +13,21 @@
       <input
         type="search"
         [(ngModel)]="searchTerm"
-        (ngModelChange)="applyFilters()"
+        (ngModelChange)="onFilterChange()"
         placeholder="Nom de l'employe"
       />
     </label>
 
     <label class="field">
       <span>Type</span>
-      <select [(ngModel)]="selectedType" (ngModelChange)="applyFilters()">
+      <select [(ngModel)]="selectedType" (ngModelChange)="onFilterChange()">
         <option *ngFor="let type of types" [value]="type">{{ type }}</option>
       </select>
     </label>
 
     <label class="field">
       <span>Departement</span>
-      <select [(ngModel)]="selectedDepartement" (ngModelChange)="applyFilters()">
+      <select [(ngModel)]="selectedDepartement" (ngModelChange)="onFilterChange()">
         <option *ngFor="let departement of departements" [value]="departement">{{ departement }}</option>
       </select>
     </label>
@@ -70,7 +70,7 @@
             <td colspan="12" class="empty-cell">Chargement...</td>
           </tr>
 
-          <tr *ngFor="let demande of demandesFiltrees">
+          <tr *ngFor="let demande of pagedDemandes">
             <td class="ref-cell">DEM-{{ demande.id }}</td>
             <td>
               <strong>{{ demande.employeNomComplet || '-' }}</strong>
@@ -93,7 +93,7 @@
             <td class="date-cell">
               {{ formatDate(demande.dateDebutDg) }} - {{ formatDate(demande.dateFinDg) }}
             </td>
-            <td><span class="duree-chip">{{ demande.joursDeduits || 0 }} j</span></td>
+            <td><span class="duree-chip">{{ dureeDemande(demande) }} j</span></td>
             <td>
               <span class="badge" [attr.data-status]="demande.status">
                 {{ getStatusLabel(demande.status) }}
@@ -146,6 +146,14 @@
                 >
                   Revalider
                 </button>
+                <button
+                  *ngIf="peutImprimer(demande)"
+                  type="button"
+                  class="print-btn"
+                  (click)="imprimerDemande(demande)"
+                >
+                  Imprimer
+                </button>
               </div>
             </td>
           </tr>
@@ -155,6 +163,12 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <div class="pagination" *ngIf="!loading && demandesFiltrees.length > pageSize">
+      <button type="button" (click)="previousPage()" [disabled]="currentPage === 1">Previous</button>
+      <span>Page {{ currentPage }} / {{ totalPages }}</span>
+      <button type="button" (click)="nextPage()" [disabled]="currentPage === totalPages">Next</button>
     </div>
   </section>
 

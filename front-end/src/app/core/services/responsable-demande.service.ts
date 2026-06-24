@@ -1,11 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
+import { map, Observable, throwError } from 'rxjs';
 import { apiUrl } from '../config/api-url';
 import {
   ResponsableDemande,
   ResponsableValidationDemandeRequest,
 } from '../models/demande-conge.model';
+
+type ResponsableDemandeListResponse = ResponsableDemande[] | { content: ResponsableDemande[] };
 
 @Injectable({ providedIn: 'root' })
 export class ResponsableDemandeService {
@@ -14,15 +16,21 @@ export class ResponsableDemandeService {
   constructor(private readonly http: HttpClient) {}
 
   getDemandesAValider(): Observable<ResponsableDemande[]> {
-    return this.http.get<ResponsableDemande[]>(`${this.responsableUrl}/demandes-a-valider`, {
+    return this.http.get<ResponsableDemandeListResponse>(`${this.responsableUrl}/demandes-a-valider`, {
       withCredentials: true,
-    });
+    }).pipe(map(response => this.toDemandesArray(response)));
+  }
+
+  getDemandesValidees(): Observable<ResponsableDemande[]> {
+    return this.http.get<ResponsableDemandeListResponse>(`${this.responsableUrl}/demandes-validees`, {
+      withCredentials: true,
+    }).pipe(map(response => this.toDemandesArray(response)));
   }
 
   getAbsencesAValider(): Observable<ResponsableDemande[]> {
-    return this.http.get<ResponsableDemande[]>(`${this.responsableUrl}/absences-a-valider`, {
+    return this.http.get<ResponsableDemandeListResponse>(`${this.responsableUrl}/absences-a-valider`, {
       withCredentials: true,
-    });
+    }).pipe(map(response => this.toDemandesArray(response)));
   }
 
   getDemandeById(id: number): Observable<ResponsableDemande> {
@@ -77,5 +85,9 @@ export class ResponsableDemandeService {
 
   private isValidId(id: number): boolean {
     return Number.isFinite(id) && id > 0;
+  }
+
+  private toDemandesArray(response: ResponsableDemandeListResponse): ResponsableDemande[] {
+    return Array.isArray(response) ? response : response.content ?? [];
   }
 }
