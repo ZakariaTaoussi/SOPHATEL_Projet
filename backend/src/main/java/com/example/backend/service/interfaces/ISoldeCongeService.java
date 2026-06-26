@@ -9,6 +9,8 @@ public interface ISoldeCongeService {
 
     SoldeConge getOrCreateSolde(Long employeId, Integer annee);
 
+    Double calculerJoursOuvres(LocalDate dateDebut, LocalDate dateFin);
+
     Double calculerJoursCongeOuvres(LocalDate dateDebut, LocalDate dateFin);
 
     void deduireSolde(Long employeId, Integer annee, Double jours);

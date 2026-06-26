@@ -10,6 +10,16 @@ export const RH_ROUTES: Routes = [
 			{ path: 'dashboard', loadComponent: () => import('./dashboard/dashboard.component').then(m => m.RhDashboardComponent) },
 			{ path: 'Employes', loadComponent: () => import('./employes/employes.component').then(m => m.RhEmployesComponent) },
 			{
+				path: 'employes/conges-valides',
+				data: { mode: 'conges' },
+				loadComponent: () => import('./suivi-demandes/suivi-demandes.component').then(m => m.RhSuiviDemandesComponent),
+			},
+			{
+				path: 'employes/absences-valides',
+				data: { mode: 'absences' },
+				loadComponent: () => import('./suivi-demandes/suivi-demandes.component').then(m => m.RhSuiviDemandesComponent),
+			},
+			{
 				path: 'mes-demandes',
 				data: { scope: 'rh', baseRoute: '/rh' },
 				loadComponent: () => import('../shared/self-demande/mes-demandes.component').then(m => m.SelfMesDemandesComponent),
@@ -28,6 +38,7 @@ export const RH_ROUTES: Routes = [
 				loadComponent: () => import('../shared/profil/profil.component').then(m => m.SharedProfilComponent),
 			},
 			{ path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+			{ path: 'employes', redirectTo: 'employes/conges-valides', pathMatch: 'full' },
 		],
 	},
 ];

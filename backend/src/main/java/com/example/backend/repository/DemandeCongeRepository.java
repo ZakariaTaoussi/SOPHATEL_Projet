@@ -8,10 +8,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface DemandeCongeRepository extends JpaRepository<DemandeConge, Long> {
+public interface DemandeCongeRepository extends JpaRepository<DemandeConge, Long>, JpaSpecificationExecutor<DemandeConge> {
 
     @Query("select d from DemandeConge d where d.employe.idEmp = :employeId order by d.createdAt desc")
     List<DemandeConge> findByEmployeIdOrderByCreatedAtDesc(@Param("employeId") Long employeId);

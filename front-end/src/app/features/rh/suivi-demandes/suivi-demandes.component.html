@@ -1,0 +1,136 @@
+<div class="suivi-page">
+  <header class="page-header">
+    <div>
+      <span class="page-kicker">Ressources Humaines</span>
+      <h1>{{ title }}</h1>
+      <p>{{ subtitle }}</p>
+    </div>
+
+    <button type="button" class="export-btn" (click)="exporterExcel()" [disabled]="exporting">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <path d="M7 10l5 5 5-5"/>
+        <path d="M12 15V3"/>
+      </svg>
+      {{ exporting ? 'Export...' : 'Exporter Excel' }}
+    </button>
+  </header>
+
+  <section class="filters-panel">
+    <label class="field search-field">
+      <span>Recherche employe</span>
+      <input type="search" [(ngModel)]="search" (ngModelChange)="onFilterChange()" placeholder="Nom, prenom, matricule, email" />
+    </label>
+
+    <label class="field">
+      <span>Annee</span>
+      <input type="number" [(ngModel)]="annee" (ngModelChange)="onFilterChange()" min="2000" max="2100" />
+    </label>
+
+    <label class="field">
+      <span>Mois</span>
+      <select [(ngModel)]="mois" (ngModelChange)="onFilterChange()">
+        <option [ngValue]="null">Tous</option>
+        <option *ngFor="let option of moisOptions" [ngValue]="option.value">{{ option.label }}</option>
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Departement</span>
+      <select [(ngModel)]="departementId" (ngModelChange)="onFilterChange()">
+        <option [ngValue]="null">Tous</option>
+        <option *ngFor="let departement of departements" [ngValue]="departement.id">{{ departement.nom }}</option>
+      </select>
+    </label>
+  </section>
+
+  <p class="message error" *ngIf="errorMessage">{{ errorMessage }}</p>
+  <p class="message success" *ngIf="successMessage">{{ successMessage }}</p>
+
+  <section class="table-panel">
+    <div class="table-title">
+      <div>
+        <h2>{{ title }}</h2>
+        <p>{{ totalElements }} element(s) trouve(s)</p>
+      </div>
+      <span class="page-chip">Page {{ totalPages === 0 ? 0 : page + 1 }} / {{ totalPages }}</span>
+    </div>
+
+    <div class="loading" *ngIf="loading">Chargement...</div>
+
+    <div class="table-wrapper" *ngIf="!loading">
+      <table class="suivi-table">
+        <thead>
+          <tr>
+            <th>Ref.</th>
+            <th>Employe</th>
+            <th>Matricule</th>
+            <th>Departement</th>
+            <th>Type</th>
+            <th>{{ isConges ? 'Nature' : 'Nature/Motif' }}</th>
+            <th>Periode DG</th>
+            <th>{{ isConges ? 'Jours deduits' : 'Jours a deduire paie' }}</th>
+            <th>Statut</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let demande of demandes">
+            <td class="ref-cell">{{ reference(demande) }}</td>
+            <td>
+              <strong>{{ demande.employeNomComplet || '-' }}</strong>
+              <span>{{ demande.email || '-' }}</span>
+            </td>
+            <td>{{ demande.matricule || '-' }}</td>
+            <td>{{ demande.departementNom || '-' }}</td>
+            <td>{{ demande.typeDemande || '-' }}</td>
+            <td>{{ demande.natureConge || '-' }}</td>
+            <td class="date-cell">{{ formatDate(demande.dateDebutDg) }} - {{ formatDate(demande.dateFinDg) }}</td>
+            <td><span class="duree-chip">{{ duree(demande) }} j</span></td>
+            <td><span class="badge">{{ demande.status || '-' }}</span></td>
+            <td>
+              <button
+                *ngIf="isConges && demande.status === 'VALIDE_DG'"
+                type="button"
+                class="print-btn"
+                title="Imprimer"
+                [disabled]="printingId === demande.id"
+                (click)="ouvrirImpression(demande)">
+                <span *ngIf="printingId === demande.id">...</span>
+                <svg *ngIf="printingId !== demande.id" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M6 9V2h12v7"/>
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                  <path d="M6 14h12v8H6z"/>
+                </svg>
+              </button>
+              <button
+                *ngIf="!isConges && demande.status === 'VALIDE_DG'"
+                type="button"
+                class="print-btn"
+                title="Imprimer"
+                [disabled]="printingId === demande.id"
+                (click)="ouvrirImpression(demande)">
+                <span *ngIf="printingId === demande.id">...</span>
+                <svg *ngIf="printingId !== demande.id" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M6 9V2h12v7"/>
+                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                  <path d="M6 14h12v8H6z"/>
+                </svg>
+              </button>
+            </td>
+          </tr>
+
+          <tr *ngIf="demandes.length === 0">
+            <td colspan="10" class="empty-cell">{{ emptyMessage }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <button type="button" (click)="previousPage()" [disabled]="first || loading">Precedent</button>
+      <span>Page {{ totalPages === 0 ? 0 : page + 1 }} sur {{ totalPages }}</span>
+      <button type="button" (click)="nextPage()" [disabled]="last || loading">Suivant</button>
+    </div>
+  </section>
+</div>

@@ -19,7 +19,6 @@ import com.example.backend.service.interfaces.IDemandeCongeService;
 import com.example.backend.service.interfaces.ISignatureDemandeService;
 import com.example.backend.service.interfaces.ISoldeCongeService;
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
@@ -102,7 +101,7 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
         if (role == Role.RESPONSABLE) {
             appliquerDatesResponsableSelfAvantSubmit(demande);
             validateDates(demande.getDateDebutResp(), demande.getDateFinResp());
-            deduireSoldeSiNecessaire(demande, employe, demande.getDateDebutResp(), demande.getDateFinResp());
+            appliquerImpactDemande(demande, employe, demande.getDateDebutResp(), demande.getDateFinResp());
             demande.setStatus(StatusDemande.VALIDE_RESPONSABLE);
             DemandeConge saved = demandeCongeRepository.save(demande);
             signatureDemandeService.signerParEmploye(saved, employe);
@@ -113,14 +112,14 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
         if (role == Role.DIRECTEUR_GENERAL) {
             appliquerDatesDgSelfAvantSubmit(demande);
             validateDates(demande.getDateDebutDg(), demande.getDateFinDg());
-            deduireSoldeSiNecessaire(demande, employe, demande.getDateDebutDg(), demande.getDateFinDg());
+            appliquerImpactDemande(demande, employe, demande.getDateDebutDg(), demande.getDateFinDg());
             demande.setStatus(StatusDemande.VALIDE_DG);
             DemandeConge saved = demandeCongeRepository.save(demande);
             signatureDemandeService.signerParDg(saved, employe);
             return demandeCongeMapper.toResponse(saved);
         }
 
-        deduireSoldeSiNecessaire(demande, employe, demande.getDateDebutEmp(), demande.getDateFinEmp());
+        appliquerImpactDemande(demande, employe, demande.getDateDebutEmp(), demande.getDateFinEmp());
         demande.setStatus(StatusDemande.VALIDE_EMPLOYE);
         DemandeConge saved = demandeCongeRepository.save(demande);
         signatureDemandeService.signerParEmploye(saved, employe);
@@ -163,7 +162,7 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
             throw new InvalidBusinessRequestException("Cette demande ne peut pas etre modifiee dans son etat actuel");
         }
         if (demande.getStatus() == StatusDemande.VALIDE_EMPLOYE) {
-            restaurerSoldeSiNecessaire(demande, employe);
+            retirerImpactDemande(demande, employe);
             demande.setStatus(StatusDemande.MODIFICATION_EMPLOYE);
         } else {
             throw new InvalidBusinessRequestException("Cette demande ne peut pas etre modifiee dans son etat actuel");
@@ -180,7 +179,7 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
             throw new InvalidBusinessRequestException("Cette demande ne peut pas etre modifiee dans son etat actuel");
         }
 
-        restaurerSoldeSiNecessaire(demande, responsable);
+        retirerImpactDemande(demande, responsable);
         demande.setStatus(StatusDemande.MODIFICATION_RESPONSABLE);
         return demandeCongeMapper.toResponse(demandeCongeRepository.save(demande));
     }
@@ -190,7 +189,7 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
             throw new InvalidBusinessRequestException("Cette demande ne peut pas etre modifiee dans son etat actuel");
         }
 
-        restaurerSoldeSiNecessaire(demande, directeurGeneral);
+        retirerImpactDemande(demande, directeurGeneral);
         demande.setStatus(StatusDemande.MODIFICATION_DG);
         return demandeCongeMapper.toResponse(demandeCongeRepository.save(demande));
     }
@@ -202,7 +201,7 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
         DemandeConge demande = findMaDemande(demandeId, employe);
         validateAnnulationAutorisee(demande, getRole(employe));
 
-        restaurerSoldeSiNecessaire(demande, employe);
+        retirerImpactDemande(demande, employe);
         demande.setStatus(StatusDemande.ANNULE);
         return demandeCongeMapper.toResponse(demandeCongeRepository.save(demande));
     }
@@ -244,9 +243,9 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
                     List<DemandeConge> absencesDuMois = absences.stream()
                             .filter(absence -> absence.getDateDebutEmp().getMonthValue() == month)
                             .toList();
-                    long totalJours = absencesDuMois.stream()
-                            .mapToLong(this::calculerJoursAbsenceInclusifs)
-                            .sum();
+                    long totalJours = Math.round(absencesDuMois.stream()
+                            .mapToDouble(this::joursAbsencePourStats)
+                            .sum());
                     return new AbsenceStatsResponse(month, absencesDuMois.size(), totalJours);
                 })
                 .toList();
@@ -316,7 +315,9 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
     private void normaliserAbsence(DemandeConge demande) {
         if (demande.getTypeDemande() == TypeDemande.ABSENCE) {
             demande.setNatureConge(null);
-            demande.setJoursDeduits(0D);
+            if (demande.getStatus() == StatusDemande.BROUILLON) {
+                demande.setJoursDeduits(0D);
+            }
         }
     }
 
@@ -416,28 +417,32 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
         }
     }
 
-    private void deduireSoldeSiNecessaire(
+    private void appliquerImpactDemande(
             DemandeConge demande,
             Employe employe,
             LocalDate dateDebut,
             LocalDate dateFin) {
-        if (demande.getTypeDemande() != TypeDemande.CONGE) {
-            demande.setJoursDeduits(0D);
+        if (demande.getTypeDemande() == TypeDemande.ABSENCE) {
+            demande.setJoursDeduits(soldeCongeService.calculerJoursOuvres(dateDebut, dateFin));
             return;
         }
 
-        restaurerSoldeSiNecessaire(demande, employe);
-        double jours = soldeCongeService.calculerJoursCongeOuvres(dateDebut, dateFin);
+        retirerImpactDemande(demande, employe);
+        double jours = soldeCongeService.calculerJoursOuvres(dateDebut, dateFin);
         soldeCongeService.deduireSolde(employe.getIdEmp(), dateDebut.getYear(), jours);
         demande.setJoursDeduits(jours);
     }
 
-    private void restaurerSoldeSiNecessaire(DemandeConge demande, Employe employe) {
+    private void retirerImpactDemande(DemandeConge demande, Employe employe) {
         if (demande.getTypeDemande() == TypeDemande.CONGE && demande.getJoursDeduits() != null && demande.getJoursDeduits() > 0D) {
             int annee = getAnneeSolde(demande);
             demande.setJoursDeduits(0D);
             demandeCongeRepository.saveAndFlush(demande);
             soldeCongeService.getOrCreateSolde(employe.getIdEmp(), annee);
+            return;
+        }
+        if (demande.getTypeDemande() == TypeDemande.ABSENCE) {
+            demande.setJoursDeduits(0D);
         }
     }
 
@@ -458,7 +463,10 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
         return demande.getDateDebutEmp().getYear();
     }
 
-    private long calculerJoursAbsenceInclusifs(DemandeConge demande) {
-        return ChronoUnit.DAYS.between(demande.getDateDebutEmp(), demande.getDateFinEmp()) + 1;
+    private double joursAbsencePourStats(DemandeConge demande) {
+        if (demande.getJoursDeduits() != null && demande.getJoursDeduits() > 0D) {
+            return demande.getJoursDeduits();
+        }
+        return soldeCongeService.calculerJoursOuvres(demande.getDateDebutEmp(), demande.getDateFinEmp());
     }
 }

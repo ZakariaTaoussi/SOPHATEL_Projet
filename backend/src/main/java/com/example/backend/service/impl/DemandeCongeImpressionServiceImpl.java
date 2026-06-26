@@ -10,7 +10,6 @@ import com.example.backend.model.Employe;
 import com.example.backend.model.SoldeConge;
 import com.example.backend.model.enums.Role;
 import com.example.backend.model.enums.StatusDemande;
-import com.example.backend.model.enums.TypeDemande;
 import com.example.backend.repository.DemandeCongeRepository;
 import com.example.backend.repository.SoldeCongeRepository;
 import com.example.backend.service.interfaces.IDemandeCongeImpressionService;
@@ -48,9 +47,6 @@ public class DemandeCongeImpressionServiceImpl implements IDemandeCongeImpressio
         DemandeConge demande = demandeCongeRepository.findById(demandeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Demande introuvable"));
 
-        if (demande.getTypeDemande() != TypeDemande.CONGE) {
-            throw new InvalidBusinessRequestException("Une absence ne peut pas etre imprimee avec ce formulaire.");
-        }
         if (!STATUTS_IMPRIMABLES.contains(demande.getStatus())) {
             throw new InvalidBusinessRequestException("Cette demande ne peut pas encore etre imprimee.");
         }
@@ -96,6 +92,14 @@ public class DemandeCongeImpressionServiceImpl implements IDemandeCongeImpressio
     private void verifierDroitAcces(DemandeConge demande, Employe connecte) {
         Role role = connecte.getUtilisateur() == null ? null : connecte.getUtilisateur().getRole();
         if (role == Role.DIRECTEUR_GENERAL) {
+            return;
+        }
+        Role roleDemandeur = demande.getEmploye().getUtilisateur() == null
+                ? null
+                : demande.getEmploye().getUtilisateur().getRole();
+        if (role == Role.RH
+                && demande.getStatus() == StatusDemande.VALIDE_DG
+                && roleDemandeur != Role.ADMINISTRATEUR) {
             return;
         }
         if (demande.getEmploye().getIdEmp().equals(connecte.getIdEmp())) {

@@ -131,10 +131,7 @@ export class MesAbsencesComponent implements OnInit {
   }
 
   dureeAbsence(absence: DemandeConge): number {
-    const debut = new Date(absence.dateDebutEmp);
-    const fin = new Date(absence.dateFinEmp);
-    const diff = fin.getTime() - debut.getTime();
-    return Math.max(1, Math.round(diff / 86_400_000) + 1);
+    return absence.joursDeduits || 0;
   }
 
   formatDate(value?: string | null): string {

@@ -126,7 +126,7 @@ public class ResponsableDemandeServiceImpl implements IResponsableDemandeService
         }
 
         appliquerDatesResponsable(demande, request);
-        recalculerSoldeResponsable(demande);
+        appliquerImpactResponsable(demande);
         demande.setStatus(StatusDemande.VALIDE_RESPONSABLE);
         DemandeConge saved = demandeCongeRepository.save(demande);
         signatureDemandeService.signerParResponsable(saved, responsable);
@@ -145,7 +145,7 @@ public class ResponsableDemandeServiceImpl implements IResponsableDemandeService
             throw new InvalidBusinessRequestException("Cette demande ne peut pas etre refusee par le responsable.");
         }
 
-        restaurerSoldeSiNecessaire(demande);
+        retirerImpactDemande(demande);
         demande.setStatus(StatusDemande.REFUSE_RESPONSABLE);
         return demandeCongeMapper.toResponsableResponse(demandeCongeRepository.save(demande));
     }
@@ -170,7 +170,7 @@ public class ResponsableDemandeServiceImpl implements IResponsableDemandeService
             throw new InvalidBusinessRequestException("La modification responsable est autorisee uniquement apres validation responsable");
         }
 
-        restaurerSoldeSiNecessaire(demande);
+        retirerImpactDemande(demande);
         demande.setStatus(StatusDemande.MODIFICATION_RESPONSABLE);
         return demandeCongeMapper.toResponsableResponse(demandeCongeRepository.save(demande));
     }
@@ -226,21 +226,23 @@ public class ResponsableDemandeServiceImpl implements IResponsableDemandeService
         demande.setDateFinResp(dateFinResp);
     }
 
-    private void recalculerSoldeResponsable(DemandeConge demande) {
-        if (demande.getTypeDemande() != TypeDemande.CONGE) {
-            demande.setJoursDeduits(0D);
+    private void appliquerImpactResponsable(DemandeConge demande) {
+        if (demande.getTypeDemande() == TypeDemande.ABSENCE) {
+            demande.setJoursDeduits(soldeCongeService.calculerJoursOuvres(
+                    demande.getDateDebutResp(),
+                    demande.getDateFinResp()));
             return;
         }
 
-        restaurerSoldeSiNecessaire(demande);
-        double jours = soldeCongeService.calculerJoursCongeOuvres(
+        retirerImpactDemande(demande);
+        double jours = soldeCongeService.calculerJoursOuvres(
                 demande.getDateDebutResp(),
                 demande.getDateFinResp());
         soldeCongeService.deduireSolde(demande.getEmploye().getIdEmp(), demande.getDateDebutResp().getYear(), jours);
         demande.setJoursDeduits(jours);
     }
 
-    private void restaurerSoldeSiNecessaire(DemandeConge demande) {
+    private void retirerImpactDemande(DemandeConge demande) {
         if (demande.getTypeDemande() == TypeDemande.CONGE
                 && demande.getJoursDeduits() != null
                 && demande.getJoursDeduits() > 0D) {
@@ -248,6 +250,10 @@ public class ResponsableDemandeServiceImpl implements IResponsableDemandeService
             demande.setJoursDeduits(0D);
             demandeCongeRepository.saveAndFlush(demande);
             soldeCongeService.getOrCreateSolde(demande.getEmploye().getIdEmp(), annee);
+            return;
+        }
+        if (demande.getTypeDemande() == TypeDemande.ABSENCE) {
+            demande.setJoursDeduits(0D);
         }
     }
 

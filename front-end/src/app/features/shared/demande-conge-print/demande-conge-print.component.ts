@@ -34,7 +34,6 @@ export class DemandeCongePrintComponent implements OnInit {
       return;
     }
 
-    console.log('ID impression:', id);
     this.impressionService.getDemandePourImpression(id).subscribe({
       next: data => {
         console.log('Données impression:', data);

@@ -91,9 +91,9 @@ public class DirecteurGeneralDemandeServiceImpl implements IDirecteurGeneralDema
         validateStatutValidable(demande);
         validateDatesResponsableDisponibles(demande);
 
-        restaurerSoldeSiNecessaire(demande);
+        retirerImpactDemande(demande);
         appliquerDatesDg(demande, request);
-        deduireSoldeFinalSiNecessaire(demande);
+        appliquerImpactFinal(demande);
 
         demande.setStatus(StatusDemande.VALIDE_DG);
         DemandeConge saved = demandeCongeRepository.save(demande);
@@ -108,7 +108,7 @@ public class DirecteurGeneralDemandeServiceImpl implements IDirecteurGeneralDema
         DemandeConge demande = findDemande(demandeId);
         validateStatutRefusable(demande);
 
-        restaurerSoldeSiNecessaire(demande);
+        retirerImpactDemande(demande);
         demande.setStatus(StatusDemande.REFUSE_DG);
         return demandeCongeMapper.toDirecteurGeneralResponse(demandeCongeRepository.save(demande));
     }
@@ -122,7 +122,7 @@ public class DirecteurGeneralDemandeServiceImpl implements IDirecteurGeneralDema
             throw new InvalidBusinessRequestException("La modification DG est autorisee uniquement apres validation DG");
         }
 
-        restaurerSoldeSiNecessaire(demande);
+        retirerImpactDemande(demande);
         demande.setStatus(StatusDemande.MODIFICATION_DG);
         return demandeCongeMapper.toDirecteurGeneralResponse(demandeCongeRepository.save(demande));
     }
@@ -197,20 +197,22 @@ public class DirecteurGeneralDemandeServiceImpl implements IDirecteurGeneralDema
         demande.setDateFinDg(dateFinDg);
     }
 
-    private void deduireSoldeFinalSiNecessaire(DemandeConge demande) {
-        if (demande.getTypeDemande() != TypeDemande.CONGE) {
-            demande.setJoursDeduits(0D);
+    private void appliquerImpactFinal(DemandeConge demande) {
+        if (demande.getTypeDemande() == TypeDemande.ABSENCE) {
+            demande.setJoursDeduits(soldeCongeService.calculerJoursOuvres(
+                    demande.getDateDebutDg(),
+                    demande.getDateFinDg()));
             return;
         }
 
-        double jours = soldeCongeService.calculerJoursCongeOuvres(
+        double jours = soldeCongeService.calculerJoursOuvres(
                 demande.getDateDebutDg(),
                 demande.getDateFinDg());
         soldeCongeService.deduireSolde(demande.getEmploye().getIdEmp(), demande.getDateDebutDg().getYear(), jours);
         demande.setJoursDeduits(jours);
     }
 
-    private void restaurerSoldeSiNecessaire(DemandeConge demande) {
+    private void retirerImpactDemande(DemandeConge demande) {
         if (demande.getTypeDemande() == TypeDemande.CONGE
                 && demande.getJoursDeduits() != null
                 && demande.getJoursDeduits() > 0D) {
@@ -218,6 +220,10 @@ public class DirecteurGeneralDemandeServiceImpl implements IDirecteurGeneralDema
             demande.setJoursDeduits(0D);
             demandeCongeRepository.saveAndFlush(demande);
             soldeCongeService.getOrCreateSolde(demande.getEmploye().getIdEmp(), annee);
+            return;
+        }
+        if (demande.getTypeDemande() == TypeDemande.ABSENCE) {
+            demande.setJoursDeduits(0D);
         }
     }
 

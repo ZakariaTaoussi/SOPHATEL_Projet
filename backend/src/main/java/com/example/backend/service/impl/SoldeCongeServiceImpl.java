@@ -65,12 +65,12 @@ public class SoldeCongeServiceImpl implements ISoldeCongeService {
     }
 
     @Override
-    public Double calculerJoursCongeOuvres(LocalDate dateDebut, LocalDate dateFin) {
+    public Double calculerJoursOuvres(LocalDate dateDebut, LocalDate dateFin) {
         if (dateDebut == null || dateFin == null) {
             throw new InvalidBusinessRequestException("Les dates de debut et de fin sont obligatoires");
         }
         if (dateDebut.isAfter(dateFin)) {
-            throw new InvalidBusinessRequestException("La date de debut ne peut pas etre apres la date de fin");
+            throw new InvalidBusinessRequestException("Dates invalides");
         }
 
         Set<LocalDate> joursFeries = jourCalendrierRepository.findByDateBetweenOrderByDateAsc(dateDebut, dateFin).stream()
@@ -87,6 +87,11 @@ public class SoldeCongeServiceImpl implements ISoldeCongeService {
             current = current.plusDays(1);
         }
         return total;
+    }
+
+    @Override
+    public Double calculerJoursCongeOuvres(LocalDate dateDebut, LocalDate dateFin) {
+        return calculerJoursOuvres(dateDebut, dateFin);
     }
 
     @Override

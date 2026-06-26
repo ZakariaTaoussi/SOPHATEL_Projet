@@ -16,7 +16,7 @@
     Casablanca
   </div>
 
-  <h1>*** DEMANDE DE CONGE ***</h1>
+  <h1>*** {{ demande.typeDemande === 'ABSENCE' ? "DEMANDE D'ABSENCE" : 'DEMANDE DE CONGE' }} ***</h1>
 
   <div class="info-grid">
     <div>
@@ -40,13 +40,16 @@
     </div>
   </div>
 
-  <h2>NATURE DU CONGE</h2>
+  <h2>{{ demande.typeDemande === 'ABSENCE' ? 'TYPE DE DEMANDE' : 'NATURE DU CONGE' }}</h2>
 
-  <div class="nature-grid">
+  <div class="nature-grid" *ngIf="demande.typeDemande !== 'ABSENCE'">
     <div>Annuel : {{ isNature('ANNUEL') ? 'X' : '-' }}</div>
     <div>Maternite : {{ isNature('MATERNITE') ? 'X' : '-' }}</div>
     <div>Maladie : {{ isNature('MALADIE') ? 'X' : '-' }}</div>
     <div>Mise en disponibilite : {{ isNature('MISE_EN_DISPONIBILITE') ? 'X' : '-' }}</div>
+  </div>
+  <div class="nature-grid" *ngIf="demande.typeDemande === 'ABSENCE'">
+    <div>Absence : X</div>
   </div>
 
   <h2>PERIODE</h2>
@@ -60,7 +63,7 @@
   <div class="direction-section">
     <h2>PARTIE RESERVEE A LA DIRECTION</h2>
 
-    <p><strong>Periode de conge accordee :</strong></p>
+    <p><strong>{{ demande.typeDemande === 'ABSENCE' ? "Periode d'absence validee :" : 'Periode de conge accordee :' }}</strong></p>
 
     <div class="period-row">
       <div>
@@ -79,7 +82,7 @@
       </div>
     </div>
 
-    <p>Nombre de jours : {{ demande.joursDeduits ?? '-' }}</p>
+    <p>{{ demande.typeDemande === 'ABSENCE' ? 'Jours a deduire paie' : 'Nombre de jours' }} : {{ demande.joursDeduits ?? '-' }}</p>
 
     <p>
       Annee(s) concernee(s) :
@@ -91,7 +94,7 @@
       </span>
     </p>
 
-    <p>Reliquat de droit de conge : {{ demande.reliquatConge ?? '-' }}</p>
+    <p *ngIf="demande.typeDemande !== 'ABSENCE'">Reliquat de droit de conge : {{ demande.reliquatConge ?? '-' }}</p>
   </div>
 
   <div class="signature-grid">

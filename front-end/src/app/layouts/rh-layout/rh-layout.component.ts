@@ -38,7 +38,8 @@ export class RhLayoutComponent {
 
   navItems: NavItem[] = [
     { label: 'Dashboard',       route: '/rh/dashboard',         icon: 'grid' },
-    { label: 'Employes',        route: '/rh/Employes',          icon: 'users' },
+    { label: 'Conges employes', route: '/rh/employes/conges-valides', icon: 'users' },
+    { label: 'Absences employes', route: '/rh/employes/absences-valides', icon: 'calendar-off' },
     { label: 'Mes Demandes',    route: '/rh/mes-demandes',      icon: 'file-text' },
     { label: 'Mes Absences',    route: '/rh/mes-absences',      icon: 'calendar-off' },
     { label: 'Nouvelle Demande',route: '/rh/nouvelle-demande',  icon: 'plus-circle' },

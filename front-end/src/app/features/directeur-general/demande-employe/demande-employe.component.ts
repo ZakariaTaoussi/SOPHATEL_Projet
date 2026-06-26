@@ -83,6 +83,10 @@ export class DirecteurGeneralDemandeEmployeComponent implements OnInit {
     return this.isModeValidees ? 'Demandes validees' : 'Demandes en attente DG';
   }
 
+  get joursColumnLabel(): string {
+    return this.mode === 'absences-a-valider' ? 'Jours a deduire paie' : 'Duree';
+  }
+
   get emptyMessage(): string {
     if (this.mode === 'absences-a-valider') {
       return 'Aucune absence a valider pour le directeur general.';
@@ -340,12 +344,7 @@ export class DirecteurGeneralDemandeEmployeComponent implements OnInit {
   }
 
   dureeDemande(demande: DirecteurGeneralDemande): number {
-    if (demande.typeDemande === 'CONGE') {
-      return demande.joursDeduits || 0;
-    }
-    const debut = new Date(demande.dateDebutEmp);
-    const fin = new Date(demande.dateFinEmp);
-    return Math.max(1, Math.round((fin.getTime() - debut.getTime()) / 86_400_000) + 1);
+    return demande.joursDeduits || 0;
   }
 
   private hasValidId(demande: DirecteurGeneralDemande | null | undefined): demande is DirecteurGeneralDemande {

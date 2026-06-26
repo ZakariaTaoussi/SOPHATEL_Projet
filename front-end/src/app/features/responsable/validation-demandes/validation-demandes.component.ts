@@ -86,6 +86,10 @@ export class ResponsableValidationDemandesComponent implements OnInit {
     return this.mode === 'validees' ? 'Aucune demande traitee' : 'Aucune demande a valider';
   }
 
+  get joursColumnLabel(): string {
+    return this.isAbsencesMode ? 'Jours a deduire paie' : 'Jours deduits';
+  }
+
   get pagedDemandes(): ResponsableDemande[] {
     const start = (this.currentPage - 1) * this.pageSize;
     return this.filteredDemandes.slice(start, start + this.pageSize);
@@ -283,12 +287,7 @@ export class ResponsableValidationDemandesComponent implements OnInit {
   }
 
   dureeDemande(demande: ResponsableDemande): number {
-    if (demande.typeDemande === 'CONGE') {
-      return demande.joursDeduits || 0;
-    }
-    const debut = new Date(demande.dateDebutEmp);
-    const fin = new Date(demande.dateFinEmp);
-    return Math.max(1, Math.round((fin.getTime() - debut.getTime()) / 86_400_000) + 1);
+    return demande.joursDeduits || 0;
   }
 
   isActionLoading(demande: ResponsableDemande, type: 'valider' | 'refuser' | 'modifier'): boolean {
