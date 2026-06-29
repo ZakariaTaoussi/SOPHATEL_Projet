@@ -13,7 +13,7 @@ export class NotificationComponent {
   constructor(private readonly notificationService: NotificationService) {}
 
   get notifications(): NotificationItem[] {
-    return this.notificationService.getNotifications();
+    return this.notificationService.getLocalNotifications();
   }
 
   get unreadNotifications(): NotificationItem[] {
@@ -21,6 +21,6 @@ export class NotificationComponent {
   }
 
   markAllAsRead(): void {
-    this.notificationService.markAllAsRead();
+    this.notifications.forEach(notification => notification.read = true);
   }
 }

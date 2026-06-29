@@ -1,6 +1,24 @@
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable, timeout } from 'rxjs';
+import { apiUrl } from '../config/api-url';
+import { PageResponse } from '../models/page-response.model';
 
 export type NotificationKind = 'info' | 'success' | 'warning';
+
+export interface NotificationResponse {
+  id: number;
+  recipientId?: number;
+  senderId?: number;
+  demandeId?: number;
+  type: string;
+  title: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+  readAt?: string | null;
+  targetUrl?: string | null;
+}
 
 export type NotificationItem = {
   id: number;
@@ -14,41 +32,39 @@ export type NotificationItem = {
   providedIn: 'root',
 })
 export class NotificationService {
-  private nextId = 4;
-  private readonly items: NotificationItem[] = [
-    {
-      id: 1,
-      title: 'Votre demande de congé du 04/05 au 15/05 est en attente de validation.',
-      date: '20 avril 2026',
-      kind: 'info',
-      read: false,
-    },
-    {
-      id: 2,
-      title: 'Votre demande de rattrapage a été validée par votre responsable.',
-      date: '22 avril 2026',
-      kind: 'success',
-      read: false,
-    },
-    {
-      id: 3,
-      title: 'Votre demande DEM-005 a été refusée.',
-      date: '26 avril 2026',
-      kind: 'warning',
-      read: false,
-    },
-  ];
+  private readonly apiBase = apiUrl('/api/notifications');
+  private nextId = 1;
+  private readonly localItems: NotificationItem[] = [];
 
-  getNotifications(): NotificationItem[] {
-    return this.items;
+  constructor(private readonly http: HttpClient) {}
+
+  getNotifications(page = 0, size = 10): Observable<PageResponse<NotificationResponse>> {
+    const params = new HttpParams()
+      .set('page', page)
+      .set('size', size);
+    return this.http.get<PageResponse<NotificationResponse>>(this.apiBase, {
+      params,
+      withCredentials: true,
+    }).pipe(timeout(10000));
   }
 
-  getUnreadCount(): number {
-    return this.items.filter(item => !item.read).length;
+  getUnreadCount(): Observable<{ count: number }> {
+    return this.http.get<{ count: number }>(`${this.apiBase}/unread-count`, { withCredentials: true })
+      .pipe(timeout(10000));
+  }
+
+  markAsRead(id: number): Observable<NotificationResponse> {
+    return this.http.put<NotificationResponse>(`${this.apiBase}/${id}/read`, {}, { withCredentials: true })
+      .pipe(timeout(10000));
+  }
+
+  markAllAsRead(): Observable<void> {
+    return this.http.put<void>(`${this.apiBase}/read-all`, {}, { withCredentials: true })
+      .pipe(timeout(10000));
   }
 
   add(title: string, kind: NotificationKind = 'info'): void {
-    this.items.unshift({
+    this.localItems.unshift({
       id: this.nextId++,
       title,
       date: this.formatToday(),
@@ -57,8 +73,8 @@ export class NotificationService {
     });
   }
 
-  markAllAsRead(): void {
-    this.items.forEach(item => item.read = true);
+  getLocalNotifications(): NotificationItem[] {
+    return this.localItems;
   }
 
   private formatToday(): string {

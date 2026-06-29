@@ -31,7 +31,7 @@ export const RH_ROUTES: Routes = [
 				data: { scope: 'rh', baseRoute: '/rh' },
 				loadComponent: () => import('../shared/self-demande/nouvelle-demande.component').then(m => m.SelfNouvelleDemandeComponent),
 			},
-			{ path: 'notification', loadComponent: () => import('./notification/notification.component').then(m => m.RhNotificationComponent) },
+			{ path: 'notification', loadComponent: () => import('../shared/notification-page/notification-page.component').then(m => m.SharedNotificationPageComponent) },
 			{
 				path: 'profil',
 				data: { role: Role.RH },

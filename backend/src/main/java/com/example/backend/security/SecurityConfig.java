@@ -53,6 +53,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/demandes/*/impression")
                         .hasAnyRole("EMPLOYE", "RH", "RESPONSABLE", "DIRECTEUR_GENERAL")
+                        .requestMatchers("/api/notifications/**")
+                        .hasAnyRole("EMPLOYE", "RH", "RESPONSABLE", "DIRECTEUR_GENERAL", "ADMINISTRATEUR")
                         .requestMatchers("/api/admin/**").hasRole("ADMINISTRATEUR")
                         .requestMatchers("/api/employe/**").hasRole("EMPLOYE")
                         .requestMatchers("/api/responsable/**").hasRole("RESPONSABLE")

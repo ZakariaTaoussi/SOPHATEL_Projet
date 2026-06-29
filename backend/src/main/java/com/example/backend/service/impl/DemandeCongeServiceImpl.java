@@ -10,10 +10,12 @@ import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.mapper.DemandeCongeMapper;
 import com.example.backend.model.DemandeConge;
 import com.example.backend.model.Employe;
+import com.example.backend.model.enums.NotificationType;
 import com.example.backend.model.enums.NatureConge;
 import com.example.backend.model.enums.Role;
 import com.example.backend.model.enums.StatusDemande;
 import com.example.backend.model.enums.TypeDemande;
+import com.example.backend.nats.DemandeNotificationEventPublisher;
 import com.example.backend.repository.DemandeCongeRepository;
 import com.example.backend.service.interfaces.IDemandeCongeService;
 import com.example.backend.service.interfaces.ISignatureDemandeService;
@@ -22,11 +24,15 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class DemandeCongeServiceImpl implements IDemandeCongeService {
+
+    private static final Logger log = LoggerFactory.getLogger(DemandeCongeServiceImpl.class);
 
     private static final Set<StatusDemande> STATUTS_MODIFICATION_DIRECTE = Set.of(
             StatusDemande.BROUILLON,
@@ -37,18 +43,21 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
     private final ISoldeCongeService soldeCongeService;
     private final ISignatureDemandeService signatureDemandeService;
     private final EmployeConnecteProvider employeConnecteProvider;
+    private final DemandeNotificationEventPublisher notificationEventPublisher;
 
     public DemandeCongeServiceImpl(
             DemandeCongeRepository demandeCongeRepository,
             DemandeCongeMapper demandeCongeMapper,
             ISoldeCongeService soldeCongeService,
             ISignatureDemandeService signatureDemandeService,
-            EmployeConnecteProvider employeConnecteProvider) {
+            EmployeConnecteProvider employeConnecteProvider,
+            DemandeNotificationEventPublisher notificationEventPublisher) {
         this.demandeCongeRepository = demandeCongeRepository;
         this.demandeCongeMapper = demandeCongeMapper;
         this.soldeCongeService = soldeCongeService;
         this.signatureDemandeService = signatureDemandeService;
         this.employeConnecteProvider = employeConnecteProvider;
+        this.notificationEventPublisher = notificationEventPublisher;
     }
 
     @Override
@@ -95,6 +104,7 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
         Employe employe = employeConnecteProvider.getEmployeConnecte();
         DemandeConge demande = findMaDemande(demandeId, employe);
         Role role = getRole(employe);
+        StatusDemande previousStatus = demande.getStatus();
         validateSubmitAutorise(demande, role);
         validateDates(demande.getDateDebutEmp(), demande.getDateFinEmp());
 
@@ -106,6 +116,7 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
             DemandeConge saved = demandeCongeRepository.save(demande);
             signatureDemandeService.signerParEmploye(saved, employe);
             signatureDemandeService.signerParResponsable(saved, employe);
+            publishDemandeEvent(saved, employe, NotificationType.DEMANDE_VALIDATED_BY_RESPONSABLE);
             return demandeCongeMapper.toResponse(saved);
         }
 
@@ -116,6 +127,7 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
             demande.setStatus(StatusDemande.VALIDE_DG);
             DemandeConge saved = demandeCongeRepository.save(demande);
             signatureDemandeService.signerParDg(saved, employe);
+            publishDemandeEvent(saved, employe, NotificationType.DEMANDE_VALIDATED_BY_DG);
             return demandeCongeMapper.toResponse(saved);
         }
 
@@ -123,6 +135,10 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
         demande.setStatus(StatusDemande.VALIDE_EMPLOYE);
         DemandeConge saved = demandeCongeRepository.save(demande);
         signatureDemandeService.signerParEmploye(saved, employe);
+        NotificationType eventType = previousStatus == StatusDemande.MODIFICATION_EMPLOYE
+                ? NotificationType.DEMANDE_MODIFIED_BY_EMPLOYE
+                : NotificationType.DEMANDE_SUBMITTED_BY_EMPLOYE;
+        publishDemandeEvent(saved, employe, eventType);
         return demandeCongeMapper.toResponse(saved);
     }
 
@@ -203,7 +219,9 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
 
         retirerImpactDemande(demande, employe);
         demande.setStatus(StatusDemande.ANNULE);
-        return demandeCongeMapper.toResponse(demandeCongeRepository.save(demande));
+        DemandeConge saved = demandeCongeRepository.save(demande);
+        publishDemandeEvent(saved, employe, NotificationType.DEMANDE_CANCELLED_BY_EMPLOYE);
+        return demandeCongeMapper.toResponse(saved);
     }
 
     @Override
@@ -468,5 +486,14 @@ public class DemandeCongeServiceImpl implements IDemandeCongeService {
             return demande.getJoursDeduits();
         }
         return soldeCongeService.calculerJoursOuvres(demande.getDateDebutEmp(), demande.getDateFinEmp());
+    }
+
+    private void publishDemandeEvent(DemandeConge demande, Employe actor, NotificationType eventType) {
+        Long actorUserId = actor.getUtilisateur() == null ? null : actor.getUtilisateur().getId();
+        log.info("[NOTIF] About to publish event={} demandeId={} actorUserId={}",
+                eventType,
+                demande.getId(),
+                actorUserId);
+        notificationEventPublisher.publishAfterCommit(demande, eventType, actorUserId);
     }
 }

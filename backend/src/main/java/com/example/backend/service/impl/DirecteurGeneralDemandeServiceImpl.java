@@ -7,9 +7,11 @@ import com.example.backend.exception.ResourceNotFoundException;
 import com.example.backend.mapper.DemandeCongeMapper;
 import com.example.backend.model.DemandeConge;
 import com.example.backend.model.Employe;
+import com.example.backend.model.enums.NotificationType;
 import com.example.backend.model.enums.Role;
 import com.example.backend.model.enums.StatusDemande;
 import com.example.backend.model.enums.TypeDemande;
+import com.example.backend.nats.DemandeNotificationEventPublisher;
 import com.example.backend.repository.DemandeCongeRepository;
 import com.example.backend.service.interfaces.IDirecteurGeneralDemandeService;
 import com.example.backend.service.interfaces.ISignatureDemandeService;
@@ -17,29 +19,36 @@ import com.example.backend.service.interfaces.ISoldeCongeService;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class DirecteurGeneralDemandeServiceImpl implements IDirecteurGeneralDemandeService {
 
+    private static final Logger log = LoggerFactory.getLogger(DirecteurGeneralDemandeServiceImpl.class);
+
     private final DemandeCongeRepository demandeCongeRepository;
     private final DemandeCongeMapper demandeCongeMapper;
     private final ISoldeCongeService soldeCongeService;
     private final ISignatureDemandeService signatureDemandeService;
     private final EmployeConnecteProvider employeConnecteProvider;
+    private final DemandeNotificationEventPublisher notificationEventPublisher;
 
     public DirecteurGeneralDemandeServiceImpl(
             DemandeCongeRepository demandeCongeRepository,
             DemandeCongeMapper demandeCongeMapper,
             ISoldeCongeService soldeCongeService,
             ISignatureDemandeService signatureDemandeService,
-            EmployeConnecteProvider employeConnecteProvider) {
+            EmployeConnecteProvider employeConnecteProvider,
+            DemandeNotificationEventPublisher notificationEventPublisher) {
         this.demandeCongeRepository = demandeCongeRepository;
         this.demandeCongeMapper = demandeCongeMapper;
         this.soldeCongeService = soldeCongeService;
         this.signatureDemandeService = signatureDemandeService;
         this.employeConnecteProvider = employeConnecteProvider;
+        this.notificationEventPublisher = notificationEventPublisher;
     }
 
     @Override
@@ -98,6 +107,7 @@ public class DirecteurGeneralDemandeServiceImpl implements IDirecteurGeneralDema
         demande.setStatus(StatusDemande.VALIDE_DG);
         DemandeConge saved = demandeCongeRepository.save(demande);
         signatureDemandeService.signerParDg(saved, directeurGeneral);
+        publishDemandeEvent(saved, directeurGeneral, NotificationType.DEMANDE_VALIDATED_BY_DG);
         return demandeCongeMapper.toDirecteurGeneralResponse(saved);
     }
 
@@ -110,7 +120,9 @@ public class DirecteurGeneralDemandeServiceImpl implements IDirecteurGeneralDema
 
         retirerImpactDemande(demande);
         demande.setStatus(StatusDemande.REFUSE_DG);
-        return demandeCongeMapper.toDirecteurGeneralResponse(demandeCongeRepository.save(demande));
+        DemandeConge saved = demandeCongeRepository.save(demande);
+        publishDemandeEvent(saved, getDirecteurGeneralConnecte(), NotificationType.DEMANDE_REFUSED_BY_DG);
+        return demandeCongeMapper.toDirecteurGeneralResponse(saved);
     }
 
     @Override
@@ -124,7 +136,8 @@ public class DirecteurGeneralDemandeServiceImpl implements IDirecteurGeneralDema
 
         retirerImpactDemande(demande);
         demande.setStatus(StatusDemande.MODIFICATION_DG);
-        return demandeCongeMapper.toDirecteurGeneralResponse(demandeCongeRepository.save(demande));
+        DemandeConge saved = demandeCongeRepository.save(demande);
+        return demandeCongeMapper.toDirecteurGeneralResponse(saved);
     }
 
     private Employe getDirecteurGeneralConnecte() {
@@ -247,5 +260,14 @@ public class DirecteurGeneralDemandeServiceImpl implements IDirecteurGeneralDema
         if (dateDebut.getYear() != dateFin.getYear()) {
             throw new InvalidBusinessRequestException("Une demande ne peut pas traverser deux annees differentes");
         }
+    }
+
+    private void publishDemandeEvent(DemandeConge demande, Employe actor, NotificationType eventType) {
+        Long actorUserId = actor.getUtilisateur() == null ? null : actor.getUtilisateur().getId();
+        log.info("[NOTIF] About to publish event={} demandeId={} actorUserId={}",
+                eventType,
+                demande.getId(),
+                actorUserId);
+        notificationEventPublisher.publishAfterCommit(demande, eventType, actorUserId);
     }
 }

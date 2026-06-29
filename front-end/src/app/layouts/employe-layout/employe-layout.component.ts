@@ -1,6 +1,7 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { Subscription, catchError, interval, of, startWith, switchMap } from 'rxjs';
 import { Role } from '../../core/enums/role.enum';
 import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -19,7 +20,10 @@ interface NavItem {
   templateUrl: './employe-layout.component.html',
   styleUrls: ['./employe-layout.component.scss'],
 })
-export class EmployeLayoutComponent {
+export class EmployeLayoutComponent implements OnInit, OnDestroy {
+  notificationCount = 0;
+  private notificationPolling?: Subscription;
+
   constructor(
     private readonly notificationService: NotificationService,
     private readonly authService: AuthService,
@@ -27,6 +31,17 @@ export class EmployeLayoutComponent {
   ) {}
 
   isSidebarCollapsed = signal(false);
+
+  ngOnInit(): void {
+    this.notificationPolling = interval(10000).pipe(
+      startWith(0),
+      switchMap(() => this.notificationService.getUnreadCount().pipe(catchError(() => of({ count: 0 }))))
+    ).subscribe(response => this.notificationCount = response.count);
+  }
+
+  ngOnDestroy(): void {
+    this.notificationPolling?.unsubscribe();
+  }
 
   get currentUser() {
     const user = this.authService.currentUser();
@@ -57,7 +72,4 @@ export class EmployeLayoutComponent {
     });
   }
 
-  get notificationCount(): number {
-    return this.notificationService.getUnreadCount();
-  }
 }

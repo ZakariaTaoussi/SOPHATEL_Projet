@@ -8,9 +8,11 @@ import com.example.backend.mapper.DemandeCongeMapper;
 import com.example.backend.model.Departement;
 import com.example.backend.model.DemandeConge;
 import com.example.backend.model.Employe;
+import com.example.backend.model.enums.NotificationType;
 import com.example.backend.model.enums.Role;
 import com.example.backend.model.enums.StatusDemande;
 import com.example.backend.model.enums.TypeDemande;
+import com.example.backend.nats.DemandeNotificationEventPublisher;
 import com.example.backend.repository.DemandeCongeRepository;
 import com.example.backend.service.interfaces.IResponsableDemandeService;
 import com.example.backend.service.interfaces.ISignatureDemandeService;
@@ -19,11 +21,15 @@ import java.time.LocalDate;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ResponsableDemandeServiceImpl implements IResponsableDemandeService {
+
+    private static final Logger log = LoggerFactory.getLogger(ResponsableDemandeServiceImpl.class);
 
     private static final Set<StatusDemande> STATUTS_WORKFLOW_RESPONSABLE = EnumSet.of(
             StatusDemande.VALIDE_EMPLOYE,
@@ -40,18 +46,21 @@ public class ResponsableDemandeServiceImpl implements IResponsableDemandeService
     private final ISoldeCongeService soldeCongeService;
     private final ISignatureDemandeService signatureDemandeService;
     private final EmployeConnecteProvider employeConnecteProvider;
+    private final DemandeNotificationEventPublisher notificationEventPublisher;
 
     public ResponsableDemandeServiceImpl(
             DemandeCongeRepository demandeCongeRepository,
             DemandeCongeMapper demandeCongeMapper,
             ISoldeCongeService soldeCongeService,
             ISignatureDemandeService signatureDemandeService,
-            EmployeConnecteProvider employeConnecteProvider) {
+            EmployeConnecteProvider employeConnecteProvider,
+            DemandeNotificationEventPublisher notificationEventPublisher) {
         this.demandeCongeRepository = demandeCongeRepository;
         this.demandeCongeMapper = demandeCongeMapper;
         this.soldeCongeService = soldeCongeService;
         this.signatureDemandeService = signatureDemandeService;
         this.employeConnecteProvider = employeConnecteProvider;
+        this.notificationEventPublisher = notificationEventPublisher;
     }
 
     @Override
@@ -130,6 +139,7 @@ public class ResponsableDemandeServiceImpl implements IResponsableDemandeService
         demande.setStatus(StatusDemande.VALIDE_RESPONSABLE);
         DemandeConge saved = demandeCongeRepository.save(demande);
         signatureDemandeService.signerParResponsable(saved, responsable);
+        publishDemandeEvent(saved, responsable, NotificationType.DEMANDE_VALIDATED_BY_RESPONSABLE);
         return demandeCongeMapper.toResponsableResponse(saved);
     }
 
@@ -147,7 +157,9 @@ public class ResponsableDemandeServiceImpl implements IResponsableDemandeService
 
         retirerImpactDemande(demande);
         demande.setStatus(StatusDemande.REFUSE_RESPONSABLE);
-        return demandeCongeMapper.toResponsableResponse(demandeCongeRepository.save(demande));
+        DemandeConge saved = demandeCongeRepository.save(demande);
+        publishDemandeEvent(saved, responsable, NotificationType.DEMANDE_REFUSED_BY_RESPONSABLE);
+        return demandeCongeMapper.toResponsableResponse(saved);
     }
 
     @Override
@@ -172,7 +184,9 @@ public class ResponsableDemandeServiceImpl implements IResponsableDemandeService
 
         retirerImpactDemande(demande);
         demande.setStatus(StatusDemande.MODIFICATION_RESPONSABLE);
-        return demandeCongeMapper.toResponsableResponse(demandeCongeRepository.save(demande));
+        DemandeConge saved = demandeCongeRepository.save(demande);
+        publishDemandeEvent(saved, responsable, NotificationType.DEMANDE_MODIFIED_BY_RESPONSABLE);
+        return demandeCongeMapper.toResponsableResponse(saved);
     }
 
     private Employe getResponsableConnecte() {
@@ -274,5 +288,14 @@ public class ResponsableDemandeServiceImpl implements IResponsableDemandeService
         if (dateDebut.getYear() != dateFin.getYear()) {
             throw new InvalidBusinessRequestException("Dates invalides");
         }
+    }
+
+    private void publishDemandeEvent(DemandeConge demande, Employe actor, NotificationType eventType) {
+        Long actorUserId = actor.getUtilisateur() == null ? null : actor.getUtilisateur().getId();
+        log.info("[NOTIF] About to publish event={} demandeId={} actorUserId={}",
+                eventType,
+                demande.getId(),
+                actorUserId);
+        notificationEventPublisher.publishAfterCommit(demande, eventType, actorUserId);
     }
 }

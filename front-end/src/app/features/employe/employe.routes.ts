@@ -30,7 +30,7 @@ export const EMPLOYE_ROUTES: Routes = [
       {
         path: 'notification',
         loadComponent: () =>
-          import('./notification/notification.component').then(m => m.NotificationComponent),
+          import('../shared/notification-page/notification-page.component').then(m => m.SharedNotificationPageComponent),
       },
       // 'Historique' removed per request; use 'Mes Demandes' with filters instead
       {

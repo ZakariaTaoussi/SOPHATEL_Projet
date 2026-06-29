@@ -35,7 +35,7 @@ export const RESPONSABLE_ROUTES: Routes = [
 			},
 			{
 				path: 'notifications',
-				loadComponent: () => import('./notifications/notifications.component').then(m => m.ResponsableNotificationsComponent),
+				loadComponent: () => import('../shared/notification-page/notification-page.component').then(m => m.SharedNotificationPageComponent),
 			},
 			{
 				path: 'profil',

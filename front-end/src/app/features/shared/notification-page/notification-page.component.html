@@ -1,0 +1,72 @@
+<div class="notification-page">
+  <header class="page-header">
+    <div>
+      <h1>Notifications</h1>
+      <p>Centre de notifications du systeme</p>
+    </div>
+
+    <button type="button" class="mark-read-btn" (click)="markAllAsRead()" [disabled]="loading || unreadCount === 0">
+      Tout marquer comme lu
+    </button>
+  </header>
+
+  <section class="notification-card">
+    <div class="card-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+      <div>
+        <h2>Non lues ({{ unreadCount }})</h2>
+        <p>Notifications necessitant votre attention</p>
+      </div>
+    </div>
+
+    <div class="state-message" *ngIf="loading">Chargement...</div>
+    <div class="state-message error" *ngIf="!loading && errorMessage">{{ errorMessage }}</div>
+    <div class="state-message" *ngIf="!loading && !errorMessage && notifications.length === 0">
+      Aucune notification.
+    </div>
+
+    <div class="notification-list" *ngIf="!loading && notifications.length > 0">
+      <article
+        class="notification-item"
+        *ngFor="let notification of notifications"
+        [class.is-read]="notification.read"
+        (click)="markAsRead(notification)"
+        tabindex="0"
+      >
+        <span class="notification-icon" [attr.data-kind]="kind(notification)">
+          <svg *ngIf="kind(notification) === 'info'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 16v-4"/>
+            <path d="M12 8h.01"/>
+          </svg>
+          <svg *ngIf="kind(notification) === 'success'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="m9 12 2 2 4-4"/>
+          </svg>
+          <svg *ngIf="kind(notification) === 'warning'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <path d="M12 9v4"/>
+            <path d="M12 17h.01"/>
+          </svg>
+        </span>
+
+        <div class="notification-content">
+          <h3>{{ notification.title }}</h3>
+          <p>{{ notification.message }}</p>
+          <small>{{ formatDate(notification.createdAt) }}</small>
+        </div>
+
+        <span class="unread-dot" *ngIf="!notification.read"></span>
+      </article>
+    </div>
+
+    <footer class="pagination-bar" *ngIf="totalPages > 1">
+      <button type="button" (click)="previousPage()" [disabled]="first">Precedent</button>
+      <span>Page {{ page + 1 }} / {{ totalPages }}</span>
+      <button type="button" (click)="nextPage()" [disabled]="last">Suivant</button>
+    </footer>
+  </section>
+</div>

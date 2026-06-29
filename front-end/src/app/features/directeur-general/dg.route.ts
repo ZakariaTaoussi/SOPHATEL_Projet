@@ -51,6 +51,10 @@ export const DIRECTEUR_GENERAL_ROUTES: Routes = [
         loadComponent: () => import('./historique/historique.component').then(m => m.DirecteurGeneralHistoriqueComponent),
       },
       {
+        path: 'notifications',
+        loadComponent: () => import('../shared/notification-page/notification-page.component').then(m => m.SharedNotificationPageComponent),
+      },
+      {
         path: 'profil',
         data: { role: Role.DIRECTEUR_GENERAL },
         loadComponent: () => import('../shared/profil/profil.component').then(m => m.SharedProfilComponent),

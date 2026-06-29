@@ -1,8 +1,10 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { Subscription, catchError, interval, of, startWith, switchMap } from 'rxjs';
 import { Role } from '../../core/enums/role.enum';
 import { AuthService } from '../../core/services/auth.service';
+import { NotificationService } from '../../core/services/notification.service';
 import { NavIconComponent } from '../../shared/nav-icon/nav-icon.component';
 
 interface NavItem {
@@ -18,13 +20,28 @@ interface NavItem {
   templateUrl: './responsable-layout.component.html',
   styleUrls: ['./responsable-layout.component.scss'],
 })
-export class ResponsableLayoutComponent {
+export class ResponsableLayoutComponent implements OnInit, OnDestroy {
+  notificationCount = 0;
+  private notificationPolling?: Subscription;
+
   constructor(
     private readonly authService: AuthService,
+    private readonly notificationService: NotificationService,
     private readonly router: Router
   ) {}
 
   isSidebarCollapsed = signal(false);
+
+  ngOnInit(): void {
+    this.notificationPolling = interval(10000).pipe(
+      startWith(0),
+      switchMap(() => this.notificationService.getUnreadCount().pipe(catchError(() => of({ count: 0 }))))
+    ).subscribe(response => this.notificationCount = response.count);
+  }
+
+  ngOnDestroy(): void {
+    this.notificationPolling?.unsubscribe();
+  }
 
   get currentUser() {
     const user = this.authService.currentUser();

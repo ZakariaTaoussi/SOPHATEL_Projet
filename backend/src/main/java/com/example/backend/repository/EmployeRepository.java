@@ -19,6 +19,18 @@ public interface EmployeRepository extends JpaRepository<Employe, Long> {
     Optional<Employe> findFirstByDepartementIdAndUtilisateurRole(Long departementId, Role role);
 
     @Query("""
+            select e
+            from Employe e
+            join fetch e.utilisateur u
+            left join fetch e.departement d
+            where d.id = :departementId
+              and u.role = :role
+            """)
+    Optional<Employe> findResponsableByDepartementId(
+            @Param("departementId") Long departementId,
+            @Param("role") Role role);
+
+    @Query("""
             select e from Employe e
             join e.utilisateur u
             where e.departement.id = :departementId

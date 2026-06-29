@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Subscription, catchError, interval, of, startWith, switchMap } from 'rxjs';
 import { Role } from '../../core/enums/role.enum';
 import { AuthService } from '../../core/services/auth.service';
+import { NotificationService } from '../../core/services/notification.service';
 import { NavIconComponent } from '../../shared/nav-icon/nav-icon.component';
 
 interface NavItem {
@@ -18,13 +20,28 @@ interface NavItem {
   templateUrl: './directeur-general-layout.component.html',
   styleUrls: ['./directeur-general-layout.component.scss'],
 })
-export class DirecteurGeneralLayoutComponent {
+export class DirecteurGeneralLayoutComponent implements OnInit, OnDestroy {
+  notificationCount = 0;
+  private notificationPolling?: Subscription;
+
   constructor(
     private readonly authService: AuthService,
+    private readonly notificationService: NotificationService,
     private readonly router: Router
   ) {}
 
   isSidebarCollapsed = signal(false);
+
+  ngOnInit(): void {
+    this.notificationPolling = interval(10000).pipe(
+      startWith(0),
+      switchMap(() => this.notificationService.getUnreadCount().pipe(catchError(() => of({ count: 0 }))))
+    ).subscribe(response => this.notificationCount = response.count);
+  }
+
+  ngOnDestroy(): void {
+    this.notificationPolling?.unsubscribe();
+  }
 
   get currentUser() {
     const user = this.authService.currentUser();
@@ -43,6 +60,7 @@ export class DirecteurGeneralLayoutComponent {
     { label: 'Mes Demandes', route: '/directeur-general/mes-demandes', icon: 'file-text' },
     { label: 'Demandes a valider', route: '/directeur-general/demandes-a-valider', icon: 'file-text' },
     { label: 'Demandes validees', route: '/directeur-general/demandes-validees', icon: 'check-circle' },
+    { label: 'Notifications', route: '/directeur-general/notifications', icon: 'bell' },
     { label: 'Historique', route: '/directeur-general/historique', icon: 'clock' },
     { label: 'Profil', route: '/directeur-general/profil', icon: 'user' },
   ];
