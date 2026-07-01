@@ -1,6 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
+import {
+  DashboardRecentDemande,
+  DirecteurGeneralDashboardResponse,
+} from '../../../core/models/dashboard.model';
+import { DirecteurGeneralDashboardService } from '../../../core/services/directeur-general-dashboard.service';
 
 @Component({
   selector: 'app-directeur-general-dashboard',
@@ -9,19 +15,79 @@ import { RouterLink } from '@angular/router';
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
 })
-export class DirecteurGeneralDashboardComponent {
-  stats = [
-    { label: 'Demandes à valider', value: '7', unit: 'demandes', color: 'navy', icon: 'clock' },
-    { label: 'Absences déclarées', value: '18', unit: 'absences', color: 'gold', icon: 'calendar' },
-    { label: 'Départements suivis', value: '6', unit: 'départements', color: 'slate', icon: 'grid' },
-    { label: 'Demandes refusées', value: '3', unit: 'demandes', color: 'teal', icon: 'refresh' },
-  ];
+export class DirecteurGeneralDashboardComponent implements OnInit {
+  dashboard: DirecteurGeneralDashboardResponse | null = null;
+  stats: { label: string; value: string; unit: string; color: string; icon: string }[] = [];
+  loading = false;
+  errorMessage = '';
 
-  recentDemandes = [
-    { type: 'Congé', dateDebut: '15/07/2026', dateFin: '25/07/2026', statut: 'En attente', statutClass: 'pending' },
-    { type: 'Rattrapage', dateDebut: '03/06/2026', dateFin: '03/06/2026', statut: 'Validée DG', statutClass: 'approved' },
-    { type: 'Congé', dateDebut: '12/05/2026', dateFin: '14/05/2026', statut: 'Validée DG', statutClass: 'approved' },
-    { type: 'Congé', dateDebut: '02/04/2026', dateFin: '04/04/2026', statut: 'Refusée', statutClass: 'rejected' },
-  ];
+  constructor(
+    private readonly dashboardService: DirecteurGeneralDashboardService,
+    private readonly cdr: ChangeDetectorRef
+  ) {}
 
+  ngOnInit(): void {
+    this.loadDashboard();
+  }
+
+  get pendingRequests(): DashboardRecentDemande[] {
+    return this.dashboard?.recentResponsableValidatedRequests ?? [];
+  }
+
+  get processedRequests(): DashboardRecentDemande[] {
+    return this.dashboard?.recentDgProcessedRequests ?? [];
+  }
+
+  loadDashboard(): void {
+    this.loading = true;
+    this.errorMessage = '';
+    this.dashboardService.getDashboard()
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.cdr.detectChanges();
+      }))
+      .subscribe({
+        next: dashboard => {
+          if (!dashboard) {
+            this.errorMessage = 'Dashboard vide';
+            this.dashboard = null;
+            this.stats = [];
+            this.cdr.detectChanges();
+            return;
+          }
+          this.dashboard = dashboard;
+          this.stats = [
+            { label: 'Conges a valider', value: `${dashboard.pendingCongesForDg ?? 0}`, unit: 'conge(s)', color: 'navy', icon: 'clock' },
+            { label: 'Absences a valider', value: `${dashboard.pendingAbsencesForDg ?? 0}`, unit: 'absence(s)', color: 'gold', icon: 'calendar' },
+            { label: 'Validees ce mois', value: `${dashboard.validatedByDgThisMonth ?? 0}`, unit: 'demande(s)', color: 'slate', icon: 'check' },
+            { label: 'Total employes', value: `${dashboard.totalEmployeesExceptAdmins ?? 0}`, unit: 'hors admin', color: 'teal', icon: 'users' },
+          ];
+          this.cdr.detectChanges();
+        },
+        error: error => {
+          this.errorMessage = error.error?.message || 'Erreur lors du chargement du dashboard DG';
+          this.dashboard = null;
+          this.stats = [];
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  typeLabel(demande: DashboardRecentDemande): string {
+    return demande.typeDemande === 'ABSENCE' ? 'Absence' : 'Conge';
+  }
+
+  statusLabel(status: string): string {
+    return status.replaceAll('_', ' ');
+  }
+
+  statusClass(status: string): string {
+    if (status.includes('REFUSE')) {
+      return 'rejected';
+    }
+    if (status.includes('VALIDE')) {
+      return 'approved';
+    }
+    return 'pending';
+  }
 }

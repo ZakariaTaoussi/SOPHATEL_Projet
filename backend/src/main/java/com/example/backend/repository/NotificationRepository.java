@@ -12,6 +12,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
     Page<Notification> findByRecipientIdOrderByCreatedAtDesc(Long recipientId, Pageable pageable);
 
+    List<Notification> findTop5ByRecipientIdOrderByCreatedAtDesc(Long recipientId);
+
     long countByRecipientIdAndReadFalse(Long recipientId);
 
     Optional<Notification> findByIdAndRecipientId(Long id, Long recipientId);

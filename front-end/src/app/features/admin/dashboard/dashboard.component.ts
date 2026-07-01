@@ -1,16 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { finalize } from 'rxjs';
+import { AdminDashboardResponse } from '../../../core/models/dashboard.model';
+import { AdminDashboardService } from '../../../core/services/admin-dashboard.service';
 
 interface StatCard {
   label: string;
   value: string;
   detail: string;
-}
-
-interface Activity {
-  title: string;
-  detail: string;
-  status: string;
 }
 
 @Component({
@@ -20,23 +17,61 @@ interface Activity {
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
 })
-export class AdminDashboardComponent {
-  stats: StatCard[] = [
-    { label: 'Comptes actifs', value: '128', detail: '114 employes, 9 responsables, 3 RH, 2 DG' },
-    { label: 'Departements', value: '7', detail: '2 departements sans responsable affecte' },
-    { label: 'Jours feries 2026', value: '12', detail: 'Calendrier annuel configure' },
-    { label: 'Regle conge', value: '1.5 j/mois', detail: '18 jours generes sur une annee complete' },
-  ];
+export class AdminDashboardComponent implements OnInit {
+  dashboard: AdminDashboardResponse | null = null;
+  stats: StatCard[] = [];
+  loading = false;
+  errorMessage = '';
 
-  activities: Activity[] = [
-    { title: 'Nouveau compte cree', detail: 'Sara El Amrani - Marketing', status: 'Compte actif' },
-    { title: 'Regle de preavis mise a jour', detail: 'Demande de conge requise 15 jours avant le depart', status: 'Appliquee' },
-    { title: 'Jour ferie ajoute', detail: 'Fete du Travail - 01/05/2026', status: 'Calendrier' },
-  ];
+  constructor(
+    private readonly dashboardService: AdminDashboardService,
+    private readonly cdr: ChangeDetectorRef
+  ) {}
 
-  health = [
-    { label: 'Comptes sans departement', value: 3 },
-    { label: 'Departements sans manager', value: 2 },
-    { label: 'Profils incomplets', value: 5 },
-  ];
+  ngOnInit(): void {
+    this.loadDashboard();
+  }
+
+  loadDashboard(): void {
+    this.loading = true;
+    this.errorMessage = '';
+    this.dashboardService.getDashboard()
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.cdr.detectChanges();
+      }))
+      .subscribe({
+        next: dashboard => {
+          if (!dashboard) {
+            this.errorMessage = 'Dashboard vide';
+            this.dashboard = null;
+            this.stats = [];
+            this.cdr.detectChanges();
+            return;
+          }
+          this.dashboard = dashboard;
+          this.stats = [
+            {
+              label: 'Total employes',
+              value: `${dashboard.totalEmployees ?? 0}`,
+              detail: `${dashboard.totalEmployesRole ?? 0} employes, ${dashboard.totalResponsables ?? 0} responsables, ${dashboard.totalRh ?? 0} RH, ${dashboard.totalDirecteursGeneraux ?? 0} DG`,
+            },
+            { label: 'Administrateurs', value: `${dashboard.totalAdmins ?? 0}`, detail: 'Comptes systeme actifs' },
+            { label: 'Departements', value: `${dashboard.totalDepartments ?? 0}`, detail: 'Structures configurees' },
+            {
+              label: `Jours feries ${new Date().getFullYear()}`,
+              value: `${dashboard.holidaysThisYear ?? 0}`,
+              detail: dashboard.currentYearAgendaExists ? 'Agenda annuel cree' : 'Agenda annuel non cree',
+            },
+          ];
+          this.cdr.detectChanges();
+        },
+        error: error => {
+          this.errorMessage = error.error?.message || 'Erreur lors du chargement du dashboard admin';
+          this.dashboard = null;
+          this.stats = [];
+          this.cdr.detectChanges();
+        },
+      });
+  }
 }

@@ -26,10 +26,6 @@ export const RESPONSABLE_ROUTES: Routes = [
 				loadComponent: () => import('../shared/self-demande/nouvelle-demande.component').then(m => m.SelfNouvelleDemandeComponent),
 			},
 			{
-				path: 'historique',
-				loadComponent: () => import('./historique/historique.component').then(m => m.ResponsableHistoriqueComponent),
-			},
-			{
 				path: 'mes-employes',
 				loadComponent: () => import('./mes-employes/mes-employes.component').then(m => m.ResponsableMesEmployesComponent),
 			},

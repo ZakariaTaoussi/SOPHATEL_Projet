@@ -10,7 +10,7 @@ p { margin: 0; color: #64748b; }
 .stat-card span { display: block; color: #64748b; font-size: .78rem; font-weight: 800; text-transform: uppercase; }
 .stat-card strong { display: block; margin: 10px 0 6px; color: #163b68; font-size: 1.55rem; }
 .stat-card p { font-size: .86rem; }
-.content-grid { display: grid; grid-template-columns: 1.4fr .8fr; gap: 16px; align-items: start; }
+.content-grid { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: start; }
 .panel { overflow: hidden; }
 .panel-header { padding: 20px 20px 14px; border-bottom: 1px solid #eef2f7; }
 .panel-header h2 { margin: 0 0 5px; font-size: 1rem; }

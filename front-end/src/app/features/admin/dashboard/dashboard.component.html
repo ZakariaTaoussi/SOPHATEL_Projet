@@ -7,6 +7,9 @@
     </div>
   </header>
 
+  <p class="loading-message" *ngIf="loading">Chargement...</p>
+  <p class="error-message" *ngIf="errorMessage">{{ errorMessage }}</p>
+
   <section class="stats-grid">
     <article class="stat-card" *ngFor="let stat of stats">
       <span>{{ stat.label }}</span>
@@ -18,31 +21,26 @@
   <section class="content-grid">
     <article class="panel">
       <div class="panel-header">
-        <h2>Activite recente</h2>
-        <p>Dernieres actions d'administration</p>
+        <h2>Derniers employes crees</h2>
+        <p>{{ dashboard?.recentlyCreatedEmployees?.length || 0 }} entree(s)</p>
       </div>
       <ul class="activity-list">
-        <li *ngFor="let activity of activities">
+        <li *ngFor="let employe of dashboard?.recentlyCreatedEmployees || []">
           <div>
-            <strong>{{ activity.title }}</strong>
-            <span>{{ activity.detail }}</span>
+            <strong>{{ employe.nomComplet }}</strong>
+            <span>{{ employe.matricule }} - {{ employe.departementNom }}</span>
           </div>
-          <em>{{ activity.status }}</em>
+          <em>{{ employe.role }}</em>
+        </li>
+        <li *ngIf="!loading && (dashboard?.recentlyCreatedEmployees?.length || 0) === 0">
+          <div>
+            <strong>Aucune donnee</strong>
+            <span>Aucun employe recent trouve</span>
+          </div>
+          <em>0</em>
         </li>
       </ul>
     </article>
 
-    <article class="panel">
-      <div class="panel-header">
-        <h2>Controle qualite</h2>
-        <p>Elements a verifier pour garder les donnees propres</p>
-      </div>
-      <div class="health-list">
-        <div *ngFor="let item of health">
-          <span>{{ item.label }}</span>
-          <strong>{{ item.value }}</strong>
-        </div>
-      </div>
-    </article>
   </section>
 </div>

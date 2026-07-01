@@ -48,7 +48,7 @@ public class AuthentificationService implements IAuthentificationService {
         Utilisateur utilisateur = utilisateurRepository.findByEmail(email)
                 .orElseThrow(() -> new AuthException("Email ou mot de passe incorrect", HttpStatus.UNAUTHORIZED));
 
-        if (!utilisateur.isActif() || !passwordEncoder.matches(password, utilisateur.getPassword())) {
+        if (!passwordEncoder.matches(password, utilisateur.getPassword())) {
             throw new AuthException("Email ou mot de passe incorrect", HttpStatus.UNAUTHORIZED);
         }
 

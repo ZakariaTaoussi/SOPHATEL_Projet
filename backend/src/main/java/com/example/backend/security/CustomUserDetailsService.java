@@ -27,7 +27,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         return new User(
                 utilisateur.getEmail(),
                 utilisateur.getPassword(),
-                utilisateur.isActif(),
+                true,
                 true,
                 true,
                 true,

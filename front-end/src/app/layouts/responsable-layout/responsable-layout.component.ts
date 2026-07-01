@@ -60,7 +60,6 @@ export class ResponsableLayoutComponent implements OnInit, OnDestroy {
     { label: 'Mes Demandes',        route: '/responsable/mes-demandes',      icon: 'file-text' },
     { label: 'Mes Absences',        route: '/responsable/mes-absences',      icon: 'calendar-off' },
     { label: 'Nouvelle Demande',    route: '/responsable/nouvelle-demande',  icon: 'plus-circle' },
-    { label: 'Historique',          route: '/responsable/historique',        icon: 'clock' },
     { label: 'Notifications',       route: '/responsable/notifications',     icon: 'bell' },
     { label: 'Profil',              route: '/responsable/profil',            icon: 'user' },
   ];

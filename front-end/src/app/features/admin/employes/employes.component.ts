@@ -4,7 +4,7 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Role } from '../../../core/enums/role.enum';
 import { Departement } from '../../../core/models/departement.model';
-import { CreateEmployeRequest, Employe, StatutEmploye } from '../../../core/models/employe.model';
+import { CreateEmployeRequest, Employe } from '../../../core/models/employe.model';
 import { DepartementService } from '../../../core/services/departement.service';
 import { EmployeAdminService } from '../../../core/services/employe-admin.service';
 
@@ -25,7 +25,6 @@ export class AdminEmployesComponent implements OnInit {
 
   departements: Departement[] = [];
   roles = Object.values(Role);
-  statuts: StatutEmploye[] = ['ACTIF', 'INACTIF'];
   employes: Employe[] = [];
   form: CreateEmployeRequest = this.emptyForm();
   errorMessage = '';
@@ -107,7 +106,6 @@ export class AdminEmployesComponent implements OnInit {
       password: '',
       role: employe.role,
       departementId: employe.departementId,
-      statut: employe.statut,
     };
   }
 
@@ -166,7 +164,6 @@ export class AdminEmployesComponent implements OnInit {
       password: '',
       role: Role.EMPLOYE,
       departementId: null,
-      statut: 'ACTIF',
     };
   }
 

@@ -7,5 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface JourFerieRepository extends JpaRepository<JourFerie, Long> {
     List<JourFerie> findByAgendaAnneeOrderByDateDebutAsc(Integer annee);
 
+    long countByAgendaAnnee(Integer annee);
+
     void deleteByAgendaId(Long agendaId);
 }

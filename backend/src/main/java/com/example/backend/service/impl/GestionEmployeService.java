@@ -11,7 +11,6 @@ import com.example.backend.model.Departement;
 import com.example.backend.model.Employe;
 import com.example.backend.model.Utilisateur;
 import com.example.backend.model.enums.Role;
-import com.example.backend.model.enums.StatutEmploye;
 import com.example.backend.repository.DepartementRepository;
 import com.example.backend.repository.EmployeRepository;
 import com.example.backend.repository.UtilisateurRepository;
@@ -56,7 +55,6 @@ public class GestionEmployeService implements IGestionEmploye {
         utilisateur.setEmail(request.getEmail().trim());
         utilisateur.setRole(request.getRole());
         utilisateur.setPassword(passwordEncoder.encode(request.getPassword()));
-        utilisateur.setActif(request.getStatut() != StatutEmploye.INACTIF);
         Utilisateur savedUser = utilisateurRepository.save(utilisateur);
 
         Employe employe = new Employe();
@@ -83,7 +81,6 @@ public class GestionEmployeService implements IGestionEmploye {
 
         utilisateur.setEmail(request.getEmail().trim());
         utilisateur.setRole(request.getRole());
-        utilisateur.setActif(request.getStatut() != StatutEmploye.INACTIF);
         if (!isBlank(request.getPassword())) {
             utilisateur.setPassword(passwordEncoder.encode(request.getPassword()));
         }
@@ -144,16 +141,12 @@ public class GestionEmployeService implements IGestionEmploye {
         if (request.getRole() == null) {
             throw new InvalidBusinessRequestException("Le role est obligatoire");
         }
-        if (request.getStatut() == null) {
-            request.setStatut(StatutEmploye.ACTIF);
-        }
     }
 
     private void applyValues(Employe employe, CreateEmployeRequest request) {
         employe.setMatricule(request.getMatricule().trim());
         employe.setNom(request.getNom().trim());
         employe.setPrenom(request.getPrenom().trim());
-        employe.setStatut(request.getStatut());
         employe.setDepartement(findDepartementOrNull(request.getDepartementId()));
     }
 

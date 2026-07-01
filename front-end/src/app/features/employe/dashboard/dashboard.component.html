@@ -1,15 +1,18 @@
 <div class="page-wrapper">
   <div class="page-header">
     <div>
-      <span class="page-kicker">GestionCongé</span>
+      <span class="page-kicker">GestionConge</span>
       <h1 class="page-title">Tableau de bord</h1>
-      <p class="page-subtitle">Bonjour Ahmed, voici un aperçu clair de votre situation.</p>
+      <p class="page-subtitle">Votre solde, vos demandes et vos notifications recentes.</p>
     </div>
     <a routerLink="/employe/nouvelle-demande" class="btn-primary">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Nouvelle demande
     </a>
   </div>
+
+  <p class="loading-message" *ngIf="loading">Chargement...</p>
+  <p class="error-message" *ngIf="errorMessage">{{ errorMessage }}</p>
 
   <div class="stats-grid">
     <div class="stat-card" *ngFor="let stat of stats" [attr.data-color]="stat.color">
@@ -24,7 +27,7 @@
   <div class="content-grid">
     <section class="card">
       <div class="card-header">
-        <h2 class="card-title">Dernières demandes</h2>
+        <h2 class="card-title">Dernieres demandes</h2>
         <a routerLink="/employe/mes-demandes" class="card-link">Voir tout</a>
       </div>
       <div class="table-wrapper">
@@ -32,17 +35,20 @@
           <thead>
             <tr>
               <th>Type</th>
-              <th>Période</th>
+              <th>Periode</th>
               <th>Statut</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let d of recentDemandes">
-              <td class="type-cell">{{ d.type }}</td>
-              <td class="date-cell">{{ d.dateDebut }} - {{ d.dateFin }}</td>
+              <td class="type-cell">{{ typeLabel(d) }}</td>
+              <td class="date-cell">{{ d.dateDebut | date:'dd/MM/yyyy' }} - {{ d.dateFin | date:'dd/MM/yyyy' }}</td>
               <td>
-                <span class="badge" [attr.data-status]="d.statutClass">{{ d.statut }}</span>
+                <span class="badge" [attr.data-status]="statusClass(d.status)">{{ statusLabel(d.status) }}</span>
               </td>
+            </tr>
+            <tr *ngIf="!loading && recentDemandes.length === 0">
+              <td colspan="3">Aucune donnee</td>
             </tr>
           </tbody>
         </table>
@@ -52,20 +58,28 @@
     <section class="card workflow-card">
       <div class="card-header">
         <div>
-          <h2 class="card-title">Workflow de validation</h2>
-          <p class="card-subtitle">Le parcours d'une demande</p>
+          <h2 class="card-title">Notifications recentes</h2>
+          <p class="card-subtitle">{{ dashboard?.unreadNotificationsCount || 0 }} non lue(s)</p>
         </div>
       </div>
 
       <div class="workflow-list">
-        <div class="workflow-step" *ngFor="let step of workflowSteps" [attr.data-color]="step.color">
-          <div class="step-marker">{{ step.order }}</div>
+        <div class="workflow-step" *ngFor="let notification of dashboard?.latestNotifications || []" data-color="blue">
+          <div class="step-marker">!</div>
           <div class="step-content">
-            <h3>{{ step.title }}</h3>
-            <p>{{ step.description }}</p>
+            <h3>{{ notification.title }}</h3>
+            <p>{{ notification.message }}</p>
+          </div>
+        </div>
+        <div class="workflow-step" *ngIf="!loading && (dashboard?.latestNotifications?.length || 0) === 0" data-color="cyan">
+          <div class="step-marker">0</div>
+          <div class="step-content">
+            <h3>Aucune notification</h3>
+            <p>Aucune donnee recente</p>
           </div>
         </div>
       </div>
     </section>
+
   </div>
 </div>

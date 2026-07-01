@@ -22,7 +22,6 @@ export interface CreateEmployeRequest {
   password: string;
   role: Role;
   departementId: number | null;
-  statut: StatutEmploye;
 }
 
 export type UpdateEmployeRequest = CreateEmployeRequest;

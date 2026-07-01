@@ -28,9 +28,6 @@ public class Utilisateur {
     @Column(nullable = false)
     private Role role;
 
-    @Column(nullable = false)
-    private boolean actif = true;
-
     public Long getId() {
         return id;
     }
@@ -63,11 +60,4 @@ public class Utilisateur {
         this.role = role;
     }
 
-    public boolean isActif() {
-        return actif;
-    }
-
-    public void setActif(boolean actif) {
-        this.actif = actif;
-    }
 }

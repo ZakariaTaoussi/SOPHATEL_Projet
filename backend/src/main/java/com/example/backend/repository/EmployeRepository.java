@@ -2,6 +2,7 @@ package com.example.backend.repository;
 
 import com.example.backend.model.Employe;
 import com.example.backend.model.enums.Role;
+import com.example.backend.dto.dashboard.DashboardChartItemDto;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -13,6 +14,23 @@ import org.springframework.data.repository.query.Param;
 
 public interface EmployeRepository extends JpaRepository<Employe, Long> {
     Optional<Employe> findByUtilisateurId(Long utilisateurId);
+
+    long countByUtilisateurRole(Role role);
+
+    long countByUtilisateurRoleNot(Role role);
+
+    long countByDepartementId(Long departementId);
+
+    @Query("""
+            select count(e) from Employe e
+            where e.departement.id = :departementId
+              and e.idEmp <> :employeId
+            """)
+    long countByDepartementIdAndIdEmpNot(
+            @Param("departementId") Long departementId,
+            @Param("employeId") Long employeId);
+
+    List<Employe> findTop5ByOrderByCreatedAtDesc();
 
     Optional<Employe> findFirstByUtilisateurRole(Role role);
 
@@ -79,6 +97,45 @@ public interface EmployeRepository extends JpaRepository<Employe, Long> {
             @Param("departementId") Long departementId,
             @Param("searchPattern") String searchPattern,
             Pageable pageable);
+
+    @Query("""
+            select new com.example.backend.dto.dashboard.DashboardChartItemDto(cast(u.role as string), count(e))
+            from Employe e
+            join e.utilisateur u
+            where u.role <> :excludedRole
+            group by u.role
+            order by count(e) desc
+            """)
+    List<DashboardChartItemDto> countEmployeesByRoleExcluding(@Param("excludedRole") Role excludedRole);
+
+    @Query("""
+            select new com.example.backend.dto.dashboard.DashboardChartItemDto(cast(u.role as string), count(e))
+            from Employe e
+            join e.utilisateur u
+            group by u.role
+            order by count(e) desc
+            """)
+    List<DashboardChartItemDto> countEmployeesByRole();
+
+    @Query("""
+            select new com.example.backend.dto.dashboard.DashboardChartItemDto(coalesce(d.nom, 'Non defini'), count(e))
+            from Employe e
+            left join e.departement d
+            join e.utilisateur u
+            where u.role <> :excludedRole
+            group by d.nom
+            order by count(e) desc
+            """)
+    List<DashboardChartItemDto> countEmployeesByDepartmentExcluding(@Param("excludedRole") Role excludedRole);
+
+    @Query("""
+            select new com.example.backend.dto.dashboard.DashboardChartItemDto(coalesce(d.nom, 'Non defini'), count(e))
+            from Employe e
+            left join e.departement d
+            group by d.nom
+            order by count(e) desc
+            """)
+    List<DashboardChartItemDto> countEmployeesByDepartment();
 
     boolean existsByMatricule(String matricule);
 

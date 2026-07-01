@@ -1,6 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
+import { DashboardRecentDemande, RhDashboardResponse } from '../../../core/models/dashboard.model';
+import { RhDashboardService } from '../../../core/services/rh-dashboard.service';
 
 @Component({
   selector: 'app-rh-dashboard',
@@ -9,45 +12,65 @@ import { RouterLink } from '@angular/router';
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
 })
-export class RhDashboardComponent {
-  stats = [
-    { label: 'Jours de congé restants', value: '12', unit: 'jours', color: 'navy', icon: 'sun' },
-    { label: 'Demandes en attente', value: '2', unit: 'demandes', color: 'gold', icon: 'clock' },
-    { label: 'Absences ce mois', value: '1', unit: 'jour', color: 'slate', icon: 'calendar' },
-    { label: 'Demandes refusées', value: '1', unit: 'demande', color: 'teal', icon: 'refresh' },
-  ];
+export class RhDashboardComponent implements OnInit {
+  dashboard: RhDashboardResponse | null = null;
+  stats: { label: string; value: string; unit: string; color: string; icon: string }[] = [];
+  loading = false;
+  errorMessage = '';
 
-  recentDemandes = [
-    { type: 'Congé', dateDebut: '15/07/2025', dateFin: '25/07/2025', statut: 'En attente', statutClass: 'pending' },
-    { type: 'Rattrapage', dateDebut: '03/06/2025', dateFin: '03/06/2025', statut: 'Validée DG', statutClass: 'approved' },
-    { type: 'Congé', dateDebut: '12/05/2025', dateFin: '14/05/2025', statut: 'Validée DG', statutClass: 'approved' },
-    { type: 'Congé', dateDebut: '02/04/2025', dateFin: '04/04/2025', statut: 'Refusée', statutClass: 'rejected' },
-  ];
+  constructor(
+    private readonly dashboardService: RhDashboardService,
+    private readonly cdr: ChangeDetectorRef
+  ) {}
 
-  workflowSteps = [
-    {
-      order: 1,
-      title: 'Création & soumission',
-      description: "L'employé crée et soumet sa demande",
-      color: 'blue',
-    },
-    {
-      order: 2,
-      title: 'Validation Responsable',
-      description: 'Signature du responsable hiérarchique',
-      color: 'cyan',
-    },
-    {
-      order: 3,
-      title: 'Validation DG',
-      description: 'Signature finale du Directeur Général',
-      color: 'green',
-    },
-    {
-      order: 4,
-      title: 'Notification & calcul',
-      description: 'Mise à jour du reliquat et notification',
-      color: 'purple',
-    },
-  ];
+  ngOnInit(): void {
+    this.loadDashboard();
+  }
+
+  get recentConges(): DashboardRecentDemande[] {
+    return this.dashboard?.recentCongesValidesDg ?? [];
+  }
+
+  get recentAbsences(): DashboardRecentDemande[] {
+    return this.dashboard?.recentAbsencesValideesDg ?? [];
+  }
+
+  loadDashboard(): void {
+    this.loading = true;
+    this.errorMessage = '';
+    this.dashboardService.getDashboard()
+      .pipe(finalize(() => {
+        this.loading = false;
+        this.cdr.detectChanges();
+      }))
+      .subscribe({
+        next: dashboard => {
+          if (!dashboard) {
+            this.errorMessage = 'Dashboard vide';
+            this.dashboard = null;
+            this.stats = [];
+            this.cdr.detectChanges();
+            return;
+          }
+          this.dashboard = dashboard;
+          this.stats = [
+            { label: 'Conges valides DG ce mois', value: `${dashboard.congesValidesDgThisMonth ?? 0}`, unit: 'conge(s)', color: 'navy', icon: 'file' },
+            { label: 'Absences validees DG ce mois', value: `${dashboard.absencesValideesDgThisMonth ?? 0}`, unit: 'absence(s)', color: 'gold', icon: 'calendar' },
+            { label: 'Jours conge valides', value: `${dashboard.totalJoursCongeValidesThisMonth ?? 0}`, unit: 'jours', color: 'slate', icon: 'sun' },
+            { label: 'Jours absence paie', value: `${dashboard.totalJoursAbsencePaieThisMonth ?? 0}`, unit: 'jours', color: 'teal', icon: 'refresh' },
+          ];
+          this.cdr.detectChanges();
+        },
+        error: error => {
+          this.errorMessage = error.error?.message || 'Erreur lors du chargement du dashboard RH';
+          this.dashboard = null;
+          this.stats = [];
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  statusLabel(status: string): string {
+    return status.replaceAll('_', ' ');
+  }
 }
