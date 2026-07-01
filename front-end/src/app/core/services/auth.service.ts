@@ -10,6 +10,10 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface MessageResponse {
+  message: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly apiUrl = apiUrl('/api/auth');
@@ -40,6 +44,22 @@ export class AuthService {
           this.currentUserSignal.set(null);
         })
       );
+  }
+
+  forgotPassword(email: string): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(
+      `${this.apiUrl}/forgot-password`,
+      { email },
+      { withCredentials: true }
+    );
+  }
+
+  resetPassword(token: string, newPassword: string, confirmPassword: string): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(
+      `${this.apiUrl}/reset-password`,
+      { token, newPassword, confirmPassword },
+      { withCredentials: true }
+    );
   }
 
   getCurrentUser(): AuthUser | null {
