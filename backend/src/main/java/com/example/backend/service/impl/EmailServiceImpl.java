@@ -18,12 +18,15 @@ public class EmailServiceImpl implements IEmailService {
 
     private final JavaMailSender mailSender;
     private final String appMailFrom;
+    private final boolean failOnError;
 
     public EmailServiceImpl(
             JavaMailSender mailSender,
-            @Value("${app.mail.from}") String appMailFrom) {
+            @Value("${app.mail.from}") String appMailFrom,
+            @Value("${app.mail.fail-on-error:false}") boolean failOnError) {
         this.mailSender = mailSender;
         this.appMailFrom = appMailFrom;
+        this.failOnError = failOnError;
     }
 
     @Override
@@ -54,7 +57,11 @@ public class EmailServiceImpl implements IEmailService {
             LOGGER.info("Email de reinitialisation envoye avec succes a {}", to);
         } catch (MailException exception) {
             LOGGER.error("Erreur lors de l'envoi email reset password", exception);
-            throw new BusinessException("Erreur lors de l'envoi de l'email.", HttpStatus.BAD_REQUEST);
+            if (failOnError) {
+                throw new BusinessException("Erreur lors de l'envoi de l'email.", HttpStatus.BAD_REQUEST);
+            }
+            LOGGER.warn(
+                    "Envoi email reset password ignore car app.mail.fail-on-error=false. Utilisez le lien [RESET-PASSWORD-DEV] dans les logs.");
         }
     }
 }
