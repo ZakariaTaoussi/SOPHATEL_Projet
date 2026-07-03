@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.angular/
+.vscode/
+angular-dev*.log
+ng-serve*.log
+npm-debug.log*
+.env
+.env.*

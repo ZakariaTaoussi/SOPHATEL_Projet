@@ -1,4 +1,34 @@
 services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: sophatel-backend:local
+    container_name: sophatel-backend
+    ports:
+      - "8081:8081"
+    env_file:
+      - ./backend/.env
+    environment:
+      NATS_URL: nats://nats:4222
+      APP_FRONTEND_URL: ${APP_FRONTEND_URL:-http://localhost:4200}
+    depends_on:
+      nats:
+        condition: service_started
+
+  front-end:
+    build:
+      context: ./front-end
+      dockerfile: Dockerfile
+    image: sophatel-front-end:local
+    container_name: sophatel-front-end
+    ports:
+      - "4200:4200"
+    environment:
+      PORT: 4200
+    depends_on:
+      - backend
+
   nats:
     image: nats:latest
     container_name: sophatel-nats
