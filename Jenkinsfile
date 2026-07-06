@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        nodejs 'nodejs-24'
+        nodejs 'nodejs-20'
     }
 
     options {
@@ -13,7 +13,6 @@ pipeline {
     environment {
         BACKEND_IMAGE = 'sophatel-backend:local'
         FRONTEND_IMAGE = 'sophatel-front-end:local'
-        COMPOSE_PROJECT_NAME = 'stage-ci'
     }
 
     stages {
@@ -27,6 +26,7 @@ pipeline {
             steps {
                 dir('backend') {
                     sh 'chmod +x mvnw'
+                    sh 'java -version'
                     sh './mvnw -B clean test'
                 }
             }
@@ -35,6 +35,8 @@ pipeline {
         stage('Frontend build') {
             steps {
                 dir('front-end') {
+                    sh 'node --version'
+                    sh 'npm --version'
                     sh 'npm ci'
                     sh 'npm run build'
                 }
@@ -43,6 +45,7 @@ pipeline {
 
         stage('Docker build') {
             steps {
+                sh 'docker --version'
                 sh 'docker build -t "$BACKEND_IMAGE" backend'
                 sh 'docker build -t "$FRONTEND_IMAGE" front-end'
             }
@@ -52,6 +55,14 @@ pipeline {
     post {
         always {
             junit allowEmptyResults: true, testResults: 'backend/target/surefire-reports/*.xml'
+        }
+
+        success {
+            echo 'CI pipeline completed successfully.'
+        }
+
+        failure {
+            echo 'CI pipeline failed. Check the failed stage logs above.'
         }
     }
 }
