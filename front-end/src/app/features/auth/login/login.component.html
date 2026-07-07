@@ -11,20 +11,6 @@
       <p>Demandes, validations, absences et soldes réunis dans une interface simple et propre.</p>
     </div>
 
-    <div class="login__metrics">
-      <div>
-        <strong>30j</strong>
-        <span>solde annuel</span>
-      </div>
-      <div>
-        <strong>3</strong>
-        <span>validations</span>
-      </div>
-      <div>
-        <strong>24h</strong>
-        <span>suivi rapide</span>
-      </div>
-    </div>
   </aside>
 
   <section class="login__panel">
@@ -55,24 +41,29 @@
           <div class="field__password">
             <input
               id="password"
-              type="password"
+              [type]="showPassword ? 'text' : 'password'"
               formControlName="password"
               placeholder="••••••••"
               autocomplete="current-password"
             />
-            <button type="button" class="field__toggle" aria-label="Afficher le mot de passe">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <button
+              type="button"
+              class="field__toggle"
+              [attr.aria-label]="showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+              [attr.aria-pressed]="showPassword"
+              (click)="togglePasswordVisibility()"
+            >
+              <svg *ngIf="!showPassword" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M1 12C1 12 5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              <svg *ngIf="showPassword" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M3 3l18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M10.58 10.58A2 2 0 0012 14a2 2 0 001.42-.58M9.88 5.08A9.77 9.77 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-4.18 5.18M6.61 6.61C3.74 8.56 1 12 1 12s4 8 11 8a10.85 10.85 0 005.39-1.39" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </button>
           </div>
         </div>
-
-        <label class="checkbox">
-          <input type="checkbox" formControlName="remember" />
-          Se souvenir de moi
-        </label>
 
         <p class="form__error">{{ errorMessage }}</p>
 
