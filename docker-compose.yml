@@ -11,7 +11,12 @@ services:
       - ./backend/.env
     environment:
       NATS_URL: nats://nats:4222
+      # Ces deux valeurs dependent de la machine qui heberge la stack. Elles se
+      # surchargent via un fichier .env a la racine du projet (non versionne) :
+      #   APP_FRONTEND_URL=http://192.168.56.10:4200
+      #   APP_CORS_ALLOWED_ORIGINS=http://192.168.56.10:4200
       APP_FRONTEND_URL: ${APP_FRONTEND_URL:-http://localhost:4200}
+      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:4200}
       # backend/.env pointe sur localhost:5432 pour un lancement hors Docker ;
       # dans le reseau compose la base s'atteint par le nom du service.
       DB_URL: jdbc:postgresql://postgres:5432/DB_Sophatel
