@@ -4,3 +4,10 @@ backend/.env
 backend/.env.*
 !/.env.example
 !backend/.env.example
+
+# Export de donnees reelles (emails, hash de mots de passe) : jamais versionne.
+backend/db-local/
+
+# Cache Python des scripts utilitaires.
+__pycache__/
+*.pyc
